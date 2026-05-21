@@ -127,7 +127,7 @@ interview/
 
 ## 当前状态
 
-当前阶段：Task 4 Target CRUD 已完成，下一步 Task 5 CandidateProfile 隐私链路。
+当前阶段：Task 5 CandidateProfile 隐私链路已完成，下一步 Task 6 Platform AI + JobBrief。
 
 已完成：
 
@@ -143,7 +143,11 @@ interview/
 - Task 4：后端 TargetNotFoundException、status 白名单校验、8 个集成测试。
 - Task 4：iOS TargetListView、TargetCreateView、TargetDetailView。
 - Task 4：iOS TargetLocal SwiftData 模型、TargetStatusHelper 共享 UI 组件。
+- Task 5：后端 CandidateProfile 实体、Repository、Service（Stub draft）、Controller（3 个端点）。
+- Task 5：后端 ProfileNotFoundException、隐私约束（原文内存使用、不记录日志）。
+- Task 5：iOS CandidateProfileLocal SwiftData 模型、ProfileInputView、ProfileConfirmView。
+- Task 5：docs/privacy/data-policy.md 隐私文档。
 
 尚未创建：
 
-- CandidateProfile、AI、测评、训练和模拟面试业务模块。
+- AI、测评、训练和模拟面试业务模块。
