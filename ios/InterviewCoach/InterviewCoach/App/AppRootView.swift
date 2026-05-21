@@ -38,16 +38,12 @@ struct AppRootView: View {
     }
     .task {
       if authService.isAuthenticated {
-        await authService.fetchCurrentUser()
-        await refreshHealth()
+        await initializeSession()
       }
     }
     .onChange(of: authService.isAuthenticated) { _, newValue in
       if newValue {
-        Task {
-          await authService.fetchCurrentUser()
-          await refreshHealth()
-        }
+        Task { await refreshHealth() }
       }
     }
   }
@@ -72,6 +68,12 @@ struct AppRootView: View {
     .frame(maxWidth: .infinity, alignment: .leading)
     .padding(20)
     .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+  }
+
+  @MainActor
+  private func initializeSession() async {
+    async let _: () = authService.fetchCurrentUser()
+    async let _: () = refreshHealth()
   }
 
   @MainActor
