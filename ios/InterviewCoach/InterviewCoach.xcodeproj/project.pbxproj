@@ -21,7 +21,10 @@
 		2A000001000000000000000C /* MockInterviewDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A000001000000000000001C /* MockInterviewDTO.swift */; };
 		2A000001000000000000000D /* ReportDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A000001000000000000001D /* ReportDTO.swift */; };
 		2A000001000000000000000E /* AiProviderDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A000001000000000000001E /* AiProviderDTO.swift */; };
-/* End PBXBuildFile section */
+			2A00000100000000000000A1 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B1 /* KeychainHelper.swift */; };
+			2A00000100000000000000A2 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B2 /* APIClient.swift */; };
+			2A00000100000000000000A3 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B3 /* AuthService.swift */; };
+			2A00000100000000000000A4 /* DevLoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B4 /* DevLoginView.swift */; };/* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		2A0000010000000000000010 /* InterviewCoach.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InterviewCoach.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -40,7 +43,10 @@
 		2A000001000000000000001D /* ReportDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportDTO.swift; sourceTree = "<group>"; };
 		2A000001000000000000001E /* AiProviderDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AiProviderDTO.swift; sourceTree = "<group>"; };
 		2A000001000000000000001F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-/* End PBXFileReference section */
+			2A00000100000000000000B1 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
+			2A00000100000000000000B2 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+			2A00000100000000000000B3 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+			2A00000100000000000000B4 /* DevLoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevLoginView.swift; sourceTree = "<group>"; };/* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		2A0000010000000000000020 /* Frameworks */ = {
@@ -66,6 +72,7 @@
 			children = (
 				2A0000010000000000000033 /* App */,
 				2A0000010000000000000034 /* Core */,
+				2A0000010000000000000038 /* Features */,
 				2A0000010000000000000035 /* Resources */,
 			);
 			path = InterviewCoach;
@@ -92,6 +99,8 @@
 			isa = PBXGroup;
 			children = (
 				2A0000010000000000000036 /* API */,
+				2A0000010000000000000039 /* Security */,
+				2A000001000000000000003A /* Auth */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -109,6 +118,7 @@
 			children = (
 				2A0000010000000000000037 /* DTO */,
 				2A0000010000000000000013 /* BackendHealthClient.swift */,
+				2A00000100000000000000B2 /* APIClient.swift */,
 			);
 			path = API;
 			sourceTree = "<group>";
@@ -129,6 +139,38 @@
 				2A000001000000000000001E /* AiProviderDTO.swift */,
 			);
 			path = DTO;
+			sourceTree = "<group>";
+		};
+			2A0000010000000000000038 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				2A000001000000000000003B /* Auth */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+			2A0000010000000000000039 /* Security */ = {
+			isa = PBXGroup;
+			children = (
+				2A00000100000000000000B1 /* KeychainHelper.swift */,
+			);
+			path = Security;
+			sourceTree = "<group>";
+		};
+			2A000001000000000000003A /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				2A00000100000000000000B3 /* AuthService.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+			2A000001000000000000003B /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				2A00000100000000000000B4 /* DevLoginView.swift */,
+			);
+			path = Auth;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -213,6 +255,10 @@
 				2A000001000000000000000C /* MockInterviewDTO.swift in Sources */,
 				2A000001000000000000000D /* ReportDTO.swift in Sources */,
 				2A000001000000000000000E /* AiProviderDTO.swift in Sources */,
+				2A00000100000000000000A1 /* KeychainHelper.swift in Sources */,
+				2A00000100000000000000A2 /* APIClient.swift in Sources */,
+				2A00000100000000000000A3 /* AuthService.swift in Sources */,
+				2A00000100000000000000A4 /* DevLoginView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

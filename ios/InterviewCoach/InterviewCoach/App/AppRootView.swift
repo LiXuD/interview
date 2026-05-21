@@ -1,32 +1,45 @@
 import SwiftUI
 
 struct AppRootView: View {
+  @ObservedObject var authService: AuthService
   @State private var connectionState: BackendConnectionState = .checking
 
   private let healthClient = BackendHealthClient()
 
   var body: some View {
     NavigationStack {
-      VStack(alignment: .leading, spacing: 24) {
-        VStack(alignment: .leading, spacing: 8) {
-          Text("AI 技术岗面试教练")
-            .font(.largeTitle)
-            .fontWeight(.semibold)
+      if authService.isAuthenticated {
+        VStack(alignment: .leading, spacing: 24) {
+          VStack(alignment: .leading, spacing: 8) {
+            Text("AI 技术岗面试教练")
+              .font(.largeTitle)
+              .fontWeight(.semibold)
 
-          Text("Walking Skeleton")
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
+            Text("Walking Skeleton")
+              .font(.subheadline)
+              .foregroundStyle(.secondary)
+          }
+
+          connectionPanel
+
+          Button("退出登录") {
+            authService.logout()
+          }
+          .buttonStyle(.bordered)
+          .tint(.red)
+
+          Spacer()
         }
-
-        connectionPanel
-
-        Spacer()
+        .padding(24)
+        .navigationTitle("Interview Coach")
+      } else {
+        DevLoginView(authService: authService)
       }
-      .padding(24)
-      .navigationTitle("Interview Coach")
     }
     .task {
-      await refreshHealth()
+      if authService.isAuthenticated {
+        await refreshHealth()
+      }
     }
   }
 
@@ -113,8 +126,4 @@ private enum BackendConnectionState: Equatable {
       return .red
     }
   }
-}
-
-#Preview {
-  AppRootView()
 }

@@ -127,7 +127,7 @@ interview/
 
 ## 当前状态
 
-当前阶段：Task 2 OpenAPI 与基础 DTO 已完成。
+当前阶段：Task 3 Dev Login 已完成。
 
 已完成：
 
@@ -135,7 +135,11 @@ interview/
 - Task 2：完整 OpenAPI 契约（29 个路径、30+ 个 Schema、bearerAuth 安全方案）。
 - Task 2：后端 33 个 Java record DTO（`common/api` + `common/error`）。
 - Task 2：iOS 10 个 Swift Codable DTO 文件（`Core/API/DTO/`）。
+- Task 3：后端 JWT 签发/验证（jjwt）、Spring Security Bearer Token 拦截器链、User 实体与 Repository。
+- Task 3：后端 AuthController（dev-login、logout）和 UserController（GET/DELETE /api/me）。
+- Task 3：iOS KeychainHelper、APIClient actor、AuthService（ObservableObject）、DevLoginView。
+- Task 3：AppRootView auth gating、infra/docker-compose.yml（PostgreSQL）。
 
 尚未创建：
 
-- 登录、岗位、简历摘要、AI、测评、训练和模拟面试业务模块。
+- Target CRUD、CandidateProfile、AI、测评、训练和模拟面试业务模块。
