@@ -13,6 +13,7 @@ struct TargetDetailView: View {
     @State private var editJd = ""
     @State private var currentTarget: InterviewTargetDTO
     @State private var showDeleteConfirm = false
+    @State private var showProfile = false
     @State private var isLoading = false
     @State private var errorMessage: String?
 
@@ -61,6 +62,16 @@ struct TargetDetailView: View {
 
             if !isEditing {
                 Section {
+                    Button {
+                        showProfile = true
+                    } label: {
+                        Label("候选人简历", systemImage: "person.text.rectangle")
+                    }
+                }
+            }
+
+            if !isEditing {
+                Section {
                     Button("删除此岗位", role: .destructive) {
                         showDeleteConfirm = true
                     }
@@ -96,6 +107,13 @@ struct TargetDetailView: View {
             Button("删除", role: .destructive) {
                 Task { await deleteTarget() }
             }
+        }
+        .sheet(isPresented: $showProfile) {
+            ProfileInputView(
+                targetId: currentTarget.id,
+                targetTitle: currentTarget.title,
+                authService: authService
+            )
         }
         .overlay {
             if isLoading {

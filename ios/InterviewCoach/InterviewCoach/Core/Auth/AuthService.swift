@@ -49,6 +49,7 @@ final class AuthService: ObservableObject {
     private func clearLocalData() {
         guard let context = modelContext else { return }
         try? context.delete(model: TargetLocal.self)
+        try? context.delete(model: CandidateProfileLocal.self)
         try? context.save()
     }
 

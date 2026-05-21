@@ -29,6 +29,9 @@
 			2A00000100000000000000D3 /* TargetCreateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C3 /* TargetCreateView.swift */; };
 			2A00000100000000000000D4 /* TargetDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C4 /* TargetDetailView.swift */; };
 			2A00000100000000000000D5 /* TargetStatusHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C5 /* TargetStatusHelper.swift */; };
+			2A00000100000000000000D6 /* CandidateProfileLocal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C6 /* CandidateProfileLocal.swift */; };
+			2A00000100000000000000D7 /* ProfileInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C7 /* ProfileInputView.swift */; };
+			2A00000100000000000000D8 /* ProfileConfirmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C8 /* ProfileConfirmView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -56,6 +59,9 @@
 			2A00000100000000000000C3 /* TargetCreateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetCreateView.swift; sourceTree = "<group>"; };
 			2A00000100000000000000C4 /* TargetDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetDetailView.swift; sourceTree = "<group>"; };
 			2A00000100000000000000C5 /* TargetStatusHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetStatusHelper.swift; sourceTree = "<group>"; };
+			2A00000100000000000000C6 /* CandidateProfileLocal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandidateProfileLocal.swift; sourceTree = "<group>"; };
+			2A00000100000000000000C7 /* ProfileInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileInputView.swift; sourceTree = "<group>"; };
+			2A00000100000000000000C8 /* ProfileConfirmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileConfirmView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -157,6 +163,7 @@
 			children = (
 				2A000001000000000000003B /* Auth */,
 				2A00000100000000000000E3 /* Targets */,
+					2A00000100000000000000E5 /* Profiles */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -197,6 +204,7 @@
 			isa = PBXGroup;
 			children = (
 				2A00000100000000000000C1 /* TargetLocal.swift */,
+					2A00000100000000000000C6 /* CandidateProfileLocal.swift */,
 			);
 			path = LocalModels;
 			sourceTree = "<group>";
@@ -217,6 +225,15 @@
 				2A00000100000000000000C5 /* TargetStatusHelper.swift */,
 			);
 			path = UI;
+			sourceTree = "<group>";
+		};
+		2A00000100000000000000E5 /* Profiles */ = {
+			isa = PBXGroup;
+			children = (
+					2A00000100000000000000C7 /* ProfileInputView.swift */,
+					2A00000100000000000000C8 /* ProfileConfirmView.swift */,
+			);
+			path = Profiles;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -309,6 +326,9 @@
 				2A00000100000000000000D3 /* TargetCreateView.swift in Sources */,
 				2A00000100000000000000D4 /* TargetDetailView.swift in Sources */,
 					2A00000100000000000000D5 /* TargetStatusHelper.swift in Sources */,
+					2A00000100000000000000D6 /* CandidateProfileLocal.swift in Sources */,
+					2A00000100000000000000D7 /* ProfileInputView.swift in Sources */,
+					2A00000100000000000000D8 /* ProfileConfirmView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

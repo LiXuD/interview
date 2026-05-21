@@ -21,6 +21,12 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("TARGET_NOT_FOUND", ex.getMessage(), generateRequestId()));
     }
 
+    @ExceptionHandler(ProfileNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleProfileNotFound(ProfileNotFoundException ex) {
+        return ResponseEntity.status(404)
+                .body(new ErrorResponse("PROFILE_NOT_FOUND", ex.getMessage(), generateRequestId()));
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(IllegalArgumentException ex) {
         return ResponseEntity.badRequest()
