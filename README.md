@@ -76,7 +76,7 @@ interview/
 └── scripts/
 ```
 
-当前仓库已完成 Task 1-3：Walking Skeleton、OpenAPI 契约与 DTO、Dev Login 认证链路。后续按任务顺序继续推进 Target CRUD。
+当前仓库已完成 Task 1-4：Walking Skeleton、OpenAPI 契约与 DTO、Dev Login 认证链路、Target CRUD。后续按任务顺序继续推进 CandidateProfile 隐私链路。
 
 ## 开发计划
 
@@ -127,7 +127,7 @@ interview/
 
 ## 当前状态
 
-当前阶段：Task 3 Dev Login 已完成。
+当前阶段：Task 4 Target CRUD 已完成，下一步 Task 5 CandidateProfile 隐私链路。
 
 已完成：
 
@@ -139,7 +139,11 @@ interview/
 - Task 3：后端 AuthController（dev-login、logout）和 UserController（GET/DELETE /api/me）。
 - Task 3：iOS KeychainHelper、APIClient actor、AuthService（ObservableObject）、DevLoginView。
 - Task 3：AppRootView auth gating、infra/docker-compose.yml（PostgreSQL）。
+- Task 4：后端 InterviewTarget 实体、Repository、Service、Controller（5 个 REST 端点）。
+- Task 4：后端 TargetNotFoundException、status 白名单校验、8 个集成测试。
+- Task 4：iOS TargetListView、TargetCreateView、TargetDetailView。
+- Task 4：iOS TargetLocal SwiftData 模型、TargetStatusHelper 共享 UI 组件。
 
 尚未创建：
 
-- Target CRUD、CandidateProfile、AI、测评、训练和模拟面试业务模块。
+- CandidateProfile、AI、测评、训练和模拟面试业务模块。
