@@ -242,6 +242,13 @@ paths:
         - Profile
       summary: Get current confirmed profile
       operationId: getCurrentProfile
+      parameters:
+        - name: targetId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
           description: Current profile.

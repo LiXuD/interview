@@ -7,7 +7,7 @@ import com.interviewcoach.common.api.CandidateProfileDraftRequest;
 import com.interviewcoach.profile.service.CandidateProfileService;
 import com.interviewcoach.user.entity.User;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -34,17 +34,15 @@ public class CandidateProfileController {
 
     @PostMapping("/confirm")
     public CandidateProfileDto confirmProfile(
-            Authentication authentication,
             @RequestBody CandidateProfileConfirmRequest request) {
-        User user = currentUser(authentication);
+        User user = currentUser();
         return profileService.confirmProfile(user, request);
     }
 
     @GetMapping("/current")
     public ResponseEntity<CandidateProfileDto> getCurrentProfile(
-            Authentication authentication,
             @RequestParam("targetId") UUID targetId) {
-        User user = currentUser(authentication);
+        User user = currentUser();
         CandidateProfileDto dto = profileService.getProfileByTargetId(targetId, user.getId());
         if (dto == null) {
             return ResponseEntity.notFound().build();
@@ -52,7 +50,7 @@ public class CandidateProfileController {
         return ResponseEntity.ok(dto);
     }
 
-    private User currentUser(Authentication authentication) {
-        return (User) authentication.getPrincipal();
+    private User currentUser() {
+        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 }

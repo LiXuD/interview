@@ -109,13 +109,13 @@ struct ProfileInputView: View {
     }
 }
 
-extension CandidateProfileDraftDTO: @retroactive Hashable {
+extension CandidateProfileDraftDTO: Hashable {
     public func hash(into hasher: inout Hasher) {
         hasher.combine(summary)
         hasher.combine(rawTextLength)
     }
 }
 
-extension CandidateProfileDraftDTO: @retroactive Identifiable {
+extension CandidateProfileDraftDTO: Identifiable {
     public var id: String { "\(summary)_\(rawTextLength)" }
 }
