@@ -50,6 +50,16 @@ paths:
               schema:
                 $ref: "#/components/schemas/LoginResponse"
 
+  /api/auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Logout current user
+      operationId: logout
+      responses:
+        "204":
+          description: Logged out.
+
   /api/me:
     get:
       tags:
@@ -1019,7 +1029,6 @@ components:
         - status
         - questionIndex
         - totalQuestions
-        - currentQuestion
       properties:
         id:
           type: string
@@ -1208,7 +1217,6 @@ components:
         - id
         - targetId
         - status
-        - currentQuestion
         - conversationTurns
       properties:
         id:

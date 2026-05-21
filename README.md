@@ -132,7 +132,7 @@ interview/
 已完成：
 
 - Task 1：Spring Boot 后端 health API、SwiftUI iOS App 壳、OpenAPI health 契约。
-- Task 2：完整 OpenAPI 契约（30 个路径、30+ 个 Schema、bearerAuth 安全方案）。
+- Task 2：完整 OpenAPI 契约（29 个路径、30+ 个 Schema、bearerAuth 安全方案）。
 - Task 2：后端 33 个 Java record DTO（`common/api` + `common/error`）。
 - Task 2：iOS 10 个 Swift Codable DTO 文件（`Core/API/DTO/`）。
 
