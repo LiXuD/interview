@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 @main
 struct InterviewCoachApp: App {
@@ -8,5 +9,6 @@ struct InterviewCoachApp: App {
     WindowGroup {
       AppRootView(authService: authService)
     }
+    .modelContainer(for: TargetLocal.self)
   }
 }

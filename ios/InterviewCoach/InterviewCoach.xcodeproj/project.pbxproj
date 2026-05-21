@@ -23,7 +23,13 @@
 			2A00000100000000000000A1 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B1 /* KeychainHelper.swift */; };
 			2A00000100000000000000A2 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B2 /* APIClient.swift */; };
 			2A00000100000000000000A3 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B3 /* AuthService.swift */; };
-			2A00000100000000000000A4 /* DevLoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B4 /* DevLoginView.swift */; };/* End PBXBuildFile section */
+			2A00000100000000000000A4 /* DevLoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B4 /* DevLoginView.swift */; };
+			2A00000100000000000000D1 /* TargetLocal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C1 /* TargetLocal.swift */; };
+			2A00000100000000000000D2 /* TargetListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C2 /* TargetListView.swift */; };
+			2A00000100000000000000D3 /* TargetCreateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C3 /* TargetCreateView.swift */; };
+			2A00000100000000000000D4 /* TargetDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C4 /* TargetDetailView.swift */; };
+			2A00000100000000000000D5 /* TargetStatusHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C5 /* TargetStatusHelper.swift */; };
+/* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		2A0000010000000000000010 /* InterviewCoach.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InterviewCoach.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -44,7 +50,13 @@
 			2A00000100000000000000B1 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 			2A00000100000000000000B2 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 			2A00000100000000000000B3 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
-			2A00000100000000000000B4 /* DevLoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevLoginView.swift; sourceTree = "<group>"; };/* End PBXFileReference section */
+			2A00000100000000000000B4 /* DevLoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevLoginView.swift; sourceTree = "<group>"; };
+			2A00000100000000000000C1 /* TargetLocal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetLocal.swift; sourceTree = "<group>"; };
+			2A00000100000000000000C2 /* TargetListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetListView.swift; sourceTree = "<group>"; };
+			2A00000100000000000000C3 /* TargetCreateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetCreateView.swift; sourceTree = "<group>"; };
+			2A00000100000000000000C4 /* TargetDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetDetailView.swift; sourceTree = "<group>"; };
+			2A00000100000000000000C5 /* TargetStatusHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetStatusHelper.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		2A0000010000000000000020 /* Frameworks */ = {
@@ -97,6 +109,8 @@
 			isa = PBXGroup;
 			children = (
 				2A0000010000000000000036 /* API */,
+				2A00000100000000000000E1 /* Storage */,
+				2A00000100000000000000E4 /* UI */,
 				2A0000010000000000000039 /* Security */,
 				2A000001000000000000003A /* Auth */,
 			);
@@ -142,6 +156,7 @@
 			isa = PBXGroup;
 			children = (
 				2A000001000000000000003B /* Auth */,
+				2A00000100000000000000E3 /* Targets */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -168,6 +183,40 @@
 				2A00000100000000000000B4 /* DevLoginView.swift */,
 			);
 			path = Auth;
+			sourceTree = "<group>";
+		};
+		2A00000100000000000000E1 /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				2A00000100000000000000E2 /* LocalModels */,
+			);
+			path = Storage;
+			sourceTree = "<group>";
+		};
+		2A00000100000000000000E2 /* LocalModels */ = {
+			isa = PBXGroup;
+			children = (
+				2A00000100000000000000C1 /* TargetLocal.swift */,
+			);
+			path = LocalModels;
+			sourceTree = "<group>";
+		};
+		2A00000100000000000000E3 /* Targets */ = {
+			isa = PBXGroup;
+			children = (
+				2A00000100000000000000C2 /* TargetListView.swift */,
+				2A00000100000000000000C3 /* TargetCreateView.swift */,
+				2A00000100000000000000C4 /* TargetDetailView.swift */,
+			);
+			path = Targets;
+			sourceTree = "<group>";
+		};
+		2A00000100000000000000E4 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				2A00000100000000000000C5 /* TargetStatusHelper.swift */,
+			);
+			path = UI;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -255,6 +304,11 @@
 				2A00000100000000000000A2 /* APIClient.swift in Sources */,
 				2A00000100000000000000A3 /* AuthService.swift in Sources */,
 				2A00000100000000000000A4 /* DevLoginView.swift in Sources */,
+				2A00000100000000000000D1 /* TargetLocal.swift in Sources */,
+				2A00000100000000000000D2 /* TargetListView.swift in Sources */,
+				2A00000100000000000000D3 /* TargetCreateView.swift in Sources */,
+				2A00000100000000000000D4 /* TargetDetailView.swift in Sources */,
+					2A00000100000000000000D5 /* TargetStatusHelper.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

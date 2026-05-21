@@ -15,6 +15,12 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("USER_NOT_FOUND", ex.getMessage(), generateRequestId()));
     }
 
+    @ExceptionHandler(TargetNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleTargetNotFound(TargetNotFoundException ex) {
+        return ResponseEntity.status(404)
+                .body(new ErrorResponse("TARGET_NOT_FOUND", ex.getMessage(), generateRequestId()));
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(IllegalArgumentException ex) {
         return ResponseEntity.badRequest()

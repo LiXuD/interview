@@ -104,7 +104,8 @@ captures/
 *.aab
 
 # Java / Spring Boot / Maven / Gradle
-target/
+backend/target/
+!backend/src/**/target/
 *.class
 *.jar
 *.war

@@ -7,31 +7,24 @@ struct AppRootView: View {
   var body: some View {
     NavigationStack {
       if authService.isAuthenticated {
-        VStack(alignment: .leading, spacing: 24) {
-          VStack(alignment: .leading, spacing: 8) {
-            Text("AI 技术岗面试教练")
-              .font(.largeTitle)
-              .fontWeight(.semibold)
-
-            if let user = authService.currentUser {
-              Text("欢迎，\(user.username)")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+        TargetListView(authService: authService)
+          .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+              connectionBadge
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+              Menu {
+                Button("退出登录", role: .destructive) {
+                  authService.logout()
+                }
+                Button("重新检查连接") {
+                  Task { await refreshHealth() }
+                }
+              } label: {
+                Image(systemName: "ellipsis.circle")
+              }
             }
           }
-
-          connectionPanel
-
-          Button("退出登录") {
-            authService.logout()
-          }
-          .buttonStyle(.bordered)
-          .tint(.red)
-
-          Spacer()
-        }
-        .padding(24)
-        .navigationTitle("Interview Coach")
       } else {
         DevLoginView(authService: authService)
       }
@@ -48,26 +41,14 @@ struct AppRootView: View {
     }
   }
 
-  private var connectionPanel: some View {
-    VStack(alignment: .leading, spacing: 12) {
-      Label(connectionState.title, systemImage: connectionState.systemImage)
-        .font(.headline)
-        .foregroundStyle(connectionState.tint)
-
-      Text(connectionState.message)
-        .font(.body)
-        .foregroundStyle(.secondary)
-
-      Button("重新检查") {
-        Task {
-          await refreshHealth()
-        }
-      }
-      .buttonStyle(.borderedProminent)
-    }
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .padding(20)
-    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+  private var connectionBadge: some View {
+    Label(connectionState.shortTitle, systemImage: connectionState.systemImage)
+      .font(.caption2)
+      .foregroundStyle(connectionState.tint)
+      .padding(.horizontal, 8)
+      .padding(.vertical, 4)
+      .background(connectionState.tint.opacity(0.12))
+      .clipShape(Capsule())
   }
 
   @MainActor
@@ -102,6 +83,17 @@ private enum BackendConnectionState: Equatable {
       return "Backend connected"
     case .failed:
       return "Backend unavailable"
+    }
+  }
+
+  var shortTitle: String {
+    switch self {
+    case .checking:
+      return "检查中"
+    case .connected:
+      return "已连接"
+    case .failed:
+      return "未连接"
     }
   }
 
