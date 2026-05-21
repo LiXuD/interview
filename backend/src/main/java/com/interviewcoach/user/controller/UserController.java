@@ -19,14 +19,16 @@ public class UserController {
 
     @GetMapping
     public UserDto getCurrentUser(Authentication authentication) {
-        User user = (User) authentication.getPrincipal();
-        return authService.getCurrentUser(user.getId());
+        return authService.getCurrentUser(currentUser(authentication).getId());
     }
 
     @DeleteMapping
     public ResponseEntity<Void> deleteUser(Authentication authentication) {
-        User user = (User) authentication.getPrincipal();
-        authService.deleteUser(user.getId());
+        authService.deleteUser(currentUser(authentication).getId());
         return ResponseEntity.noContent().build();
+    }
+
+    private User currentUser(Authentication authentication) {
+        return (User) authentication.getPrincipal();
     }
 }

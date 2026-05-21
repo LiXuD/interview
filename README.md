@@ -76,7 +76,7 @@ interview/
 └── scripts/
 ```
 
-当前仓库已经完成 Walking Skeleton：iOS App、Spring Boot 后端和 OpenAPI health 契约已创建。后续继续按任务顺序推进。
+当前仓库已完成 Task 1-3：Walking Skeleton、OpenAPI 契约与 DTO、Dev Login 认证链路。后续按任务顺序继续推进 Target CRUD。
 
 ## 开发计划
 

@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		2A0000010000000000000001 /* InterviewCoachApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000011 /* InterviewCoachApp.swift */; };
 		2A0000010000000000000002 /* AppRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000012 /* AppRootView.swift */; };
-		2A0000010000000000000003 /* BackendHealthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000013 /* BackendHealthClient.swift */; };
 		2A0000010000000000000004 /* HealthResponseDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000014 /* HealthResponseDTO.swift */; };
 		2A0000010000000000000005 /* ErrorResponseDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000015 /* ErrorResponseDTO.swift */; };
 		2A0000010000000000000006 /* AuthDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000016 /* AuthDTO.swift */; };
@@ -30,7 +29,6 @@
 		2A0000010000000000000010 /* InterviewCoach.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InterviewCoach.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2A0000010000000000000011 /* InterviewCoachApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterviewCoachApp.swift; sourceTree = "<group>"; };
 		2A0000010000000000000012 /* AppRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRootView.swift; sourceTree = "<group>"; };
-		2A0000010000000000000013 /* BackendHealthClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendHealthClient.swift; sourceTree = "<group>"; };
 		2A0000010000000000000014 /* HealthResponseDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthResponseDTO.swift; sourceTree = "<group>"; };
 		2A0000010000000000000015 /* ErrorResponseDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorResponseDTO.swift; sourceTree = "<group>"; };
 		2A0000010000000000000016 /* AuthDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthDTO.swift; sourceTree = "<group>"; };
@@ -117,7 +115,6 @@
 			isa = PBXGroup;
 			children = (
 				2A0000010000000000000037 /* DTO */,
-				2A0000010000000000000013 /* BackendHealthClient.swift */,
 				2A00000100000000000000B2 /* APIClient.swift */,
 			);
 			path = API;
@@ -243,7 +240,6 @@
 			files = (
 				2A0000010000000000000001 /* InterviewCoachApp.swift in Sources */,
 				2A0000010000000000000002 /* AppRootView.swift in Sources */,
-				2A0000010000000000000003 /* BackendHealthClient.swift in Sources */,
 				2A0000010000000000000004 /* HealthResponseDTO.swift in Sources */,
 				2A0000010000000000000005 /* ErrorResponseDTO.swift in Sources */,
 				2A0000010000000000000006 /* AuthDTO.swift in Sources */,

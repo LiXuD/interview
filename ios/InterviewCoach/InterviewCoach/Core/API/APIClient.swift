@@ -50,9 +50,6 @@ actor APIClient {
         }
         let (data, response) = try await URLSession.shared.data(for: urlRequest)
         try validateResponse(response)
-        if (response as? HTTPURLResponse)?.statusCode == 204 {
-            return EmptyResponse() as! Response
-        }
         return try decoder.decode(Response.self, from: data)
     }
 

@@ -4,8 +4,6 @@ struct AppRootView: View {
   @ObservedObject var authService: AuthService
   @State private var connectionState: BackendConnectionState = .checking
 
-  private let healthClient = BackendHealthClient()
-
   var body: some View {
     NavigationStack {
       if authService.isAuthenticated {
@@ -41,6 +39,11 @@ struct AppRootView: View {
         await refreshHealth()
       }
     }
+    .onChange(of: authService.isAuthenticated) { _, newValue in
+      if newValue {
+        Task { await refreshHealth() }
+      }
+    }
   }
 
   private var connectionPanel: some View {
@@ -70,7 +73,7 @@ struct AppRootView: View {
     connectionState = .checking
 
     do {
-      let response = try await healthClient.fetchHealth()
+      let response: HealthResponseDTO = try await APIClient.shared.request("GET", path: "/api/health", authorized: false)
       connectionState = .connected(service: response.service)
     } catch {
       connectionState = .failed
