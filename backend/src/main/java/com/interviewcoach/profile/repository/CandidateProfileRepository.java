@@ -10,4 +10,6 @@ import java.util.UUID;
 public interface CandidateProfileRepository extends JpaRepository<CandidateProfile, UUID> {
     Optional<CandidateProfile> findByTargetIdAndUserId(UUID targetId, UUID userId);
     List<CandidateProfile> findByUserIdOrderByConfirmedAtDesc(UUID userId);
+    void deleteByTargetId(UUID targetId);
+    void deleteByUserId(UUID userId);
 }

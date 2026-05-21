@@ -5,6 +5,7 @@ import com.interviewcoach.common.api.InterviewTargetDto;
 import com.interviewcoach.common.api.InterviewTargetUpdateRequest;
 import com.interviewcoach.common.error.TargetNotFoundException;
 import com.interviewcoach.target.entity.InterviewTarget;
+import com.interviewcoach.profile.repository.CandidateProfileRepository;
 import com.interviewcoach.target.repository.InterviewTargetRepository;
 import com.interviewcoach.user.entity.User;
 import org.springframework.stereotype.Service;
@@ -21,9 +22,12 @@ public class InterviewTargetService {
     private static final Set<String> VALID_STATUSES = Set.of("active", "completed", "archived");
 
     private final InterviewTargetRepository targetRepository;
+    private final CandidateProfileRepository profileRepository;
 
-    public InterviewTargetService(InterviewTargetRepository targetRepository) {
+    public InterviewTargetService(InterviewTargetRepository targetRepository,
+                                  CandidateProfileRepository profileRepository) {
         this.targetRepository = targetRepository;
+        this.profileRepository = profileRepository;
     }
 
     @Transactional
@@ -75,6 +79,7 @@ public class InterviewTargetService {
     public void deleteTarget(UUID targetId, UUID userId) {
         InterviewTarget target = targetRepository.findByIdAndUserId(targetId, userId)
                 .orElseThrow(() -> new TargetNotFoundException(targetId));
+        profileRepository.deleteByTargetId(targetId);
         targetRepository.delete(target);
     }
 

@@ -10,4 +10,5 @@ import java.util.UUID;
 public interface InterviewTargetRepository extends JpaRepository<InterviewTarget, UUID> {
     List<InterviewTarget> findByUserIdOrderByCreatedAtDesc(UUID userId);
     Optional<InterviewTarget> findByIdAndUserId(UUID id, UUID userId);
+    void deleteByUserId(UUID userId);
 }
