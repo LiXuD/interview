@@ -1,7 +1,9 @@
 import SwiftUI
+import SwiftData
 
 struct AppRootView: View {
   @ObservedObject var authService: AuthService
+  @Environment(\.modelContext) private var modelContext
   @State private var connectionState: BackendConnectionState = .checking
 
   var body: some View {
@@ -30,6 +32,7 @@ struct AppRootView: View {
       }
     }
     .task {
+      authService.setModelContext(modelContext)
       if authService.isAuthenticated {
         await initializeSession()
       }

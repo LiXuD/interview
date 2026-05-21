@@ -99,7 +99,14 @@ struct TargetListView: View {
     }
 
     private func loadFromLocal() {
-        let descriptor = FetchDescriptor<TargetLocal>(sortBy: [SortDescriptor(\.createdAt, order: .reverse)])
+        guard let userId = authService.currentUser?.id else {
+            targets = []
+            return
+        }
+        let descriptor = FetchDescriptor<TargetLocal>(
+            predicate: #Predicate<TargetLocal> { $0.userId == userId },
+            sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
+        )
         if let locals = try? modelContext.fetch(descriptor) {
             targets = locals.map { local in
                 InterviewTargetDTO(

@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import SwiftData
 
 @MainActor
 final class AuthService: ObservableObject {
@@ -9,9 +10,14 @@ final class AuthService: ObservableObject {
     @Published var errorMessage: String?
 
     private let apiClient = APIClient.shared
+    private var modelContext: ModelContext?
 
     init() {
         self.isAuthenticated = KeychainHelper.loadToken() != nil
+    }
+
+    func setModelContext(_ context: ModelContext) {
+        self.modelContext = context
     }
 
     func devLogin(username: String) async {
@@ -35,8 +41,15 @@ final class AuthService: ObservableObject {
 
     func logout() {
         _ = KeychainHelper.deleteToken()
+        clearLocalData()
         currentUser = nil
         isAuthenticated = false
+    }
+
+    private func clearLocalData() {
+        guard let context = modelContext else { return }
+        try? context.delete(model: TargetLocal.self)
+        try? context.save()
     }
 
     func fetchCurrentUser() async {
