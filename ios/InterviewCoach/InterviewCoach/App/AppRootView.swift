@@ -13,9 +13,11 @@ struct AppRootView: View {
               .font(.largeTitle)
               .fontWeight(.semibold)
 
-            Text("Walking Skeleton")
-              .font(.subheadline)
-              .foregroundStyle(.secondary)
+            if let user = authService.currentUser {
+              Text("欢迎，\(user.username)")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            }
           }
 
           connectionPanel
@@ -36,12 +38,16 @@ struct AppRootView: View {
     }
     .task {
       if authService.isAuthenticated {
+        await authService.fetchCurrentUser()
         await refreshHealth()
       }
     }
     .onChange(of: authService.isAuthenticated) { _, newValue in
       if newValue {
-        Task { await refreshHealth() }
+        Task {
+          await authService.fetchCurrentUser()
+          await refreshHealth()
+        }
       }
     }
   }
