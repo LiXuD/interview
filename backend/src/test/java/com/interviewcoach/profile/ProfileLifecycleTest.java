@@ -67,12 +67,10 @@ class ProfileLifecycleTest {
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNoContent());
 
-        // Target is gone
         mockMvc.perform(get("/api/targets/" + targetId)
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound());
 
-        // Profile is also gone
         mockMvc.perform(get("/api/profiles/current?targetId=" + targetId)
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound());
