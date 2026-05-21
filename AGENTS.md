@@ -4,7 +4,7 @@
 
 任何代理在修改本项目之前，必须先阅读并遵守：
 
-`/Users/lixd/IdeaProjects/Git/interview/CLAUDE.md`
+`CLAUDE.md`
 
 `CLAUDE.md` 是本项目 vibecoding 主约束文件。除非用户给出更新、更明确的指令，否则所有开发任务都必须以 `CLAUDE.md` 为准。
 

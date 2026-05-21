@@ -11,6 +11,16 @@
 		2A0000010000000000000002 /* AppRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000012 /* AppRootView.swift */; };
 		2A0000010000000000000003 /* BackendHealthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000013 /* BackendHealthClient.swift */; };
 		2A0000010000000000000004 /* HealthResponseDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000014 /* HealthResponseDTO.swift */; };
+		2A0000010000000000000005 /* ErrorResponseDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000015 /* ErrorResponseDTO.swift */; };
+		2A0000010000000000000006 /* AuthDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000016 /* AuthDTO.swift */; };
+		2A0000010000000000000007 /* InterviewTargetDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000017 /* InterviewTargetDTO.swift */; };
+		2A0000010000000000000008 /* CandidateProfileDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000018 /* CandidateProfileDTO.swift */; };
+		2A0000010000000000000009 /* JobBriefDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000019 /* JobBriefDTO.swift */; };
+		2A000001000000000000000A /* AssessmentDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A000001000000000000001A /* AssessmentDTO.swift */; };
+		2A000001000000000000000B /* TrainingDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A000001000000000000001B /* TrainingDTO.swift */; };
+		2A000001000000000000000C /* MockInterviewDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A000001000000000000001C /* MockInterviewDTO.swift */; };
+		2A000001000000000000000D /* ReportDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A000001000000000000001D /* ReportDTO.swift */; };
+		2A000001000000000000000E /* AiProviderDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A000001000000000000001E /* AiProviderDTO.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -19,7 +29,17 @@
 		2A0000010000000000000012 /* AppRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRootView.swift; sourceTree = "<group>"; };
 		2A0000010000000000000013 /* BackendHealthClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendHealthClient.swift; sourceTree = "<group>"; };
 		2A0000010000000000000014 /* HealthResponseDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthResponseDTO.swift; sourceTree = "<group>"; };
-		2A0000010000000000000015 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		2A0000010000000000000015 /* ErrorResponseDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorResponseDTO.swift; sourceTree = "<group>"; };
+		2A0000010000000000000016 /* AuthDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthDTO.swift; sourceTree = "<group>"; };
+		2A0000010000000000000017 /* InterviewTargetDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterviewTargetDTO.swift; sourceTree = "<group>"; };
+		2A0000010000000000000018 /* CandidateProfileDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandidateProfileDTO.swift; sourceTree = "<group>"; };
+		2A0000010000000000000019 /* JobBriefDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobBriefDTO.swift; sourceTree = "<group>"; };
+		2A000001000000000000001A /* AssessmentDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssessmentDTO.swift; sourceTree = "<group>"; };
+		2A000001000000000000001B /* TrainingDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingDTO.swift; sourceTree = "<group>"; };
+		2A000001000000000000001C /* MockInterviewDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockInterviewDTO.swift; sourceTree = "<group>"; };
+		2A000001000000000000001D /* ReportDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportDTO.swift; sourceTree = "<group>"; };
+		2A000001000000000000001E /* AiProviderDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AiProviderDTO.swift; sourceTree = "<group>"; };
+		2A000001000000000000001F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -79,7 +99,7 @@
 		2A0000010000000000000035 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				2A0000010000000000000015 /* Info.plist */,
+				2A000001000000000000001F /* Info.plist */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -97,6 +117,16 @@
 			isa = PBXGroup;
 			children = (
 				2A0000010000000000000014 /* HealthResponseDTO.swift */,
+				2A0000010000000000000015 /* ErrorResponseDTO.swift */,
+				2A0000010000000000000016 /* AuthDTO.swift */,
+				2A0000010000000000000017 /* InterviewTargetDTO.swift */,
+				2A0000010000000000000018 /* CandidateProfileDTO.swift */,
+				2A0000010000000000000019 /* JobBriefDTO.swift */,
+				2A000001000000000000001A /* AssessmentDTO.swift */,
+				2A000001000000000000001B /* TrainingDTO.swift */,
+				2A000001000000000000001C /* MockInterviewDTO.swift */,
+				2A000001000000000000001D /* ReportDTO.swift */,
+				2A000001000000000000001E /* AiProviderDTO.swift */,
 			);
 			path = DTO;
 			sourceTree = "<group>";
@@ -173,6 +203,16 @@
 				2A0000010000000000000002 /* AppRootView.swift in Sources */,
 				2A0000010000000000000003 /* BackendHealthClient.swift in Sources */,
 				2A0000010000000000000004 /* HealthResponseDTO.swift in Sources */,
+				2A0000010000000000000005 /* ErrorResponseDTO.swift in Sources */,
+				2A0000010000000000000006 /* AuthDTO.swift in Sources */,
+				2A0000010000000000000007 /* InterviewTargetDTO.swift in Sources */,
+				2A0000010000000000000008 /* CandidateProfileDTO.swift in Sources */,
+				2A0000010000000000000009 /* JobBriefDTO.swift in Sources */,
+				2A000001000000000000000A /* AssessmentDTO.swift in Sources */,
+				2A000001000000000000000B /* TrainingDTO.swift in Sources */,
+				2A000001000000000000000C /* MockInterviewDTO.swift in Sources */,
+				2A000001000000000000000D /* ReportDTO.swift in Sources */,
+				2A000001000000000000000E /* AiProviderDTO.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

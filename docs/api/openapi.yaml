@@ -1,11 +1,13 @@
 openapi: 3.1.0
 info:
   title: Interview Coach API
-  version: 0.1.0
+  version: 0.2.0
   description: API contract for the AI technical interview coach app.
 servers:
   - url: http://localhost:18080
     description: Local development server
+security:
+  - bearerAuth: []
 paths:
   /api/health:
     get:
@@ -13,6 +15,7 @@ paths:
         - Health
       summary: Check backend health
       operationId: getHealth
+      security: []
       responses:
         "200":
           description: Backend is reachable.
@@ -25,8 +28,683 @@ paths:
                   value:
                     status: "UP"
                     service: "interview-coach-backend"
+
+  /api/auth/dev-login:
+    post:
+      tags:
+        - Auth
+      summary: Dev login with username
+      operationId: devLogin
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+
+  /api/me:
+    get:
+      tags:
+        - Auth
+      summary: Get current user
+      operationId: getCurrentUser
+      responses:
+        "200":
+          description: Current user info.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDto"
+        "401":
+          description: Not authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      tags:
+        - Auth
+      summary: Delete current user account
+      operationId: deleteCurrentUser
+      responses:
+        "204":
+          description: Account deleted.
+        "401":
+          description: Not authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/targets:
+    post:
+      tags:
+        - Target
+      summary: Create interview target
+      operationId: createTarget
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InterviewTargetCreateRequest"
+      responses:
+        "201":
+          description: Target created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InterviewTargetDto"
+    get:
+      tags:
+        - Target
+      summary: List interview targets
+      operationId: listTargets
+      responses:
+        "200":
+          description: List of targets.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InterviewTargetDto"
+
+  /api/targets/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags:
+        - Target
+      summary: Get interview target by ID
+      operationId: getTarget
+      responses:
+        "200":
+          description: Target found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InterviewTargetDto"
+        "404":
+          description: Target not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      tags:
+        - Target
+      summary: Update interview target
+      operationId: updateTarget
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InterviewTargetUpdateRequest"
+      responses:
+        "200":
+          description: Target updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InterviewTargetDto"
+        "404":
+          description: Target not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      tags:
+        - Target
+      summary: Delete interview target
+      operationId: deleteTarget
+      responses:
+        "204":
+          description: Target deleted.
+        "404":
+          description: Target not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/profiles/draft-summary:
+    post:
+      tags:
+        - Profile
+      summary: Generate draft summary from resume text
+      operationId: draftSummary
+      description: >
+        Temporarily sends resume text to backend AI for summary generation.
+        Text is not persisted - only the confirmed summary is saved.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CandidateProfileDraftRequest"
+      responses:
+        "200":
+          description: Draft summary generated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CandidateProfileDraftDto"
+
+  /api/profiles/confirm:
+    post:
+      tags:
+        - Profile
+      summary: Confirm and save candidate profile
+      operationId: confirmProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CandidateProfileConfirmRequest"
+      responses:
+        "200":
+          description: Profile confirmed and saved.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CandidateProfileDto"
+
+  /api/profiles/current:
+    get:
+      tags:
+        - Profile
+      summary: Get current confirmed profile
+      operationId: getCurrentProfile
+      responses:
+        "200":
+          description: Current profile.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CandidateProfileDto"
+        "404":
+          description: No confirmed profile found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/job-briefs/generate:
+    post:
+      tags:
+        - JobBrief
+      summary: Generate job brief for a target
+      operationId: generateJobBrief
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobBriefGenerateRequest"
+      responses:
+        "200":
+          description: Job brief generated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobBriefDto"
+
+  /api/job-briefs/{targetId}:
+    parameters:
+      - name: targetId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags:
+        - JobBrief
+      summary: Get job brief by target ID
+      operationId: getJobBrief
+      responses:
+        "200":
+          description: Job brief found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobBriefDto"
+        "404":
+          description: Job brief not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/assessments/start:
+    post:
+      tags:
+        - Assessment
+      summary: Start assessment session
+      operationId: startAssessment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssessmentStartRequest"
+      responses:
+        "200":
+          description: Assessment started with first question.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssessmentSessionDto"
+
+  /api/assessments/{id}/answers:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags:
+        - Assessment
+      summary: Submit answer for current question
+      operationId: submitAssessmentAnswer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssessmentAnswerRequest"
+      responses:
+        "200":
+          description: Answer submitted, next question or completion.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssessmentSessionDto"
+
+  /api/assessments/{id}/finish:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags:
+        - Assessment
+      summary: Finish assessment and generate result
+      operationId: finishAssessment
+      responses:
+        "200":
+          description: Assessment result generated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssessmentResultDto"
+
+  /api/assessments/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags:
+        - Assessment
+      summary: Get assessment session
+      operationId: getAssessment
+      responses:
+        "200":
+          description: Assessment session found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssessmentSessionDto"
+
+  /api/training-plans/generate:
+    post:
+      tags:
+        - Training
+      summary: Generate training plan based on weaknesses
+      operationId: generateTrainingPlan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrainingPlanGenerateRequest"
+      responses:
+        "200":
+          description: Training plan generated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrainingPlanDto"
+
+  /api/training-plans/{targetId}:
+    parameters:
+      - name: targetId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags:
+        - Training
+      summary: Get training plan by target ID
+      operationId: getTrainingPlan
+      responses:
+        "200":
+          description: Training plan found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrainingPlanDto"
+
+  /api/training-tasks/{id}/answer:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags:
+        - Training
+      summary: Submit answer for training task
+      operationId: answerTrainingTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrainingTaskAnswerRequest"
+      responses:
+        "200":
+          description: Training feedback generated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrainingFeedbackDto"
+
+  /api/training-tasks/{id}/complete:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    patch:
+      tags:
+        - Training
+      summary: Mark training task as completed
+      operationId: completeTrainingTask
+      responses:
+        "200":
+          description: Task marked completed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrainingTaskDto"
+
+  /api/mock-interviews/start:
+    post:
+      tags:
+        - MockInterview
+      summary: Start mock interview session
+      operationId: startMockInterview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MockInterviewStartRequest"
+      responses:
+        "200":
+          description: Mock interview started.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MockInterviewSessionDto"
+
+  /api/mock-interviews/{id}/answer:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags:
+        - MockInterview
+      summary: Submit answer during mock interview
+      operationId: answerMockInterview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MockInterviewAnswerRequest"
+      responses:
+        "200":
+          description: Next question from AI interviewer.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MockInterviewSessionDto"
+
+  /api/mock-interviews/{id}/finish:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags:
+        - MockInterview
+      summary: Finish mock interview and generate report
+      operationId: finishMockInterview
+      responses:
+        "200":
+          description: Mock interview report generated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MockInterviewReportDto"
+
+  /api/mock-interviews/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags:
+        - MockInterview
+      summary: Get mock interview session
+      operationId: getMockInterview
+      responses:
+        "200":
+          description: Mock interview session found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MockInterviewSessionDto"
+
+  /api/reports/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags:
+        - Report
+      summary: Get report by ID
+      operationId: getReport
+      responses:
+        "200":
+          description: Report found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportDto"
+
+  /api/reports:
+    get:
+      tags:
+        - Report
+      summary: List reports by target
+      operationId: listReports
+      parameters:
+        - name: targetId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of reports.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReportDto"
+
+  /api/ai-providers:
+    get:
+      tags:
+        - AIProvider
+      summary: List AI providers
+      operationId: listProviders
+      responses:
+        "200":
+          description: List of providers.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiProviderDto"
+    post:
+      tags:
+        - AIProvider
+      summary: Create AI provider
+      operationId: createProvider
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiProviderCreateRequest"
+      responses:
+        "200":
+          description: Provider created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiProviderDto"
+
+  /api/ai-providers/test:
+    post:
+      tags:
+        - AIProvider
+      summary: Test AI provider connection
+      operationId: testProvider
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiProviderTestRequest"
+      responses:
+        "200":
+          description: Test result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiProviderTestResponse"
+
+  /api/ai-providers/{id}/default:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    patch:
+      tags:
+        - AIProvider
+      summary: Set provider as default
+      operationId: setDefaultProvider
+      responses:
+        "200":
+          description: Provider set as default.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiProviderDto"
+
+  /api/ai-providers/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    delete:
+      tags:
+        - AIProvider
+      summary: Delete AI provider
+      operationId: deleteProvider
+      responses:
+        "204":
+          description: Provider deleted.
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
+    # -- Shared --
     HealthResponse:
       type: object
       required:
@@ -39,3 +717,664 @@ components:
         service:
           type: string
           example: "interview-coach-backend"
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+        - requestId
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        requestId:
+          type: string
+
+    # -- Auth --
+    LoginRequest:
+      type: object
+      required:
+        - username
+      properties:
+        username:
+          type: string
+
+    LoginResponse:
+      type: object
+      required:
+        - token
+        - userId
+        - username
+      properties:
+        token:
+          type: string
+        userId:
+          type: string
+          format: uuid
+        username:
+          type: string
+
+    UserDto:
+      type: object
+      required:
+        - id
+        - username
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+
+    # -- Target --
+    InterviewTargetCreateRequest:
+      type: object
+      required:
+        - title
+        - jd
+      properties:
+        title:
+          type: string
+        jd:
+          type: string
+
+    InterviewTargetUpdateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        jd:
+          type: string
+        status:
+          type: string
+          enum: [active, completed, archived]
+
+    InterviewTargetDto:
+      type: object
+      required:
+        - id
+        - userId
+        - title
+        - jd
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        jd:
+          type: string
+        status:
+          type: string
+          enum: [active, completed, archived]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # -- Profile --
+    CandidateProfileDraftRequest:
+      type: object
+      properties:
+        resumeText:
+          type: string
+        projectRawText:
+          type: string
+
+    CandidateProfileDraftDto:
+      type: object
+      required:
+        - summary
+        - skills
+        - projects
+        - experience
+        - rawTextLength
+      properties:
+        summary:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        projects:
+          type: array
+          items:
+            type: string
+        experience:
+          type: array
+          items:
+            type: string
+        rawTextLength:
+          type: integer
+
+    CandidateProfileConfirmRequest:
+      type: object
+      required:
+        - targetId
+        - summary
+        - skills
+        - projects
+        - experience
+      properties:
+        targetId:
+          type: string
+          format: uuid
+        summary:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        projects:
+          type: array
+          items:
+            type: string
+        experience:
+          type: array
+          items:
+            type: string
+
+    CandidateProfileDto:
+      type: object
+      required:
+        - id
+        - targetId
+        - summary
+        - skills
+        - projects
+        - experience
+        - confirmedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        targetId:
+          type: string
+          format: uuid
+        summary:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        projects:
+          type: array
+          items:
+            type: string
+        experience:
+          type: array
+          items:
+            type: string
+        confirmedAt:
+          type: string
+          format: date-time
+
+    # -- JobBrief --
+    JobBriefGenerateRequest:
+      type: object
+      required:
+        - targetId
+      properties:
+        targetId:
+          type: string
+          format: uuid
+
+    SkillMapItem:
+      type: object
+      required:
+        - name
+        - importance
+        - userLevel
+        - gap
+      properties:
+        name:
+          type: string
+        importance:
+          type: string
+          enum: [required, important, bonus]
+        userLevel:
+          type: string
+          enum: [unknown, weak, basic, solid, strong]
+        gap:
+          type: string
+
+    JobBriefDto:
+      type: object
+      required:
+        - targetId
+        - roleSummary
+        - skillMap
+        - mustHaveSkills
+        - niceToHaveSkills
+        - businessContext
+        - interviewTopics
+        - candidateMatch
+        - riskAreas
+        - confidence
+      properties:
+        targetId:
+          type: string
+          format: uuid
+        roleSummary:
+          type: string
+        skillMap:
+          type: array
+          items:
+            $ref: "#/components/schemas/SkillMapItem"
+        mustHaveSkills:
+          type: array
+          items:
+            type: string
+        niceToHaveSkills:
+          type: array
+          items:
+            type: string
+        businessContext:
+          type: array
+          items:
+            type: string
+        interviewTopics:
+          type: array
+          items:
+            type: string
+        candidateMatch:
+          type: array
+          items:
+            type: string
+        riskAreas:
+          type: array
+          items:
+            type: string
+        confidence:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+
+    # -- Assessment --
+    AssessmentStartRequest:
+      type: object
+      required:
+        - targetId
+      properties:
+        targetId:
+          type: string
+          format: uuid
+
+    AssessmentSessionDto:
+      type: object
+      required:
+        - id
+        - targetId
+        - status
+        - questionIndex
+        - totalQuestions
+        - currentQuestion
+      properties:
+        id:
+          type: string
+          format: uuid
+        targetId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [in_progress, completed]
+        questionIndex:
+          type: integer
+        totalQuestions:
+          type: integer
+        currentQuestion:
+          type: string
+
+    AssessmentAnswerRequest:
+      type: object
+      required:
+        - answer
+      properties:
+        answer:
+          type: string
+
+    DimensionScore:
+      type: object
+      required:
+        - name
+        - score
+        - reason
+      properties:
+        name:
+          type: string
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        reason:
+          type: string
+
+    AssessmentResultDto:
+      type: object
+      required:
+        - assessmentId
+        - totalScore
+        - dimensions
+        - strengths
+        - weaknesses
+        - nextActions
+      properties:
+        assessmentId:
+          type: string
+          format: uuid
+        totalScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+        dimensions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DimensionScore"
+        strengths:
+          type: array
+          items:
+            type: string
+        weaknesses:
+          type: array
+          items:
+            type: string
+        nextActions:
+          type: array
+          items:
+            type: string
+
+    # -- Training --
+    TrainingPlanGenerateRequest:
+      type: object
+      required:
+        - targetId
+      properties:
+        targetId:
+          type: string
+          format: uuid
+
+    TrainingTaskDto:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_progress, completed]
+        feedback:
+          type: string
+        completedAt:
+          type: string
+          format: date-time
+
+    TrainingPlanDto:
+      type: object
+      required:
+        - id
+        - targetId
+        - tasks
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        targetId:
+          type: string
+          format: uuid
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrainingTaskDto"
+        createdAt:
+          type: string
+          format: date-time
+
+    TrainingTaskAnswerRequest:
+      type: object
+      required:
+        - answer
+      properties:
+        answer:
+          type: string
+
+    TrainingFeedbackDto:
+      type: object
+      required:
+        - taskId
+        - score
+        - feedback
+        - problems
+        - rewrittenAnswer
+        - followUpQuestion
+        - recommendedReviewPoints
+      properties:
+        taskId:
+          type: string
+          format: uuid
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        feedback:
+          type: string
+        problems:
+          type: array
+          items:
+            type: string
+        rewrittenAnswer:
+          type: string
+        followUpQuestion:
+          type: string
+        recommendedReviewPoints:
+          type: array
+          items:
+            type: string
+
+    # -- MockInterview --
+    MockInterviewStartRequest:
+      type: object
+      required:
+        - targetId
+      properties:
+        targetId:
+          type: string
+          format: uuid
+
+    MockInterviewSessionDto:
+      type: object
+      required:
+        - id
+        - targetId
+        - status
+        - currentQuestion
+        - conversationTurns
+      properties:
+        id:
+          type: string
+          format: uuid
+        targetId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [in_progress, completed]
+        currentQuestion:
+          type: string
+        conversationTurns:
+          type: integer
+
+    MockInterviewAnswerRequest:
+      type: object
+      required:
+        - answer
+      properties:
+        answer:
+          type: string
+
+    MockInterviewReportDto:
+      type: object
+      required:
+        - mockInterviewId
+        - overallScore
+        - dimensionScores
+        - summary
+        - strengths
+        - weaknesses
+        - improvedAnswers
+        - nextTrainingTasks
+      properties:
+        mockInterviewId:
+          type: string
+          format: uuid
+        overallScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+        dimensionScores:
+          type: array
+          items:
+            $ref: "#/components/schemas/DimensionScore"
+        summary:
+          type: string
+        strengths:
+          type: array
+          items:
+            type: string
+        weaknesses:
+          type: array
+          items:
+            type: string
+        improvedAnswers:
+          type: array
+          items:
+            type: string
+        nextTrainingTasks:
+          type: array
+          items:
+            type: string
+
+    # -- Report --
+    ReportDto:
+      type: object
+      required:
+        - id
+        - targetId
+        - type
+        - content
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        targetId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [assessment, mockInterview]
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    # -- AI Provider --
+    AiProviderCreateRequest:
+      type: object
+      required:
+        - name
+        - baseUrl
+        - apiKey
+        - model
+        - openaiApiMode
+      properties:
+        name:
+          type: string
+        baseUrl:
+          type: string
+        apiKey:
+          type: string
+        model:
+          type: string
+        openaiApiMode:
+          type: string
+          enum: [responses, chatCompletions]
+
+    AiProviderDto:
+      type: object
+      required:
+        - id
+        - name
+        - baseUrl
+        - model
+        - openaiApiMode
+        - isDefault
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        baseUrl:
+          type: string
+        model:
+          type: string
+        openaiApiMode:
+          type: string
+          enum: [responses, chatCompletions]
+        isDefault:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    AiProviderTestRequest:
+      type: object
+      required:
+        - baseUrl
+        - apiKey
+        - model
+        - openaiApiMode
+      properties:
+        baseUrl:
+          type: string
+        apiKey:
+          type: string
+        model:
+          type: string
+        openaiApiMode:
+          type: string
+          enum: [responses, chatCompletions]
+
+    AiProviderTestResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string

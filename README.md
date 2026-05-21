@@ -65,6 +65,8 @@ interview/
 ├── CLAUDE.md
 ├── README.md
 ├── docs/
+│   ├── api/
+│   │   └── openapi.yaml
 │   └── product/
 │       └── vibecoding-development-plan.md
 ├── ios/
@@ -125,21 +127,15 @@ interview/
 
 ## 当前状态
 
-当前阶段：Task 1 Walking Skeleton 已完成。
+当前阶段：Task 2 OpenAPI 与基础 DTO 已完成。
 
 已完成：
 
-- 初始化 Git 仓库。
-- 添加 `.gitignore`。
-- 添加 `AGENTS.md`。
-- 添加 `CLAUDE.md`。
-- 添加 vibecoding 三层开发计划。
-- 关联 GitHub remote `origin`。
-- 创建 Spring Boot 后端 health API。
-- 创建 SwiftUI iOS App 壳。
-- 创建 OpenAPI health 契约。
+- Task 1：Spring Boot 后端 health API、SwiftUI iOS App 壳、OpenAPI health 契约。
+- Task 2：完整 OpenAPI 契约（30 个路径、30+ 个 Schema、bearerAuth 安全方案）。
+- Task 2：后端 33 个 Java record DTO（`common/api` + `common/error`）。
+- Task 2：iOS 10 个 Swift Codable DTO 文件（`Core/API/DTO/`）。
 
 尚未创建：
 
-- 本地开发基础设施。
 - 登录、岗位、简历摘要、AI、测评、训练和模拟面试业务模块。
