@@ -63,6 +63,7 @@ out/
 
 # Xcode / iOS / Swift
 DerivedData/
+.derivedData/
 build/
 Build/
 *.xcuserstate

@@ -1,0 +1,145 @@
+# AI 技术岗面试教练
+
+一款面向技术岗求职者的 iOS App。用户输入目标岗位、JD、简历或项目经历后，App 通过 AI 完成岗位研究、能力测评、专项训练、模拟面试和复盘报告。
+
+本项目不是题库 App，也不是简历润色工具，而是一个围绕目标岗位进行针对性提升的 AI 面试教练。
+
+## MVP 闭环
+
+第一版只围绕一条最窄闭环开发：
+
+```text
+目标岗位 -> 简历摘要确认 -> 岗位画像 -> 5 题测评 -> 1 天训练计划 -> 1 次文字模拟面试 -> 报告
+```
+
+MVP 完成标准：
+
+1. 用户登录。
+2. 创建目标岗位。
+3. 粘贴 JD。
+4. 粘贴简历或项目经历。
+5. 同意临时上传原文生成摘要。
+6. 确认 `CandidateProfile` 摘要。
+7. 生成 `JobBrief` 岗位画像。
+8. 完成 5 题 `Assessment`。
+9. 查看 `Assessment Report`。
+10. 生成 1 天 `TrainingPlan`。
+11. 完成 1 个 `TrainingTask`。
+12. 完成 1 次文字 `MockInterview`。
+13. 查看 `MockInterview Report`。
+14. 删除账号并清理本地和远端数据。
+
+## 技术方向
+
+iOS：
+
+- SwiftUI
+- iOS 17+
+- SwiftData
+- Keychain
+- async/await
+- URLSession
+- Codable DTO
+
+后端：
+
+- Spring Boot 3
+- PostgreSQL
+- Redis
+- Spring Security
+- OpenAPI
+- 模块化单体
+
+AI：
+
+- 后端统一代理 AI 请求。
+- MVP 默认平台 AI。
+- MVP 支持 OpenAI-compatible 自定义 Provider。
+- Anthropic 协议后移，不进入最窄 MVP。
+
+## 项目结构
+
+```text
+interview/
+├── AGENTS.md
+├── CLAUDE.md
+├── README.md
+├── docs/
+│   └── product/
+│       └── vibecoding-development-plan.md
+├── ios/
+│   └── InterviewCoach/
+├── backend/
+├── infra/
+└── scripts/
+```
+
+当前仓库已经完成 Walking Skeleton：iOS App、Spring Boot 后端和 OpenAPI health 契约已创建。后续继续按任务顺序推进。
+
+## 开发计划
+
+主计划文档：
+
+- [AI 技术岗面试教练 App Vibecoding 三层开发计划](docs/product/vibecoding-development-plan.md)
+
+后续开发按以下顺序推进：
+
+1. Walking Skeleton
+2. OpenAPI 与基础 DTO
+3. Dev Login
+4. Target CRUD
+5. CandidateProfile 隐私链路
+6. Platform AI + JobBrief
+7. Assessment 5 题测评
+8. TrainingPlan 1 天任务
+9. MockInterview
+10. User OpenAI Provider
+11. Delete Account
+12. TestFlight Polish
+
+## 开发约束
+
+本项目采用 vibecoding 方式开发。任何 AI 开发代理或人工协作者在修改项目之前，必须先阅读：
+
+- [AGENTS.md](AGENTS.md)
+- [CLAUDE.md](CLAUDE.md)
+
+关键红线：
+
+- 每次只实现一个小任务。
+- 禁止扩展非 MVP 功能。
+- 后端必须使用 Spring Security Bearer Token。
+- 所有后端返回给 iOS 的 JSON 必须使用 camelCase。
+- 后端必须返回强类型 DTO。
+- 禁止把 AI 原始字符串直接返回给 iOS。
+- 简历原文默认只保存在 iOS 本地。
+- 生成摘要时，简历原文只允许临时上传并在后端内存中使用。
+- 禁止记录简历原文或 API Key 到日志。
+- 模拟面试 Prompt 最多携带最近 6 轮，也就是 12 条 message。
+
+## GitHub
+
+远端仓库：
+
+- <https://github.com/LiXuD/interview.git>
+
+## 当前状态
+
+当前阶段：Task 1 Walking Skeleton 已完成。
+
+已完成：
+
+- 初始化 Git 仓库。
+- 添加 `.gitignore`。
+- 添加 `AGENTS.md`。
+- 添加 `CLAUDE.md`。
+- 添加 vibecoding 三层开发计划。
+- 关联 GitHub remote `origin`。
+- 创建 Spring Boot 后端 health API。
+- 创建 SwiftUI iOS App 壳。
+- 创建 OpenAPI health 契约。
+
+尚未创建：
+
+- 本地开发基础设施。
+- 登录、岗位、简历摘要、AI、测评、训练和模拟面试业务模块。

@@ -1,0 +1,41 @@
+openapi: 3.1.0
+info:
+  title: Interview Coach API
+  version: 0.1.0
+  description: API contract for the AI technical interview coach app.
+servers:
+  - url: http://localhost:18080
+    description: Local development server
+paths:
+  /api/health:
+    get:
+      tags:
+        - Health
+      summary: Check backend health
+      operationId: getHealth
+      responses:
+        "200":
+          description: Backend is reachable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              examples:
+                ok:
+                  value:
+                    status: "UP"
+                    service: "interview-coach-backend"
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - service
+      properties:
+        status:
+          type: string
+          example: "UP"
+        service:
+          type: string
+          example: "interview-coach-backend"
