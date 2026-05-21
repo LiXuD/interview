@@ -53,7 +53,8 @@ public class CandidateProfileService {
         InterviewTarget target = targetRepository.findByIdAndUserId(targetId, user.getId())
                 .orElseThrow(() -> new TargetNotFoundException(targetId));
 
-        CandidateProfile profile = new CandidateProfile();
+        CandidateProfile profile = profileRepository.findByTargetIdAndUserId(targetId, user.getId())
+                .orElse(new CandidateProfile());
         profile.setUser(user);
         profile.setTarget(target);
         profile.setSummary(request.summary());

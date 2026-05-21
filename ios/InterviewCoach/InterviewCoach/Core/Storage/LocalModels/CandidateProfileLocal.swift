@@ -36,27 +36,30 @@ final class CandidateProfileLocal {
         )
     }
 
+    func apply(from dto: CandidateProfileDTO, userId: String) {
+        self.remoteId = dto.id
+        self.userId = userId
+        self.summary = dto.summary
+        self.skills = dto.skills
+        self.projects = dto.projects
+        self.experience = dto.experience
+        self.confirmedAt = dto.confirmedAt
+    }
+
     static func sync(_ dto: CandidateProfileDTO, userId: String, in context: ModelContext) {
         let targetId = dto.targetId
         let descriptor = FetchDescriptor<CandidateProfileLocal>(predicate: #Predicate { $0.targetId == targetId })
         if let existing = try? context.fetch(descriptor).first {
-            existing.remoteId = dto.id
-            existing.summary = dto.summary
-            existing.skills = dto.skills
-            existing.projects = dto.projects
-            existing.experience = dto.experience
-            existing.confirmedAt = dto.confirmedAt
+            existing.apply(from: dto, userId: userId)
         } else {
             context.insert(CandidateProfileLocal(from: dto, userId: userId))
         }
-        try? context.save()
     }
 
     static func delete(_ targetId: String, in context: ModelContext) {
         let descriptor = FetchDescriptor<CandidateProfileLocal>(predicate: #Predicate { $0.targetId == targetId })
         if let existing = try? context.fetch(descriptor).first {
             context.delete(existing)
-            try? context.save()
         }
     }
 }

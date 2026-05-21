@@ -115,6 +115,7 @@ struct ProfileConfirmView: View {
             )
             if let userId = authService.currentUser?.id {
                 CandidateProfileLocal.sync(result, userId: userId, in: modelContext)
+                try? modelContext.save()
             }
             isConfirmed = true
         } catch {
