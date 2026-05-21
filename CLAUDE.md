@@ -547,7 +547,48 @@ Report API：
 
 禁止只回复“已完成”。禁止省略测试说明。
 
-## 16. 最终 MVP 验收路径
+## 16. Git 提交规范
+
+每个 commit 必须使用以下格式：
+
+```text
+<type>(<scope>): <summary>
+
+<正文：描述本次变更的背景与动机>
+
+Agent-Task: <原始任务描述或任务 ID>
+Agent-Model: <使用的模型，如 gpt-4o、gemini-2.5-pro>
+Agent-Decision: <关键设计决策及理由>
+Agent-Limitation: <已知局限或后续 TODO>
+```
+
+提交规则：
+
+- `type` 必须使用 `feat`、`fix`、`docs`、`test`、`refactor`、`chore`、`build`、`ci` 之一。
+- `scope` 必须描述本次变更所属模块，例如 `ios`、`backend`、`docs`、`api`、`auth`、`health`。
+- `summary` 必须使用简短中文或英文说明本次变更。
+- 正文必须说明本次变更的背景与动机，禁止空正文。
+- `Agent-Task` 必须保留原始任务描述或任务 ID。
+- `Agent-Model` 必须写明实际使用的模型名称。
+- `Agent-Decision` 必须说明关键设计决策及理由。
+- `Agent-Limitation` 必须说明已知局限、未完成事项或后续 TODO；如果没有，写“无”。
+- 禁止使用 `git commit -m "xxx"` 提交不完整信息。
+- 若一次任务需要多个 commit，每个 commit 都必须独立满足上述格式。
+
+示例：
+
+```text
+feat(health): 建立 iOS 到后端的健康检查链路
+
+为 Walking Skeleton 提供最小可运行切片，包含 Spring Boot health API、OpenAPI 契约和 SwiftUI 连接状态页面，方便后续任务在可验证基础上继续推进。
+
+Agent-Task: Task 1 Walking Skeleton
+Agent-Model: gpt-5
+Agent-Decision: 使用 18080 作为本地后端端口，避免与本机已有 8080 进程冲突，并同步到 OpenAPI 与 iOS client。
+Agent-Limitation: 仅完成 health 链路，未实现认证、业务数据和 AI 调用。
+```
+
+## 17. 最终 MVP 验收路径
 
 最终只按这一条路径验收：
 

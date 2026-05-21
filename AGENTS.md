@@ -74,6 +74,33 @@ MVP 最窄闭环必须是：
 - `MockInterview` finish 创建 `Report(type=mockInterview)`。
 - `TrainingTask` answer 只生成 `TrainingFeedback`，不创建 Report。
 
+## Git 提交规范
+
+每个 commit 必须使用以下格式：
+
+```text
+<type>(<scope>): <summary>
+
+<正文：描述本次变更的背景与动机>
+
+Agent-Task: <原始任务描述或任务 ID>
+Agent-Model: <使用的模型，如 gpt-4o、gemini-2.5-pro>
+Agent-Decision: <关键设计决策及理由>
+Agent-Limitation: <已知局限或后续 TODO>
+```
+
+提交规则：
+
+- `type` 必须使用 `feat`、`fix`、`docs`、`test`、`refactor`、`chore`、`build`、`ci` 之一。
+- `scope` 必须描述本次变更所属模块，例如 `ios`、`backend`、`docs`、`api`、`auth`、`health`。
+- `summary` 必须使用简短中文或英文说明本次变更。
+- 正文必须说明背景与动机，禁止空正文。
+- `Agent-Task` 必须保留原始任务描述或任务 ID。
+- `Agent-Model` 必须写明实际使用的模型名称。
+- `Agent-Decision` 必须说明关键设计决策及理由。
+- `Agent-Limitation` 必须说明已知局限、未完成事项或后续 TODO；如果没有，写“无”。
+- 禁止使用 `git commit -m "xxx"` 提交不完整信息。
+
 ## 任务完成输出
 
 每次任务完成后，必须说明：
