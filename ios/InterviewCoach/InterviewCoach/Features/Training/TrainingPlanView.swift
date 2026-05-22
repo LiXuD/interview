@@ -39,7 +39,7 @@ struct TrainingPlanView: View {
                         if let idx = tasks.firstIndex(where: { $0.id == updatedTask.id }) {
                             tasks[idx] = updatedTask
                         }
-                        self plan = TrainingPlanDTO(
+                        self.plan = TrainingPlanDTO(
                             id: plan.id,
                             targetId: plan.targetId,
                             tasks: tasks,

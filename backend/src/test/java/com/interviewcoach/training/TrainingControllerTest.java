@@ -136,6 +136,23 @@ class TrainingControllerTest {
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.tasks[0].status").value("completed"));
+
+        // Regenerate plan — old plan should be deleted, new plan should be singular
+        String newPlanResponse = mockMvc.perform(post("/api/training-plans/generate")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TrainingPlanGenerateRequest(targetId))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tasks.length()").value(3))
+                .andReturn().getResponse().getContentAsString();
+        String newPlanId = objectMapper.readTree(newPlanResponse).get("id").asText();
+
+        // GET should return the new plan without errors
+        mockMvc.perform(get("/api/training-plans/" + targetId)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(newPlanId))
+                .andExpect(jsonPath("$.tasks.length()").value(3));
     }
 
     @Test

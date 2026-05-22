@@ -57,6 +57,10 @@ public class TrainingService {
         InterviewTarget target = targetRepository.findByIdAndUserId(targetId, user.getId())
                 .orElseThrow(() -> new TargetNotFoundException(targetId));
 
+        // Delete existing plan to avoid duplicates on regenerate
+        planRepository.findByTargetIdAndUserId(targetId, user.getId())
+                .ifPresent(planRepository::delete);
+
         List<AiStructuredOutputService.TrainingPlanTaskItem> taskItems =
                 aiService.generateTrainingPlan(buildPlanPrompt(target, latestResult));
 
