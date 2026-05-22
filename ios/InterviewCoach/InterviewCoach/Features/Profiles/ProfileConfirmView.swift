@@ -68,9 +68,7 @@ struct ProfileConfirmView: View {
 
             if let errorMessage {
                 Section {
-                    Text(errorMessage)
-                        .foregroundStyle(.red)
-                        .font(.caption)
+                    ErrorBanner(message: errorMessage)
                 }
             }
 
@@ -84,13 +82,7 @@ struct ProfileConfirmView: View {
         .navigationTitle("确认简历摘要")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(isLoading)
-        .overlay {
-            if isLoading {
-                ProgressView("保存中...")
-                    .padding(20)
-                    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
-            }
-        }
+        .loadingOverlay(isLoading: isLoading, message: "保存中...")
         .alert("保存成功", isPresented: $isConfirmed) {
             Button("完成") { dismiss() }
         } message: {

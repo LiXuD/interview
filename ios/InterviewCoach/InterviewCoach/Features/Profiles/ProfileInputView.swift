@@ -43,9 +43,7 @@ struct ProfileInputView: View {
 
                 if let errorMessage {
                     Section {
-                        Text(errorMessage)
-                            .foregroundStyle(.red)
-                            .font(.caption)
+                        ErrorBanner(message: errorMessage)
                     }
                 }
 
@@ -79,13 +77,7 @@ struct ProfileInputView: View {
                     authService: authService
                 )
             }
-            .overlay {
-                if isLoading {
-                    ProgressView("生成摘要中...")
-                        .padding(20)
-                        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
-                }
-            }
+            .loadingOverlay(isLoading: isLoading, message: "生成摘要中...")
         }
     }
 

@@ -28,13 +28,7 @@ struct MockInterviewView: View {
                     Button("关闭") { dismiss() }
                 }
             }
-            .overlay {
-                if isLoading {
-                    ProgressView("处理中...")
-                        .padding(20)
-                        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
-                }
-            }
+            .loadingOverlay(isLoading: isLoading)
         }
     }
 
@@ -42,9 +36,7 @@ struct MockInterviewView: View {
         Form {
             if let errorMessage {
                 Section {
-                    Text(errorMessage)
-                        .font(.caption)
-                        .foregroundStyle(.red)
+                    ErrorBanner(message: errorMessage)
                 }
             }
 
@@ -71,9 +63,7 @@ struct MockInterviewView: View {
         Form {
             if let errorMessage {
                 Section {
-                    Text(errorMessage)
-                        .font(.caption)
-                        .foregroundStyle(.red)
+                    ErrorBanner(message: errorMessage)
                 }
             }
 

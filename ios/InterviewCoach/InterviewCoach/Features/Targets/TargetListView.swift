@@ -31,9 +31,9 @@ struct TargetListView: View {
             }
 
             if let errorMessage {
-                Text(errorMessage)
-                    .foregroundStyle(.red)
-                    .font(.caption)
+                ErrorBanner(message: errorMessage) {
+                    Task { await fetchTargets() }
+                }
             }
         }
         .navigationTitle("目标岗位")

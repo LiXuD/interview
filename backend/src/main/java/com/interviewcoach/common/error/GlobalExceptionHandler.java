@@ -57,6 +57,12 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("MOCK_INTERVIEW_NOT_FOUND", ex.getMessage(), generateRequestId()));
     }
 
+    @ExceptionHandler(AiProviderNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleAiProviderNotFound(AiProviderNotFoundException ex) {
+        return ResponseEntity.status(404)
+                .body(new ErrorResponse("AI_PROVIDER_NOT_FOUND", ex.getMessage(), generateRequestId()));
+    }
+
     @ExceptionHandler(AiParseException.class)
     public ResponseEntity<ErrorResponse> handleAiParseFailed(AiParseException ex) {
         return ResponseEntity.badRequest()

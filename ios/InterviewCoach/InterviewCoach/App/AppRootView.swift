@@ -4,7 +4,9 @@ import SwiftData
 struct AppRootView: View {
   @ObservedObject var authService: AuthService
   @Environment(\.modelContext) private var modelContext
+  @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
   @State private var connectionState: BackendConnectionState = .checking
+  @State private var showSettings = false
 
   var body: some View {
     NavigationStack {
@@ -15,17 +17,37 @@ struct AppRootView: View {
               connectionBadge
             }
             ToolbarItem(placement: .topBarTrailing) {
-              Menu {
-                Button("退出登录", role: .destructive) {
-                  authService.logout()
+              HStack {
+                Button {
+                  showSettings = true
+                } label: {
+                  Image(systemName: "gear")
                 }
-                Button("重新检查连接") {
-                  Task { await refreshHealth() }
+                Menu {
+                  Button("退出登录", role: .destructive) {
+                    authService.logout()
+                  }
+                  Button("重新检查连接") {
+                    Task { await refreshHealth() }
+                  }
+                } label: {
+                  Image(systemName: "ellipsis.circle")
                 }
-              } label: {
-                Image(systemName: "ellipsis.circle")
               }
             }
+          }
+          .sheet(isPresented: $showSettings) {
+            NavigationStack {
+              SettingsView(authService: authService)
+                .toolbar {
+                  ToolbarItem(placement: .topBarLeading) {
+                    Button("关闭") { showSettings = false }
+                  }
+                }
+            }
+          }
+          .fullScreenCover(isPresented: .constant(authService.isAuthenticated && !hasCompletedOnboarding)) {
+            OnboardingView(hasCompletedOnboarding: $hasCompletedOnboarding)
           }
       } else {
         DevLoginView(authService: authService)

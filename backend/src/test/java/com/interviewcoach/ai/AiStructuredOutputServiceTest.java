@@ -2,7 +2,10 @@ package com.interviewcoach.ai;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewcoach.ai.service.AiPrompt;
+import com.interviewcoach.ai.service.AiProviderService;
 import com.interviewcoach.ai.service.AiStructuredOutputService;
+import com.interviewcoach.ai.service.ApiKeyEncryption;
+import com.interviewcoach.ai.service.OpenAiCompatibleClient;
 import com.interviewcoach.ai.service.PlatformAiClient;
 import com.interviewcoach.common.error.AiParseException;
 import org.junit.jupiter.api.Test;
@@ -27,7 +30,8 @@ class AiStructuredOutputServiceTest {
                   "nextTrainingTasks": []
                 }
                 """;
-        AiStructuredOutputService service = new AiStructuredOutputService(client, new ObjectMapper());
+        AiStructuredOutputService service = new AiStructuredOutputService(
+                client, null, null, null, new ObjectMapper());
 
         assertThrows(AiParseException.class, () -> service.generateMockInterviewReport(
                 new AiPrompt("mockInterviewReport", "expected-id", "system", "user")));

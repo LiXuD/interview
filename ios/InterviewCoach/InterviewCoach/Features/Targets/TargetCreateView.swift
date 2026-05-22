@@ -20,9 +20,7 @@ struct TargetCreateView: View {
 
                 if let errorMessage {
                     Section {
-                        Text(errorMessage)
-                            .foregroundStyle(.red)
-                            .font(.caption)
+                        ErrorBanner(message: errorMessage)
                     }
                 }
             }
@@ -39,13 +37,7 @@ struct TargetCreateView: View {
                     .disabled(title.isEmpty || jd.isEmpty || isLoading)
                 }
             }
-            .overlay {
-                if isLoading {
-                    ProgressView()
-                        .padding(20)
-                        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
-                }
-            }
+            .loadingOverlay(isLoading: isLoading)
 #if DEBUG
             .onAppear {
                 applyDebugPrefillIfNeeded()

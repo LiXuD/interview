@@ -16,3 +16,5 @@ app:
   jwt:
     secret: dGVzdC1zZWNyZXQta2V5LWZvci11bml0LXRlc3RzLW9ubHktMzJieXRlcw==
     expiration-ms: 3600000
+  ai:
+    encryption-key: dGVzdC1haS1lbmNyeXB0aW9uLWtleS0zMmJ5dGVzISE=

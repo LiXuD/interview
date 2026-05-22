@@ -39,6 +39,16 @@
 			2A00000100000000000000EB /* TrainingTaskView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000E9 /* TrainingTaskView.swift */; };
 			2A00000100000000000000F0 /* MockInterviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000F2 /* MockInterviewView.swift */; };
 			2A00000100000000000000F1 /* MockInterviewResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000F3 /* MockInterviewResultView.swift */; };
+			2A00000100000000000000FA /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000F8 /* SettingsView.swift */; };
+			2A00000100000000000000FB /* AiProviderListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000F9 /* AiProviderListView.swift */; };
+			2A00000100000000000000FC /* AiProviderCreateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000FD /* AiProviderCreateView.swift */; };
+			2A0000010000000000000101 /* LoadingOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000100 /* LoadingOverlay.swift */; };
+			2A0000010000000000000103 /* ErrorBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000102 /* ErrorBanner.swift */; };
+			2A0000010000000000000105 /* PrivacyPolicyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000104 /* PrivacyPolicyView.swift */; };
+			2A0000010000000000000107 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000106 /* OnboardingView.swift */; };
+			2A0000010000000000000109 /* ReportListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000108 /* ReportListView.swift */; };
+			2A000001000000000000010B /* ReportDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A000001000000000000010A /* ReportDetailView.swift */; };
+			2A000001000000000000010C /* DateHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A000001000000000000010D /* DateHelper.swift */; };
 /* End PBXBuildFile section */
 /* Begin PBXFileReference section */
 		2A0000010000000000000010 /* InterviewCoach.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InterviewCoach.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -75,6 +85,16 @@
 			2A00000100000000000000E9 /* TrainingTaskView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingTaskView.swift; sourceTree = "<group>"; };
 			2A00000100000000000000F2 /* MockInterviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockInterviewView.swift; sourceTree = "<group>"; };
 			2A00000100000000000000F3 /* MockInterviewResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockInterviewResultView.swift; sourceTree = "<group>"; };
+			2A00000100000000000000F8 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+			2A00000100000000000000F9 /* AiProviderListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AiProviderListView.swift; sourceTree = "<group>"; };
+			2A00000100000000000000FD /* AiProviderCreateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AiProviderCreateView.swift; sourceTree = "<group>"; };
+			2A0000010000000000000100 /* LoadingOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingOverlay.swift; sourceTree = "<group>"; };
+			2A0000010000000000000102 /* ErrorBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorBanner.swift; sourceTree = "<group>"; };
+			2A0000010000000000000104 /* PrivacyPolicyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyPolicyView.swift; sourceTree = "<group>"; };
+			2A0000010000000000000106 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+			2A0000010000000000000108 /* ReportListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportListView.swift; sourceTree = "<group>"; };
+			2A000001000000000000010A /* ReportDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportDetailView.swift; sourceTree = "<group>"; };
+			2A000001000000000000010D /* DateHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateHelper.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 /* Begin PBXFrameworksBuildPhase section */
 		2A0000010000000000000020 /* Frameworks */ = {
@@ -180,6 +200,9 @@
 				2A00000100000000000000E7 /* Assessment */,
 				2A00000100000000000000EC /* Training */,
 					2A00000100000000000000F4 /* MockInterview */,
+					2A00000100000000000000FE /* Settings */,
+					2A0000010000000000000113 /* Onboarding */,
+					2A0000010000000000000114 /* Reports */,
 				);
 			path = Features;
 			sourceTree = "<group>";
@@ -239,6 +262,9 @@
 			isa = PBXGroup;
 			children = (
 				2A00000100000000000000C5 /* TargetStatusHelper.swift */,
+				2A0000010000000000000100 /* LoadingOverlay.swift */,
+				2A0000010000000000000102 /* ErrorBanner.swift */,
+				2A000001000000000000010D /* DateHelper.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -286,6 +312,34 @@
 			);
 			path = MockInterview;
 			sourceTree = "<group>";
+			};
+			2A00000100000000000000FE /* Settings */ = {
+				isa = PBXGroup;
+				children = (
+					2A00000100000000000000F8 /* SettingsView.swift */,
+					2A00000100000000000000F9 /* AiProviderListView.swift */,
+					2A00000100000000000000FD /* AiProviderCreateView.swift */,
+					2A0000010000000000000104 /* PrivacyPolicyView.swift */,
+				);
+				path = Settings;
+				sourceTree = "<group>";
+			};
+			2A0000010000000000000113 /* Onboarding */ = {
+				isa = PBXGroup;
+				children = (
+					2A0000010000000000000106 /* OnboardingView.swift */,
+				);
+				path = Onboarding;
+				sourceTree = "<group>";
+			};
+			2A0000010000000000000114 /* Reports */ = {
+				isa = PBXGroup;
+				children = (
+					2A0000010000000000000108 /* ReportListView.swift */,
+					2A000001000000000000010A /* ReportDetailView.swift */,
+				);
+				path = Reports;
+				sourceTree = "<group>";
 			};
 /* End PBXGroup section */
 
@@ -387,6 +441,16 @@
 				2A00000100000000000000EB /* TrainingTaskView.swift in Sources */,
 					2A00000100000000000000F0 /* MockInterviewView.swift in Sources */,
 					2A00000100000000000000F1 /* MockInterviewResultView.swift in Sources */,
+					2A00000100000000000000FA /* SettingsView.swift in Sources */,
+					2A00000100000000000000FB /* AiProviderListView.swift in Sources */,
+					2A00000100000000000000FC /* AiProviderCreateView.swift in Sources */,
+					2A0000010000000000000101 /* LoadingOverlay.swift in Sources */,
+					2A0000010000000000000103 /* ErrorBanner.swift in Sources */,
+					2A0000010000000000000105 /* PrivacyPolicyView.swift in Sources */,
+					2A0000010000000000000107 /* OnboardingView.swift in Sources */,
+					2A0000010000000000000109 /* ReportListView.swift in Sources */,
+					2A000001000000000000010B /* ReportDetailView.swift in Sources */,
+					2A000001000000000000010C /* DateHelper.swift in Sources */,
 				);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

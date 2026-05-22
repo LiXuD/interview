@@ -18,14 +18,9 @@ struct TargetDetailView: View {
     @State private var showAssessment = false
     @State private var showTraining = false
     @State private var showMockInterview = false
+    @State private var showReports = false
     @State private var isLoading = false
     @State private var errorMessage: String?
-
-    private static let isoFormatter: ISO8601DateFormatter = {
-        let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return f
-    }()
 
     init(target: InterviewTargetDTO, authService: AuthService, onDelete: @escaping () -> Void, onUpdate: @escaping (InterviewTargetDTO) -> Void) {
         self.authService = authService
@@ -38,9 +33,7 @@ struct TargetDetailView: View {
         Form {
             if let errorMessage {
                 Section {
-                    Text(errorMessage)
-                        .foregroundStyle(.red)
-                        .font(.caption)
+                    ErrorBanner(message: errorMessage)
                 }
             }
 
@@ -60,8 +53,8 @@ struct TargetDetailView: View {
             }
 
             Section("时间") {
-                LabeledContent("创建时间", value: formatDate(currentTarget.createdAt))
-                LabeledContent("更新时间", value: formatDate(currentTarget.updatedAt))
+                LabeledContent("创建时间", value: DateHelper.formatISODate(currentTarget.createdAt))
+                LabeledContent("更新时间", value: DateHelper.formatISODate(currentTarget.updatedAt))
             }
 
             if !isEditing {
@@ -90,6 +83,11 @@ struct TargetDetailView: View {
                         showMockInterview = true
                     } label: {
                         Label("模拟面试", systemImage: "person.wave.2")
+                    }
+                    Button {
+                        showReports = true
+                    } label: {
+                        Label("历史报告", systemImage: "doc.text")
                     }
                 }
             }
@@ -151,13 +149,10 @@ struct TargetDetailView: View {
         .sheet(isPresented: $showMockInterview) {
             MockInterviewView(target: currentTarget)
         }
-        .overlay {
-            if isLoading {
-                ProgressView()
-                    .padding(20)
-                    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
-            }
+        .sheet(isPresented: $showReports) {
+            ReportListView(targetId: currentTarget.id)
         }
+        .loadingOverlay(isLoading: isLoading)
     }
 
     private func save() async {
@@ -194,15 +189,4 @@ struct TargetDetailView: View {
         isLoading = false
     }
 
-    private func formatDate(_ isoString: String) -> String {
-        let formatter = Self.isoFormatter
-        if let date = formatter.date(from: isoString) {
-            return date.formatted(date: .abbreviated, time: .shortened)
-        }
-        formatter.formatOptions = [.withInternetDateTime]
-        if let date = formatter.date(from: isoString) {
-            return date.formatted(date: .abbreviated, time: .shortened)
-        }
-        return isoString
-    }
 }

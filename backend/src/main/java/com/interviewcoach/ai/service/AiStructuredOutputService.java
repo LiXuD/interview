@@ -2,6 +2,7 @@ package com.interviewcoach.ai.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.interviewcoach.ai.entity.AiProvider;
 import com.interviewcoach.common.api.AssessmentResultDto;
 import com.interviewcoach.common.api.DimensionScore;
 import com.interviewcoach.common.api.JobBriefDto;
@@ -9,6 +10,9 @@ import com.interviewcoach.common.api.MockInterviewReportDto;
 import com.interviewcoach.common.api.SkillMapItem;
 import com.interviewcoach.common.api.TrainingFeedbackDto;
 import com.interviewcoach.common.error.AiParseException;
+import com.interviewcoach.user.entity.User;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,10 +26,20 @@ public class AiStructuredOutputService {
     private static final Set<String> VALID_USER_LEVEL = Set.of("unknown", "weak", "basic", "solid", "strong");
 
     private final PlatformAiClient platformAiClient;
+    private final OpenAiCompatibleClient openAiClient;
+    private final AiProviderService providerService;
+    private final ApiKeyEncryption encryption;
     private final ObjectMapper objectMapper;
 
-    public AiStructuredOutputService(PlatformAiClient platformAiClient, ObjectMapper objectMapper) {
+    public AiStructuredOutputService(PlatformAiClient platformAiClient,
+                                     OpenAiCompatibleClient openAiClient,
+                                     AiProviderService providerService,
+                                     ApiKeyEncryption encryption,
+                                     ObjectMapper objectMapper) {
         this.platformAiClient = platformAiClient;
+        this.openAiClient = openAiClient;
+        this.providerService = providerService;
+        this.encryption = encryption;
         this.objectMapper = objectMapper;
     }
 
@@ -102,7 +116,7 @@ public class AiStructuredOutputService {
 
     private <T> T generateAndValidate(AiPrompt prompt, Class<T> type, Consumer<T> validator) {
         for (int attempt = 0; attempt < 2; attempt++) {
-            String rawJson = platformAiClient.generateJson(prompt);
+            String rawJson = generateFromProvider(prompt);
             try {
                 T result = objectMapper.readValue(rawJson, type);
                 validator.accept(result);
@@ -114,6 +128,20 @@ public class AiStructuredOutputService {
             }
         }
         throw new AiParseException();
+    }
+
+    private String generateFromProvider(AiPrompt prompt) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof User user) {
+            AiProvider provider = providerService.findDefaultProvider(user.getId());
+            if (provider != null) {
+                String apiKey = encryption.decrypt(provider.getApiKeyEncrypted());
+                return openAiClient.generateJson(
+                        provider.getBaseUrl(), apiKey, provider.getModel(),
+                        provider.getOpenaiApiMode(), prompt.systemPrompt(), prompt.userPrompt());
+            }
+        }
+        return platformAiClient.generateJson(prompt);
     }
 
     private void requireText(String value, String field) {
