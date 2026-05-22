@@ -54,7 +54,10 @@ actor APIClient {
     }
 
     private func buildRequest(_ method: String, path: String, authorized: Bool) throws -> URLRequest {
-        var request = URLRequest(url: baseURL.appendingPathComponent(path))
+        guard let url = URL(string: path, relativeTo: baseURL) else {
+            throw APIError.invalidResponse
+        }
+        var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         if authorized, let token = KeychainHelper.loadToken() {
