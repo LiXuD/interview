@@ -14,6 +14,8 @@ struct TrainingPlanView: View {
             Group {
                 if let plan {
                     planListView(plan)
+                } else if isLoading {
+                    ProgressView("处理中...")
                 } else if !isLoading {
                     generateView
                 }
@@ -143,6 +145,7 @@ struct TrainingPlanView: View {
         }
     }
 
+    @MainActor
     private func loadPlan() async {
         isLoading = true
         errorMessage = nil
@@ -157,6 +160,7 @@ struct TrainingPlanView: View {
         isLoading = false
     }
 
+    @MainActor
     private func generatePlan() async {
         isLoading = true
         errorMessage = nil
