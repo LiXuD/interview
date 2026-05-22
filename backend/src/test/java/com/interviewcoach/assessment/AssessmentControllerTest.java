@@ -198,6 +198,31 @@ class AssessmentControllerTest {
     }
 
     @Test
+    void cannotSubmitMoreThanTotalQuestions() throws Exception {
+        String token = loginAndGetToken("assess_user5");
+        String targetId = createTarget(token, "Overflow Test");
+        confirmProfile(token, targetId);
+        String sessionId = startAssessment(token, targetId);
+
+        // Answer all 5 questions
+        for (int i = 1; i <= 5; i++) {
+            mockMvc.perform(post("/api/assessments/" + sessionId + "/answers")
+                            .header("Authorization", "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(new AssessmentAnswerRequest("A" + i))))
+                    .andExpect(status().isOk());
+        }
+
+        // 6th answer should be rejected
+        mockMvc.perform(post("/api/assessments/" + sessionId + "/answers")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new AssessmentAnswerRequest("overflow"))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+    }
+
+    @Test
     void deleteTargetCascadesAssessment() throws Exception {
         String token = loginAndGetToken("assess_user4");
         String targetId = createTarget(token, "Cascade Test Target");

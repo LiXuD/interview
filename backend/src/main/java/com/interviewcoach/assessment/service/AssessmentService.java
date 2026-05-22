@@ -86,6 +86,9 @@ public class AssessmentService {
         if (!"in_progress".equals(session.getStatus())) {
             throw new IllegalArgumentException("Assessment is not in progress");
         }
+        if (session.getAnswers().size() >= session.getTotalQuestions()) {
+            throw new IllegalArgumentException("All questions already answered");
+        }
 
         session.getAnswers().add(answer);
         session.setQuestionIndex(session.getQuestionIndex() + 1);
