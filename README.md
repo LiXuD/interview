@@ -78,7 +78,7 @@ interview/
 └── scripts/
 ```
 
-当前仓库已完成 Task 1-9：Walking Skeleton、OpenAPI 契约与 DTO、Dev Login 认证链路、Target CRUD、CandidateProfile 隐私链路、Platform AI + JobBrief、Assessment 5 题测评、TrainingPlan 1 天任务、MockInterview 文字模拟面试。后续按任务顺序继续推进 User OpenAI Provider。
+当前仓库已完成 Task 1-11：Walking Skeleton、OpenAPI 契约与 DTO、Dev Login 认证链路、Target CRUD、CandidateProfile 隐私链路、Platform AI + JobBrief、Assessment 5 题测评、TrainingPlan 1 天任务、MockInterview 文字模拟面试、User OpenAI Provider、Delete Account。后续按任务顺序继续推进 TestFlight Polish。
 
 ## 开发计划
 
@@ -129,7 +129,7 @@ interview/
 
 ## 当前状态
 
-当前阶段：Task 9 MockInterview 文字模拟面试已完成，下一步 Task 10 User OpenAI Provider。
+当前阶段：Task 11 Delete Account 已完成，下一步 Task 12 TestFlight Polish。
 
 已完成：
 
@@ -166,7 +166,16 @@ interview/
 - Task 9：AiStructuredOutputService 扩展（generateMockInterviewQuestion + generateMockInterviewReport）。
 - Task 9：iOS MockInterviewView（聊天界面）、MockInterviewResultView（报告展示）。
 - Task 9：InterviewTargetService + AuthService 级联删除 MockInterview。
+- Task 10：后端 AiProvider 实体（@ManyToOne User）、Repository、Service、Controller（5 个端点）。
+- Task 10：后端 ApiKeyEncryption（AES-GCM）、OpenAiCompatibleClient（chatCompletions + responses）。
+- Task 10：后端 AiStructuredOutputService Provider 路由（SecurityContextHolder → 默认 Provider → OpenAiCompatibleClient / 平台 AI）。
+- Task 10：后端 7 个集成测试（全生命周期、认证、跨用户隔离、级联删除、API Key 不泄露）。
+- Task 10：iOS SettingsView、AiProviderListView（列表+默认切换+滑动删除）、AiProviderCreateView（创建表单+连接测试）。
+- Task 11：后端无改动，DELETE /api/me 已在 Task 3+10 中完整实现（10 张表级联删除）。
+- Task 11：iOS AuthService 新增 deleteAccount() 方法（调用 DELETE /api/me 后 logout 清除本地数据）。
+- Task 11：iOS SettingsView 新增删除账号区域 + confirmationDialog 二次确认。
+- Task 11：后端 9 个测试通过（deleteMeWithValidTokenReturns204 + deleteUserAfterProfileConfirmSucceeds）。
 
 尚未创建：
 
-- 无（Task 1-9 全部完成）。
+- 无（Task 1-11 全部完成）。
