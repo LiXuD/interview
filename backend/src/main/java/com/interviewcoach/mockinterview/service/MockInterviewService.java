@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewcoach.ai.service.AiPrompt;
 import com.interviewcoach.ai.service.AiStructuredOutputService;
-import com.interviewcoach.common.api.DimensionScore;
 import com.interviewcoach.common.api.MockInterviewReportDto;
 import com.interviewcoach.common.api.MockInterviewSessionDto;
 import com.interviewcoach.common.error.MockInterviewNotFoundException;
@@ -23,7 +22,6 @@ import com.interviewcoach.user.entity.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -31,6 +29,12 @@ import java.util.UUID;
 public class MockInterviewService {
 
     private static final int MAX_CONTEXT_TURNS = 6;
+    private static final int MAX_FINISH_MESSAGES = 20;
+    private static final String STATUS_IN_PROGRESS = "in_progress";
+    private static final String STATUS_COMPLETED = "completed";
+    private static final String ROLE_USER = "user";
+    private static final String ROLE_ASSISTANT = "assistant";
+    private static final String REPORT_TYPE = "mockInterview";
 
     private final MockInterviewRepository interviewRepository;
     private final InterviewTargetRepository targetRepository;
@@ -66,12 +70,7 @@ public class MockInterviewService {
         MockInterview interview = new MockInterview();
         interview.setUser(user);
         interview.setTargetId(targetId);
-
-        MockInterviewMessage aiMsg = new MockInterviewMessage();
-        aiMsg.setInterview(interview);
-        aiMsg.setRole("assistant");
-        aiMsg.setContent(firstQuestion);
-        interview.getMessages().add(aiMsg);
+        addMessage(interview, ROLE_ASSISTANT, firstQuestion);
 
         interview = interviewRepository.save(interview);
         return toSessionDto(interview);
@@ -80,16 +79,9 @@ public class MockInterviewService {
     @Transactional
     public MockInterviewSessionDto submitAnswer(UUID interviewId, UUID userId, String answer) {
         MockInterview interview = findInterview(interviewId, userId);
+        assertInProgress(interview);
 
-        if (!"in_progress".equals(interview.getStatus())) {
-            throw new IllegalArgumentException("Mock interview is not in progress");
-        }
-
-        MockInterviewMessage userMsg = new MockInterviewMessage();
-        userMsg.setInterview(interview);
-        userMsg.setRole("user");
-        userMsg.setContent(answer);
-        interview.getMessages().add(userMsg);
+        addMessage(interview, ROLE_USER, answer);
 
         UUID targetId = interview.getTargetId();
         InterviewTarget target = targetRepository.findById(targetId)
@@ -98,12 +90,7 @@ public class MockInterviewService {
         List<MockInterviewMessage> contextMessages = getContextMessages(interview);
         String nextQuestion = aiService.generateMockInterviewQuestion(
                 buildAnswerPrompt(target, contextMessages));
-
-        MockInterviewMessage aiMsg = new MockInterviewMessage();
-        aiMsg.setInterview(interview);
-        aiMsg.setRole("assistant");
-        aiMsg.setContent(nextQuestion);
-        interview.getMessages().add(aiMsg);
+        addMessage(interview, ROLE_ASSISTANT, nextQuestion);
 
         interview = interviewRepository.save(interview);
         return toSessionDto(interview);
@@ -112,10 +99,7 @@ public class MockInterviewService {
     @Transactional
     public MockInterviewReportDto finishInterview(UUID interviewId, UUID userId) {
         MockInterview interview = findInterview(interviewId, userId);
-
-        if (!"in_progress".equals(interview.getStatus())) {
-            throw new IllegalArgumentException("Mock interview is not in progress");
-        }
+        assertInProgress(interview);
 
         InterviewTarget target = targetRepository.findById(interview.getTargetId())
                 .orElseThrow(() -> new TargetNotFoundException(interview.getTargetId()));
@@ -123,7 +107,7 @@ public class MockInterviewService {
         MockInterviewReportDto aiResult = aiService.generateMockInterviewReport(
                 buildFinishPrompt(target, interview));
 
-        interview.setStatus("completed");
+        interview.setStatus(STATUS_COMPLETED);
         interviewRepository.save(interview);
 
         createReport(interview, aiResult);
@@ -140,6 +124,20 @@ public class MockInterviewService {
                 .orElseThrow(() -> new MockInterviewNotFoundException(interviewId));
     }
 
+    private void assertInProgress(MockInterview interview) {
+        if (!STATUS_IN_PROGRESS.equals(interview.getStatus())) {
+            throw new IllegalArgumentException("Mock interview is not in progress");
+        }
+    }
+
+    private void addMessage(MockInterview interview, String role, String content) {
+        MockInterviewMessage msg = new MockInterviewMessage();
+        msg.setInterview(interview);
+        msg.setRole(role);
+        msg.setContent(content);
+        interview.getMessages().add(msg);
+    }
+
     private List<MockInterviewMessage> getContextMessages(MockInterview interview) {
         List<MockInterviewMessage> all = interview.getMessages();
         int maxMessages = MAX_CONTEXT_TURNS * 2;
@@ -147,6 +145,14 @@ public class MockInterviewService {
             return all;
         }
         return all.subList(all.size() - maxMessages, all.size());
+    }
+
+    private String formatConversation(List<MockInterviewMessage> messages) {
+        StringBuilder sb = new StringBuilder();
+        for (MockInterviewMessage msg : messages) {
+            sb.append(msg.getRole()).append(": ").append(msg.getContent()).append("\n\n");
+        }
+        return sb.toString();
     }
 
     private AiPrompt buildStartPrompt(InterviewTarget target, CandidateProfile profile) {
@@ -181,11 +187,6 @@ public class MockInterviewService {
     }
 
     private AiPrompt buildAnswerPrompt(InterviewTarget target, List<MockInterviewMessage> contextMessages) {
-        StringBuilder conversationBuilder = new StringBuilder();
-        for (MockInterviewMessage msg : contextMessages) {
-            conversationBuilder.append(msg.getRole()).append(": ").append(msg.getContent()).append("\n\n");
-        }
-
         String systemPrompt = """
                 You are an AI interviewer conducting a technical mock interview.
                 Based on the conversation so far, ask a relevant follow-up question.
@@ -197,15 +198,15 @@ public class MockInterviewService {
 
                 Conversation so far:
                 %s
-                """.formatted(target.getTitle(), conversationBuilder);
+                """.formatted(target.getTitle(), formatConversation(contextMessages));
         return new AiPrompt("mockInterviewQuestion", target.getId().toString(), systemPrompt, userPrompt);
     }
 
     private AiPrompt buildFinishPrompt(InterviewTarget target, MockInterview interview) {
-        StringBuilder conversationBuilder = new StringBuilder();
-        for (MockInterviewMessage msg : interview.getMessages()) {
-            conversationBuilder.append(msg.getRole()).append(": ").append(msg.getContent()).append("\n\n");
-        }
+        List<MockInterviewMessage> allMessages = interview.getMessages();
+        List<MockInterviewMessage> reportMessages = allMessages.size() <= MAX_FINISH_MESSAGES
+                ? allMessages
+                : allMessages.subList(allMessages.size() - MAX_FINISH_MESSAGES, allMessages.size());
 
         String systemPrompt = """
                 You are an AI technical interview coach. Evaluate this mock interview.
@@ -228,7 +229,7 @@ public class MockInterviewService {
 
                 Full conversation:
                 %s
-                """.formatted(interview.getId().toString(), target.getTitle(), conversationBuilder);
+                """.formatted(interview.getId().toString(), target.getTitle(), formatConversation(reportMessages));
         return new AiPrompt("mockInterviewReport", interview.getId().toString(), systemPrompt, userPrompt);
     }
 
@@ -237,7 +238,7 @@ public class MockInterviewService {
             Report report = new Report();
             report.setTargetId(interview.getTargetId());
             report.setUserId(interview.getUser().getId());
-            report.setType("mockInterview");
+            report.setType(REPORT_TYPE);
             report.setContent(objectMapper.writeValueAsString(reportDto));
             reportRepository.save(report);
         } catch (JsonProcessingException ex) {
@@ -246,15 +247,16 @@ public class MockInterviewService {
     }
 
     private MockInterviewSessionDto toSessionDto(MockInterview interview) {
+        var msgs = interview.getMessages();
         String currentQuestion = null;
-        if ("in_progress".equals(interview.getStatus()) && !interview.getMessages().isEmpty()) {
-            MockInterviewMessage last = interview.getMessages().get(interview.getMessages().size() - 1);
-            if ("assistant".equals(last.getRole())) {
+        if (STATUS_IN_PROGRESS.equals(interview.getStatus()) && !msgs.isEmpty()) {
+            MockInterviewMessage last = msgs.get(msgs.size() - 1);
+            if (ROLE_ASSISTANT.equals(last.getRole())) {
                 currentQuestion = last.getContent();
             }
         }
-        int conversationTurns = (int) interview.getMessages().stream()
-                .filter(m -> "user".equals(m.getRole()))
+        int conversationTurns = (int) msgs.stream()
+                .filter(m -> ROLE_USER.equals(m.getRole()))
                 .count();
         return new MockInterviewSessionDto(
                 interview.getId().toString(),

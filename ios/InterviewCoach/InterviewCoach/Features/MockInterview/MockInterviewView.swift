@@ -35,9 +35,6 @@ struct MockInterviewView: View {
                         .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
                 }
             }
-            .task {
-                await loadSession()
-            }
         }
     }
 
@@ -125,20 +122,6 @@ struct MockInterviewView: View {
         }
     }
 
-    private func loadSession() async {
-        isLoading = true
-        errorMessage = nil
-        do {
-            session = try await APIClient.shared.request(
-                "GET",
-                path: "/api/mock-interviews/\(target.id)"
-            )
-        } catch {
-            // No session yet — show start view
-        }
-        isLoading = false
-    }
-
     private func startInterview() async {
         isLoading = true
         errorMessage = nil
@@ -154,7 +137,6 @@ struct MockInterviewView: View {
         isLoading = false
     }
 
-    @MainActor
     private func submitAnswer() async {
         guard let session else { return }
         isLoading = true
@@ -173,7 +155,6 @@ struct MockInterviewView: View {
         isLoading = false
     }
 
-    @MainActor
     private func finishInterview() async {
         guard let session else { return }
         isLoading = true
@@ -183,13 +164,7 @@ struct MockInterviewView: View {
                 "POST",
                 path: "/api/mock-interviews/\(session.id)/finish"
             )
-            self.session = MockInterviewSessionDTO(
-                id: session.id,
-                targetId: session.targetId,
-                status: "completed",
-                currentQuestion: nil,
-                conversationTurns: session.conversationTurns
-            )
+            self.session = nil
         } catch {
             errorMessage = "结束失败: \(error.localizedDescription)"
         }
