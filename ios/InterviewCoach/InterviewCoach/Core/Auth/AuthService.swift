@@ -46,6 +46,20 @@ final class AuthService: ObservableObject {
         isAuthenticated = false
     }
 
+    func deleteAccount() async {
+        isLoading = true
+        errorMessage = nil
+        do {
+            try await apiClient.requestNoContent("DELETE", path: "/api/me")
+            logout()
+        } catch APIError.unauthorized {
+            logout()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        isLoading = false
+    }
+
     private func clearLocalData() {
         guard let context = modelContext else { return }
         try? context.delete(model: TargetLocal.self)
