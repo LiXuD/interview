@@ -8,6 +8,7 @@ import com.interviewcoach.common.api.UserDto;
 import com.interviewcoach.common.error.UserNotFoundException;
 import com.interviewcoach.common.security.JwtTokenProvider;
 import com.interviewcoach.jobbrief.repository.JobBriefRepository;
+import com.interviewcoach.mockinterview.repository.MockInterviewRepository;
 import com.interviewcoach.profile.repository.CandidateProfileRepository;
 import com.interviewcoach.report.repository.ReportRepository;
 import com.interviewcoach.target.repository.InterviewTargetRepository;
@@ -32,6 +33,7 @@ public class AuthService {
     private final AssessmentSessionRepository assessmentSessionRepository;
     private final ReportRepository reportRepository;
     private final TrainingPlanRepository trainingPlanRepository;
+    private final MockInterviewRepository mockInterviewRepository;
 
     public AuthService(UserRepository userRepository, JwtTokenProvider jwtTokenProvider,
                        CandidateProfileRepository profileRepository,
@@ -40,7 +42,8 @@ public class AuthService {
                        AssessmentResultRepository assessmentResultRepository,
                        AssessmentSessionRepository assessmentSessionRepository,
                        ReportRepository reportRepository,
-                       TrainingPlanRepository trainingPlanRepository) {
+                       TrainingPlanRepository trainingPlanRepository,
+                       MockInterviewRepository mockInterviewRepository) {
         this.userRepository = userRepository;
         this.jwtTokenProvider = jwtTokenProvider;
         this.profileRepository = profileRepository;
@@ -50,6 +53,7 @@ public class AuthService {
         this.assessmentSessionRepository = assessmentSessionRepository;
         this.reportRepository = reportRepository;
         this.trainingPlanRepository = trainingPlanRepository;
+        this.mockInterviewRepository = mockInterviewRepository;
     }
 
     @Transactional
@@ -80,6 +84,7 @@ public class AuthService {
         assessmentResultRepository.deleteBySessionUserId(userId);
         assessmentSessionRepository.deleteByUserId(userId);
         reportRepository.deleteByUserId(userId);
+        mockInterviewRepository.deleteByUserId(userId);
         trainingPlanRepository.deleteByUserId(userId);
         jobBriefRepository.deleteByUserId(userId);
         profileRepository.deleteByUserId(userId);

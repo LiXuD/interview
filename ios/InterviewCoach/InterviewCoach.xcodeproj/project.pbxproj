@@ -36,8 +36,10 @@
 		2A00000100000000000000DA /* AssessmentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000CA /* AssessmentView.swift */; };
 		2A00000100000000000000DB /* AssessmentResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000CB /* AssessmentResultView.swift */; };
 			2A00000100000000000000EA /* TrainingPlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000E8 /* TrainingPlanView.swift */; };
-			2A00000100000000000000EB /* TrainingTaskView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000E9 /* TrainingTaskView.swift */; };/* End PBXBuildFile section */
-
+			2A00000100000000000000EB /* TrainingTaskView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000E9 /* TrainingTaskView.swift */; };
+			2A00000100000000000000F0 /* MockInterviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000F2 /* MockInterviewView.swift */; };
+			2A00000100000000000000F1 /* MockInterviewResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000F3 /* MockInterviewResultView.swift */; };
+/* End PBXBuildFile section */
 /* Begin PBXFileReference section */
 		2A0000010000000000000010 /* InterviewCoach.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InterviewCoach.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2A0000010000000000000011 /* InterviewCoachApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterviewCoachApp.swift; sourceTree = "<group>"; };
@@ -70,8 +72,10 @@
 		2A00000100000000000000CA /* AssessmentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssessmentView.swift; sourceTree = "<group>"; };
 		2A00000100000000000000CB /* AssessmentResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssessmentResultView.swift; sourceTree = "<group>"; };
 			2A00000100000000000000E8 /* TrainingPlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingPlanView.swift; sourceTree = "<group>"; };
-			2A00000100000000000000E9 /* TrainingTaskView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingTaskView.swift; sourceTree = "<group>"; };/* End PBXFileReference section */
-
+			2A00000100000000000000E9 /* TrainingTaskView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingTaskView.swift; sourceTree = "<group>"; };
+			2A00000100000000000000F2 /* MockInterviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockInterviewView.swift; sourceTree = "<group>"; };
+			2A00000100000000000000F3 /* MockInterviewResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockInterviewResultView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
 /* Begin PBXFrameworksBuildPhase section */
 		2A0000010000000000000020 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
@@ -175,7 +179,8 @@
 				2A00000100000000000000E6 /* JobBrief */,
 				2A00000100000000000000E7 /* Assessment */,
 				2A00000100000000000000EC /* Training */,
-			);
+					2A00000100000000000000F4 /* MockInterview */,
+				);
 			path = Features;
 			sourceTree = "<group>";
 		};
@@ -265,7 +270,7 @@
 			sourceTree = "<group>";
 		};
 		2A00000100000000000000EC /* Training */ = {
-			isa = PBXGroup;
+				isa = PBXGroup;
 			children = (
 				2A00000100000000000000E8 /* TrainingPlanView.swift */,
 				2A00000100000000000000E9 /* TrainingTaskView.swift */,
@@ -273,6 +278,15 @@
 			path = Training;
 			sourceTree = "<group>";
 		};
+			2A00000100000000000000F4 /* MockInterview */ = {
+			isa = PBXGroup;
+			children = (
+			2A00000100000000000000F2 /* MockInterviewView.swift */,
+			2A00000100000000000000F3 /* MockInterviewResultView.swift */,
+			);
+			path = MockInterview;
+			sourceTree = "<group>";
+			};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -371,7 +385,9 @@
 				2A00000100000000000000DB /* AssessmentResultView.swift in Sources */,
 				2A00000100000000000000EA /* TrainingPlanView.swift in Sources */,
 				2A00000100000000000000EB /* TrainingTaskView.swift in Sources */,
-			);
+					2A00000100000000000000F0 /* MockInterviewView.swift in Sources */,
+					2A00000100000000000000F1 /* MockInterviewResultView.swift in Sources */,
+				);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewcoach.common.api.AssessmentResultDto;
 import com.interviewcoach.common.api.DimensionScore;
 import com.interviewcoach.common.api.JobBriefDto;
+import com.interviewcoach.common.api.MockInterviewReportDto;
 import com.interviewcoach.common.api.SkillMapItem;
 import com.interviewcoach.common.api.TrainingFeedbackDto;
 import com.interviewcoach.common.error.AiParseException;
@@ -161,5 +162,46 @@ public class AiStructuredOutputService {
         requireText(dto.followUpQuestion(), "followUpQuestion");
         requireList(dto.problems(), "problems");
         requireList(dto.recommendedReviewPoints(), "recommendedReviewPoints");
+    }
+
+    public record MockInterviewQuestionResult(String question) {}
+
+    public String generateMockInterviewQuestion(AiPrompt prompt) {
+        MockInterviewQuestionResult result = generateAndValidate(prompt, MockInterviewQuestionResult.class, this::validateMockInterviewQuestion);
+        return result.question();
+    }
+
+    private void validateMockInterviewQuestion(MockInterviewQuestionResult result) {
+        if (result == null) {
+            throw new IllegalArgumentException("MockInterviewQuestionResult is null");
+        }
+        requireText(result.question(), "question");
+    }
+
+    public MockInterviewReportDto generateMockInterviewReport(AiPrompt prompt) {
+        return generateAndValidate(prompt, MockInterviewReportDto.class, this::validateMockInterviewReport);
+    }
+
+    private void validateMockInterviewReport(MockInterviewReportDto dto) {
+        if (dto == null) {
+            throw new IllegalArgumentException("MockInterviewReport is null");
+        }
+        requireText(dto.mockInterviewId(), "mockInterviewId");
+        if (dto.overallScore() < 0 || dto.overallScore() > 100) {
+            throw new IllegalArgumentException("overallScore out of range");
+        }
+        requireList(dto.dimensionScores(), "dimensionScores");
+        requireText(dto.summary(), "summary");
+        requireList(dto.strengths(), "strengths");
+        requireList(dto.weaknesses(), "weaknesses");
+        requireList(dto.improvedAnswers(), "improvedAnswers");
+        requireList(dto.nextTrainingTasks(), "nextTrainingTasks");
+        for (DimensionScore dim : dto.dimensionScores()) {
+            requireText(dim.name(), "dimension.name");
+            if (dim.score() < 0 || dim.score() > 100) {
+                throw new IllegalArgumentException("dimension score out of range");
+            }
+            requireText(dim.reason(), "dimension.reason");
+        }
     }
 }

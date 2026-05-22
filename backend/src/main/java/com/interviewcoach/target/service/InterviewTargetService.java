@@ -7,6 +7,7 @@ import com.interviewcoach.common.api.InterviewTargetDto;
 import com.interviewcoach.common.api.InterviewTargetUpdateRequest;
 import com.interviewcoach.common.error.TargetNotFoundException;
 import com.interviewcoach.jobbrief.repository.JobBriefRepository;
+import com.interviewcoach.mockinterview.repository.MockInterviewRepository;
 import com.interviewcoach.report.repository.ReportRepository;
 import com.interviewcoach.target.entity.InterviewTarget;
 import com.interviewcoach.profile.repository.CandidateProfileRepository;
@@ -33,6 +34,7 @@ public class InterviewTargetService {
     private final AssessmentSessionRepository assessmentSessionRepository;
     private final ReportRepository reportRepository;
     private final TrainingPlanRepository trainingPlanRepository;
+    private final MockInterviewRepository mockInterviewRepository;
 
     public InterviewTargetService(InterviewTargetRepository targetRepository,
                                   CandidateProfileRepository profileRepository,
@@ -40,7 +42,8 @@ public class InterviewTargetService {
                                   AssessmentResultRepository assessmentResultRepository,
                                   AssessmentSessionRepository assessmentSessionRepository,
                                   ReportRepository reportRepository,
-                                  TrainingPlanRepository trainingPlanRepository) {
+                                  TrainingPlanRepository trainingPlanRepository,
+                                  MockInterviewRepository mockInterviewRepository) {
         this.targetRepository = targetRepository;
         this.profileRepository = profileRepository;
         this.jobBriefRepository = jobBriefRepository;
@@ -48,6 +51,7 @@ public class InterviewTargetService {
         this.assessmentSessionRepository = assessmentSessionRepository;
         this.reportRepository = reportRepository;
         this.trainingPlanRepository = trainingPlanRepository;
+        this.mockInterviewRepository = mockInterviewRepository;
     }
 
     @Transactional
@@ -102,6 +106,7 @@ public class InterviewTargetService {
         assessmentResultRepository.deleteBySessionTargetId(targetId);
         assessmentSessionRepository.deleteByTargetId(targetId);
         reportRepository.deleteByTargetId(targetId);
+        mockInterviewRepository.deleteByTargetId(targetId);
         trainingPlanRepository.deleteByTargetId(targetId);
         jobBriefRepository.deleteByTargetId(targetId);
         profileRepository.deleteByTargetId(targetId);

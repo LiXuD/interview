@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewcoach.common.api.AssessmentResultDto;
 import com.interviewcoach.common.api.DimensionScore;
 import com.interviewcoach.common.api.JobBriefDto;
+import com.interviewcoach.common.api.MockInterviewReportDto;
 import com.interviewcoach.common.api.SkillMapItem;
 import com.interviewcoach.common.api.TrainingFeedbackDto;
 import org.springframework.stereotype.Component;
@@ -29,6 +30,8 @@ public class LocalPlatformAiClient implements PlatformAiClient {
                 case "assessmentResult" -> objectMapper.writeValueAsString(buildAssessmentResult(prompt));
                 case "trainingPlan" -> objectMapper.writeValueAsString(buildTrainingPlan(prompt));
                 case "trainingFeedback" -> objectMapper.writeValueAsString(buildTrainingFeedback(prompt));
+                case "mockInterviewQuestion" -> objectMapper.writeValueAsString(buildMockInterviewQuestion(prompt));
+                case "mockInterviewReport" -> objectMapper.writeValueAsString(buildMockInterviewReport(prompt));
                 default -> throw new IllegalStateException("Unknown task: " + prompt.task());
             };
         } catch (JsonProcessingException ex) {
@@ -108,6 +111,30 @@ public class LocalPlatformAiClient implements PlatformAiClient {
                 "在项目中，我负责设计订单系统的容量规划。首先估算日均订单量 10 万，峰值 QPS 约为 500。采用 3 台应用服务器 + Redis 缓存 + PostgreSQL 读写分离的架构，将 P99 延迟控制在 200ms 以内。",
                 "如果峰值 QPS 突然增长到 2000，你的架构会如何调整？",
                 List.of("准备容量估算的完整公式和步骤", "练习用数字说话，避免泛泛而谈", "复习水平扩展和垂直扩展的取舍")
+        );
+    }
+
+    private AiStructuredOutputService.MockInterviewQuestionResult buildMockInterviewQuestion(AiPrompt prompt) {
+        return new AiStructuredOutputService.MockInterviewQuestionResult(
+                "请介绍一下你在项目中使用 Spring Boot 的经验，特别是如何处理高并发场景？"
+        );
+    }
+
+    private MockInterviewReportDto buildMockInterviewReport(AiPrompt prompt) {
+        return new MockInterviewReportDto(
+                prompt.targetId(),
+                70,
+                List.of(
+                        new DimensionScore("技术深度", 72, "能结合项目说明核心技术的使用，但缺少底层原理阐述"),
+                        new DimensionScore("表达结构", 68, "回答有逻辑但不够简洁，建议用 STAR 法则组织"),
+                        new DimensionScore("问题分析", 75, "能准确定位问题，排查思路清晰"),
+                        new DimensionScore("系统设计", 65, "架构设计基本合理，但在容量评估方面需要加强")
+                ),
+                "整体表现中等偏上，技术基础扎实，但在系统设计和表达结构方面还有提升空间。",
+                List.of("项目经验丰富，有实际排查线上问题的能力", "Java 和 Spring Boot 基础扎实"),
+                List.of("系统设计回答缺少容量估算的具体数字", "部分回答过于冗长，需要练习精简表达"),
+                List.of("在项目中，我负责设计订单系统架构。采用微服务拆分，订单服务独立部署，通过消息队列异步处理库存扣减，P99 延迟控制在 200ms 以内。"),
+                List.of("系统设计容量规划", "STAR 法则面试表达", "分布式一致性原理复习")
         );
     }
 }

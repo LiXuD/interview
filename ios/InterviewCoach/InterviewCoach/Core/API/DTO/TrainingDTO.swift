@@ -4,7 +4,7 @@ struct TrainingPlanGenerateRequestDTO: Encodable {
   let targetId: String
 }
 
-struct TrainingTaskDTO: Decodable, Equatable {
+struct TrainingTaskDTO: Decodable, Equatable, Identifiable {
   let id: String
   let title: String
   let description: String
