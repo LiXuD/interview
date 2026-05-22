@@ -179,14 +179,13 @@ public class AiStructuredOutputService {
     }
 
     public MockInterviewReportDto generateMockInterviewReport(AiPrompt prompt) {
-        return generateAndValidate(prompt, MockInterviewReportDto.class, this::validateMockInterviewReport);
+        return generateAndValidate(prompt, MockInterviewReportDto.class, dto -> validateMockInterviewReport(dto, prompt.targetId()));
     }
 
-    private void validateMockInterviewReport(MockInterviewReportDto dto) {
-        if (dto == null) {
-            throw new IllegalArgumentException("MockInterviewReport is null");
+    private void validateMockInterviewReport(MockInterviewReportDto dto, String expectedMockInterviewId) {
+        if (dto == null || !expectedMockInterviewId.equals(dto.mockInterviewId())) {
+            throw new IllegalArgumentException("MockInterviewReport mockInterviewId mismatch");
         }
-        requireText(dto.mockInterviewId(), "mockInterviewId");
         if (dto.overallScore() < 0 || dto.overallScore() > 100) {
             throw new IllegalArgumentException("overallScore out of range");
         }

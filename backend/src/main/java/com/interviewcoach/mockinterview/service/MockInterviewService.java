@@ -29,7 +29,7 @@ import java.util.UUID;
 public class MockInterviewService {
 
     private static final int MAX_CONTEXT_TURNS = 6;
-    private static final int MAX_FINISH_MESSAGES = 20;
+    private static final int MAX_CONTEXT_MESSAGES = MAX_CONTEXT_TURNS * 2;
     private static final String STATUS_IN_PROGRESS = "in_progress";
     private static final String STATUS_COMPLETED = "completed";
     private static final String ROLE_USER = "user";
@@ -140,11 +140,10 @@ public class MockInterviewService {
 
     private List<MockInterviewMessage> getContextMessages(MockInterview interview) {
         List<MockInterviewMessage> all = interview.getMessages();
-        int maxMessages = MAX_CONTEXT_TURNS * 2;
-        if (all.size() <= maxMessages) {
+        if (all.size() <= MAX_CONTEXT_MESSAGES) {
             return all;
         }
-        return all.subList(all.size() - maxMessages, all.size());
+        return all.subList(all.size() - MAX_CONTEXT_MESSAGES, all.size());
     }
 
     private String formatConversation(List<MockInterviewMessage> messages) {
@@ -204,9 +203,9 @@ public class MockInterviewService {
 
     private AiPrompt buildFinishPrompt(InterviewTarget target, MockInterview interview) {
         List<MockInterviewMessage> allMessages = interview.getMessages();
-        List<MockInterviewMessage> reportMessages = allMessages.size() <= MAX_FINISH_MESSAGES
+        List<MockInterviewMessage> reportMessages = allMessages.size() <= MAX_CONTEXT_MESSAGES
                 ? allMessages
-                : allMessages.subList(allMessages.size() - MAX_FINISH_MESSAGES, allMessages.size());
+                : allMessages.subList(allMessages.size() - MAX_CONTEXT_MESSAGES, allMessages.size());
 
         String systemPrompt = """
                 You are an AI technical interview coach. Evaluate this mock interview.
