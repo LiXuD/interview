@@ -158,7 +158,8 @@ InterviewCoach/
 │   ├── Training/
 │   ├── MockInterview/
 │   ├── Reports/
-│   └── Settings/
+│   ├── Settings/
+│   └── Onboarding/
 └── Resources/
 ```
 
@@ -258,6 +259,7 @@ dto/
 - MockInterview：主要改 `backend/src/main/java/com/interviewcoach/mockinterview`、`backend/src/main/java/com/interviewcoach/report`、`ios/InterviewCoach/InterviewCoach/Features/MockInterview`。
 - OpenAI Provider：主要改 `backend/src/main/java/com/interviewcoach/ai`、`ios/InterviewCoach/InterviewCoach/Features/Settings`。
 - Delete Account：主要改 `backend/src/main/java/com/interviewcoach/user`、`backend/src/main/java/com/interviewcoach/auth`、`ios/InterviewCoach/InterviewCoach/Core/Auth`、`ios/InterviewCoach/InterviewCoach/Core/Storage`。
+- TestFlight Polish：只允许改 `ios/InterviewCoach/InterviewCoach/Core/UI`（共享组件）、`ios/InterviewCoach/InterviewCoach/Features`（各 View 替换 LoadingOverlay/ErrorBanner）、`ios/InterviewCoach/InterviewCoach/Features/Onboarding`（首次引导）、`ios/InterviewCoach/InterviewCoach/Features/Reports`（报告查看）、`ios/InterviewCoach/InterviewCoach/Features/Settings/PrivacyPolicyView.swift`（隐私政策）。
 
 禁止为了一个任务横跨无关模块做大改。若确实需要跨越上述边界，必须先说明原因、风险和替代方案，并等待用户确认。
 

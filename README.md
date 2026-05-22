@@ -78,7 +78,7 @@ interview/
 └── scripts/
 ```
 
-当前仓库已完成 Task 1-11：Walking Skeleton、OpenAPI 契约与 DTO、Dev Login 认证链路、Target CRUD、CandidateProfile 隐私链路、Platform AI + JobBrief、Assessment 5 题测评、TrainingPlan 1 天任务、MockInterview 文字模拟面试、User OpenAI Provider、Delete Account。后续按任务顺序继续推进 TestFlight Polish。
+当前仓库已完成 Task 1-12：Walking Skeleton、OpenAPI 契约与 DTO、Dev Login 认证链路、Target CRUD、CandidateProfile 隐私链路、Platform AI + JobBrief、Assessment 5 题测评、TrainingPlan 1 天任务、MockInterview 文字模拟面试、User OpenAI Provider、Delete Account、TestFlight Polish。MVP 闭环已全部打通。
 
 ## 开发计划
 
@@ -129,7 +129,7 @@ interview/
 
 ## 当前状态
 
-当前阶段：Task 11 Delete Account 已完成，下一步 Task 12 TestFlight Polish。
+当前阶段：Task 12 TestFlight Polish 已完成，MVP 闭环全部打通（Task 1-12）。
 
 已完成：
 
