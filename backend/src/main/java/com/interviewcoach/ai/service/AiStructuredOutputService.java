@@ -10,6 +10,7 @@ import com.interviewcoach.common.api.MockInterviewReportDto;
 import com.interviewcoach.common.api.SkillMapItem;
 import com.interviewcoach.common.api.TrainingFeedbackDto;
 import com.interviewcoach.common.error.AiParseException;
+import com.interviewcoach.common.error.AiProviderCallFailedException;
 import com.interviewcoach.user.entity.User;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -136,9 +137,14 @@ public class AiStructuredOutputService {
             AiProvider provider = providerService.findDefaultProvider(user.getId());
             if (provider != null) {
                 String apiKey = encryption.decrypt(provider.getApiKeyEncrypted());
-                return openAiClient.generateJson(
-                        provider.getBaseUrl(), apiKey, provider.getModel(),
-                        provider.getOpenaiApiMode(), prompt.systemPrompt(), prompt.userPrompt());
+                try {
+                    return openAiClient.generateJson(
+                            provider.getBaseUrl(), apiKey, provider.getModel(),
+                            provider.getOpenaiApiMode(), prompt.systemPrompt(), prompt.userPrompt());
+                } catch (Exception ex) {
+                    throw new AiProviderCallFailedException(
+                            "Custom AI Provider failed: " + ex.getMessage(), ex);
+                }
             }
         }
         return platformAiClient.generateJson(prompt);

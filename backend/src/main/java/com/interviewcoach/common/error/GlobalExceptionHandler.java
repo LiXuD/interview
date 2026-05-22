@@ -63,6 +63,12 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("AI_PROVIDER_NOT_FOUND", ex.getMessage(), generateRequestId()));
     }
 
+    @ExceptionHandler(AiProviderCallFailedException.class)
+    public ResponseEntity<ErrorResponse> handleAiProviderCallFailed(AiProviderCallFailedException ex) {
+        return ResponseEntity.status(502)
+                .body(new ErrorResponse("AI_PROVIDER_CALL_FAILED", ex.getMessage(), generateRequestId()));
+    }
+
     @ExceptionHandler(AiParseException.class)
     public ResponseEntity<ErrorResponse> handleAiParseFailed(AiParseException ex) {
         return ResponseEntity.badRequest()
