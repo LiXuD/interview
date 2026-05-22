@@ -78,7 +78,7 @@ interview/
 └── scripts/
 ```
 
-当前仓库已完成 Task 1-7：Walking Skeleton、OpenAPI 契约与 DTO、Dev Login 认证链路、Target CRUD、CandidateProfile 隐私链路、Platform AI + JobBrief、Assessment 5 题测评。后续按任务顺序继续推进 TrainingPlan 1 天任务。
+当前仓库已完成 Task 1-8：Walking Skeleton、OpenAPI 契约与 DTO、Dev Login 认证链路、Target CRUD、CandidateProfile 隐私链路、Platform AI + JobBrief、Assessment 5 题测评、TrainingPlan 1 天任务。后续按任务顺序继续推进 MockInterview 文字模拟面试。
 
 ## 开发计划
 
@@ -129,7 +129,7 @@ interview/
 
 ## 当前状态
 
-当前阶段：Task 7 Assessment 5 题测评已完成，下一步 Task 8 TrainingPlan 1 天任务。
+当前阶段：Task 8 TrainingPlan 1 天任务已完成，下一步 Task 9 MockInterview 文字模拟面试。
 
 已完成：
 
@@ -157,7 +157,11 @@ interview/
 - Task 7：后端 ReportService/ReportController、6 个集成测试。
 - Task 7：iOS AssessmentView（答题流程）、AssessmentResultView（评分展示）。
 - 代码清理：提取 SecurityUtils.currentUser()、AI 泛型重试方法、ReportNotFoundException。
+- Task 8：后端 TrainingPlan/TrainingTask/TrainingFeedback 实体、3 个 Repository、TrainingService。
+- Task 8：后端 TrainingPlanController + TrainingTaskController（4 个端点）、7 个集成测试。
+- Task 8：AiStructuredOutputService 扩展（generateTrainingPlan + generateTrainingFeedback）。
+- Task 8：iOS TrainingPlanView（生成/查看计划）、TrainingTaskView（答题+反馈+完成）。
 
 尚未创建：
 
-- 训练和模拟面试业务模块。
+- 模拟面试业务模块。
