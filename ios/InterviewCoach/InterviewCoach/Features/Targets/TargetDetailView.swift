@@ -14,6 +14,7 @@ struct TargetDetailView: View {
     @State private var currentTarget: InterviewTargetDTO
     @State private var showDeleteConfirm = false
     @State private var showProfile = false
+    @State private var showJobBrief = false
     @State private var isLoading = false
     @State private var errorMessage: String?
 
@@ -67,6 +68,11 @@ struct TargetDetailView: View {
                     } label: {
                         Label("候选人简历", systemImage: "person.text.rectangle")
                     }
+                    Button {
+                        showJobBrief = true
+                    } label: {
+                        Label("岗位画像", systemImage: "doc.text.magnifyingglass")
+                    }
                 }
             }
 
@@ -114,6 +120,9 @@ struct TargetDetailView: View {
                 targetTitle: currentTarget.title,
                 authService: authService
             )
+        }
+        .sheet(isPresented: $showJobBrief) {
+            JobBriefView(target: currentTarget)
         }
         .overlay {
             if isLoading {

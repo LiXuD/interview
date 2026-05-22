@@ -27,6 +27,18 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("PROFILE_NOT_FOUND", ex.getMessage(), generateRequestId()));
     }
 
+    @ExceptionHandler(JobBriefNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleJobBriefNotFound(JobBriefNotFoundException ex) {
+        return ResponseEntity.status(404)
+                .body(new ErrorResponse("JOB_BRIEF_NOT_FOUND", ex.getMessage(), generateRequestId()));
+    }
+
+    @ExceptionHandler(AiParseException.class)
+    public ResponseEntity<ErrorResponse> handleAiParseFailed(AiParseException ex) {
+        return ResponseEntity.badRequest()
+                .body(new ErrorResponse("AI_PARSE_FAILED", ex.getMessage(), generateRequestId()));
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(IllegalArgumentException ex) {
         return ResponseEntity.badRequest()

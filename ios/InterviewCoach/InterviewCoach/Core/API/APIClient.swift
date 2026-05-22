@@ -34,8 +34,8 @@ actor APIClient {
         if let body = body {
             urlRequest.httpBody = try encoder.encode(body)
         }
-        let (_, response) = try await URLSession.shared.data(for: urlRequest)
-        try validateResponse(response)
+        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+        try validateResponse(response, data: data)
     }
 
     private func perform<Body: Encodable, Response: Decodable>(
@@ -49,7 +49,7 @@ actor APIClient {
             urlRequest.httpBody = try encoder.encode(body)
         }
         let (data, response) = try await URLSession.shared.data(for: urlRequest)
-        try validateResponse(response)
+        try validateResponse(response, data: data)
         return try decoder.decode(Response.self, from: data)
     }
 
@@ -63,7 +63,7 @@ actor APIClient {
         return request
     }
 
-    private func validateResponse(_ response: URLResponse) throws {
+    private func validateResponse(_ response: URLResponse, data: Data) throws {
         guard let http = response as? HTTPURLResponse else {
             throw APIError.invalidResponse
         }
@@ -71,7 +71,10 @@ actor APIClient {
             throw APIError.unauthorized
         }
         guard (200..<300).contains(http.statusCode) else {
-            throw APIError.serverError(http.statusCode)
+            if let error = try? decoder.decode(ErrorResponseDTO.self, from: data) {
+                throw APIError.serverError(http.statusCode, error)
+            }
+            throw APIError.serverError(http.statusCode, nil)
         }
     }
 }
@@ -79,13 +82,17 @@ actor APIClient {
 enum APIError: Error, LocalizedError {
     case invalidResponse
     case unauthorized
-    case serverError(Int)
+    case serverError(Int, ErrorResponseDTO?)
 
     var errorDescription: String? {
         switch self {
         case .invalidResponse: return "Invalid response"
         case .unauthorized: return "Authentication required"
-        case .serverError(let code): return "Server error: \(code)"
+        case .serverError(let code, let error):
+            if let error {
+                return "\(error.code): \(error.message)"
+            }
+            return "Server error: \(code)"
         }
     }
 }

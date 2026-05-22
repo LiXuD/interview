@@ -282,6 +282,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/JobBriefDto"
+        "400":
+          description: AI structured output parse failed or request is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Target or confirmed candidate profile not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /api/job-briefs/{targetId}:
     parameters:

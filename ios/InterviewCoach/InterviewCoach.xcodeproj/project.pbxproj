@@ -32,6 +32,7 @@
 			2A00000100000000000000D6 /* CandidateProfileLocal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C6 /* CandidateProfileLocal.swift */; };
 			2A00000100000000000000D7 /* ProfileInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C7 /* ProfileInputView.swift */; };
 			2A00000100000000000000D8 /* ProfileConfirmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C8 /* ProfileConfirmView.swift */; };
+			2A00000100000000000000D9 /* JobBriefView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C9 /* JobBriefView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -62,6 +63,7 @@
 			2A00000100000000000000C6 /* CandidateProfileLocal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandidateProfileLocal.swift; sourceTree = "<group>"; };
 			2A00000100000000000000C7 /* ProfileInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileInputView.swift; sourceTree = "<group>"; };
 			2A00000100000000000000C8 /* ProfileConfirmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileConfirmView.swift; sourceTree = "<group>"; };
+			2A00000100000000000000C9 /* JobBriefView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobBriefView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -164,6 +166,7 @@
 				2A000001000000000000003B /* Auth */,
 				2A00000100000000000000E3 /* Targets */,
 					2A00000100000000000000E5 /* Profiles */,
+					2A00000100000000000000E6 /* JobBrief */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -234,6 +237,14 @@
 					2A00000100000000000000C8 /* ProfileConfirmView.swift */,
 			);
 			path = Profiles;
+			sourceTree = "<group>";
+		};
+		2A00000100000000000000E6 /* JobBrief */ = {
+			isa = PBXGroup;
+			children = (
+					2A00000100000000000000C9 /* JobBriefView.swift */,
+			);
+			path = JobBrief;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -329,6 +340,7 @@
 					2A00000100000000000000D6 /* CandidateProfileLocal.swift in Sources */,
 					2A00000100000000000000D7 /* ProfileInputView.swift in Sources */,
 					2A00000100000000000000D8 /* ProfileConfirmView.swift in Sources */,
+					2A00000100000000000000D9 /* JobBriefView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

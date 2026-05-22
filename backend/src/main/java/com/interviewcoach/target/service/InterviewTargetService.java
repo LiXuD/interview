@@ -4,6 +4,7 @@ import com.interviewcoach.common.api.InterviewTargetCreateRequest;
 import com.interviewcoach.common.api.InterviewTargetDto;
 import com.interviewcoach.common.api.InterviewTargetUpdateRequest;
 import com.interviewcoach.common.error.TargetNotFoundException;
+import com.interviewcoach.jobbrief.repository.JobBriefRepository;
 import com.interviewcoach.target.entity.InterviewTarget;
 import com.interviewcoach.profile.repository.CandidateProfileRepository;
 import com.interviewcoach.target.repository.InterviewTargetRepository;
@@ -23,11 +24,14 @@ public class InterviewTargetService {
 
     private final InterviewTargetRepository targetRepository;
     private final CandidateProfileRepository profileRepository;
+    private final JobBriefRepository jobBriefRepository;
 
     public InterviewTargetService(InterviewTargetRepository targetRepository,
-                                  CandidateProfileRepository profileRepository) {
+                                  CandidateProfileRepository profileRepository,
+                                  JobBriefRepository jobBriefRepository) {
         this.targetRepository = targetRepository;
         this.profileRepository = profileRepository;
+        this.jobBriefRepository = jobBriefRepository;
     }
 
     @Transactional
@@ -79,6 +83,7 @@ public class InterviewTargetService {
     public void deleteTarget(UUID targetId, UUID userId) {
         InterviewTarget target = targetRepository.findByIdAndUserId(targetId, userId)
                 .orElseThrow(() -> new TargetNotFoundException(targetId));
+        jobBriefRepository.deleteByTargetId(targetId);
         profileRepository.deleteByTargetId(targetId);
         targetRepository.delete(target);
     }
