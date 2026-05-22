@@ -11,6 +11,7 @@ import com.interviewcoach.jobbrief.repository.JobBriefRepository;
 import com.interviewcoach.profile.repository.CandidateProfileRepository;
 import com.interviewcoach.report.repository.ReportRepository;
 import com.interviewcoach.target.repository.InterviewTargetRepository;
+import com.interviewcoach.training.repository.TrainingPlanRepository;
 import com.interviewcoach.user.entity.User;
 import com.interviewcoach.user.repository.UserRepository;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -30,6 +31,7 @@ public class AuthService {
     private final AssessmentResultRepository assessmentResultRepository;
     private final AssessmentSessionRepository assessmentSessionRepository;
     private final ReportRepository reportRepository;
+    private final TrainingPlanRepository trainingPlanRepository;
 
     public AuthService(UserRepository userRepository, JwtTokenProvider jwtTokenProvider,
                        CandidateProfileRepository profileRepository,
@@ -37,7 +39,8 @@ public class AuthService {
                        JobBriefRepository jobBriefRepository,
                        AssessmentResultRepository assessmentResultRepository,
                        AssessmentSessionRepository assessmentSessionRepository,
-                       ReportRepository reportRepository) {
+                       ReportRepository reportRepository,
+                       TrainingPlanRepository trainingPlanRepository) {
         this.userRepository = userRepository;
         this.jwtTokenProvider = jwtTokenProvider;
         this.profileRepository = profileRepository;
@@ -46,6 +49,7 @@ public class AuthService {
         this.assessmentResultRepository = assessmentResultRepository;
         this.assessmentSessionRepository = assessmentSessionRepository;
         this.reportRepository = reportRepository;
+        this.trainingPlanRepository = trainingPlanRepository;
     }
 
     @Transactional
@@ -76,6 +80,7 @@ public class AuthService {
         assessmentResultRepository.deleteBySessionUserId(userId);
         assessmentSessionRepository.deleteByUserId(userId);
         reportRepository.deleteByUserId(userId);
+        trainingPlanRepository.deleteByUserId(userId);
         jobBriefRepository.deleteByUserId(userId);
         profileRepository.deleteByUserId(userId);
         targetRepository.deleteByUserId(userId);

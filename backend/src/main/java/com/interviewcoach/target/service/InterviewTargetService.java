@@ -11,6 +11,7 @@ import com.interviewcoach.report.repository.ReportRepository;
 import com.interviewcoach.target.entity.InterviewTarget;
 import com.interviewcoach.profile.repository.CandidateProfileRepository;
 import com.interviewcoach.target.repository.InterviewTargetRepository;
+import com.interviewcoach.training.repository.TrainingPlanRepository;
 import com.interviewcoach.user.entity.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,19 +32,22 @@ public class InterviewTargetService {
     private final AssessmentResultRepository assessmentResultRepository;
     private final AssessmentSessionRepository assessmentSessionRepository;
     private final ReportRepository reportRepository;
+    private final TrainingPlanRepository trainingPlanRepository;
 
     public InterviewTargetService(InterviewTargetRepository targetRepository,
                                   CandidateProfileRepository profileRepository,
                                   JobBriefRepository jobBriefRepository,
                                   AssessmentResultRepository assessmentResultRepository,
                                   AssessmentSessionRepository assessmentSessionRepository,
-                                  ReportRepository reportRepository) {
+                                  ReportRepository reportRepository,
+                                  TrainingPlanRepository trainingPlanRepository) {
         this.targetRepository = targetRepository;
         this.profileRepository = profileRepository;
         this.jobBriefRepository = jobBriefRepository;
         this.assessmentResultRepository = assessmentResultRepository;
         this.assessmentSessionRepository = assessmentSessionRepository;
         this.reportRepository = reportRepository;
+        this.trainingPlanRepository = trainingPlanRepository;
     }
 
     @Transactional
@@ -98,6 +102,7 @@ public class InterviewTargetService {
         assessmentResultRepository.deleteBySessionTargetId(targetId);
         assessmentSessionRepository.deleteByTargetId(targetId);
         reportRepository.deleteByTargetId(targetId);
+        trainingPlanRepository.deleteByTargetId(targetId);
         jobBriefRepository.deleteByTargetId(targetId);
         profileRepository.deleteByTargetId(targetId);
         targetRepository.delete(target);

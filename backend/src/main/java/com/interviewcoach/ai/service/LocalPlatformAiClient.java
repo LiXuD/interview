@@ -6,6 +6,7 @@ import com.interviewcoach.common.api.AssessmentResultDto;
 import com.interviewcoach.common.api.DimensionScore;
 import com.interviewcoach.common.api.JobBriefDto;
 import com.interviewcoach.common.api.SkillMapItem;
+import com.interviewcoach.common.api.TrainingFeedbackDto;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -26,6 +27,8 @@ public class LocalPlatformAiClient implements PlatformAiClient {
                 case "jobBrief" -> objectMapper.writeValueAsString(buildJobBrief(prompt));
                 case "assessmentQuestions" -> objectMapper.writeValueAsString(buildAssessmentQuestions(prompt));
                 case "assessmentResult" -> objectMapper.writeValueAsString(buildAssessmentResult(prompt));
+                case "trainingPlan" -> objectMapper.writeValueAsString(buildTrainingPlan(prompt));
+                case "trainingFeedback" -> objectMapper.writeValueAsString(buildTrainingFeedback(prompt));
                 default -> throw new IllegalStateException("Unknown task: " + prompt.task());
             };
         } catch (JsonProcessingException ex) {
@@ -76,6 +79,35 @@ public class LocalPlatformAiClient implements PlatformAiClient {
                 List.of("具备实际项目经验，问题排查思路清晰", "Java 和 Spring Boot 基础扎实"),
                 List.of("系统设计能力需要加强，特别是容量规划和扩展性方面", "数据库深度优化经验不足"),
                 List.of("重点复习系统设计中的容量评估方法", "练习数据库查询优化案例", "准备分布式一致性相关面试题")
+        );
+    }
+
+    private AiStructuredOutputService.TrainingPlanResult buildTrainingPlan(AiPrompt prompt) {
+        return new AiStructuredOutputService.TrainingPlanResult(List.of(
+                new AiStructuredOutputService.TrainingPlanTaskItem(
+                        "系统设计容量规划练习",
+                        "针对系统设计短板，练习如何估算 QPS、存储和带宽需求，设计一个支持百万用户的 API 系统。"
+                ),
+                new AiStructuredOutputService.TrainingPlanTaskItem(
+                        "数据库索引优化案例分析",
+                        "针对数据库深度不足，分析一个慢查询案例，说明索引选择、覆盖索引和查询计划优化。"
+                ),
+                new AiStructuredOutputService.TrainingPlanTaskItem(
+                        "分布式一致性场景回答",
+                        "针对分布式理解薄弱，准备 CAP 理论、最终一致性、分布式锁等常见面试问题的回答。"
+                )
+        ));
+    }
+
+    private TrainingFeedbackDto buildTrainingFeedback(AiPrompt prompt) {
+        return new TrainingFeedbackDto(
+                prompt.targetId(),
+                68,
+                "回答覆盖了基本概念，但在深度和结构化表达上需要加强。建议按照'问题→方案→结果'的结构重新组织。",
+                List.of("缺少具体的量化数据", "未说明技术选型的对比和权衡"),
+                "在项目中，我负责设计订单系统的容量规划。首先估算日均订单量 10 万，峰值 QPS 约为 500。采用 3 台应用服务器 + Redis 缓存 + PostgreSQL 读写分离的架构，将 P99 延迟控制在 200ms 以内。",
+                "如果峰值 QPS 突然增长到 2000，你的架构会如何调整？",
+                List.of("准备容量估算的完整公式和步骤", "练习用数字说话，避免泛泛而谈", "复习水平扩展和垂直扩展的取舍")
         );
     }
 }

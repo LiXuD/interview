@@ -16,6 +16,7 @@ struct TargetDetailView: View {
     @State private var showProfile = false
     @State private var showJobBrief = false
     @State private var showAssessment = false
+    @State private var showTraining = false
     @State private var isLoading = false
     @State private var errorMessage: String?
 
@@ -79,6 +80,11 @@ struct TargetDetailView: View {
                     } label: {
                         Label("技术测评", systemImage: "checkmark.shield")
                     }
+                    Button {
+                        showTraining = true
+                    } label: {
+                        Label("训练计划", systemImage: "figure.run")
+                    }
                 }
             }
 
@@ -132,6 +138,9 @@ struct TargetDetailView: View {
         }
         .sheet(isPresented: $showAssessment) {
             AssessmentView(target: currentTarget)
+        }
+        .sheet(isPresented: $showTraining) {
+            TrainingPlanView(target: currentTarget)
         }
         .overlay {
             if isLoading {

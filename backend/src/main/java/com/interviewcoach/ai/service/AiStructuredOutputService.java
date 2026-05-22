@@ -6,6 +6,7 @@ import com.interviewcoach.common.api.AssessmentResultDto;
 import com.interviewcoach.common.api.DimensionScore;
 import com.interviewcoach.common.api.JobBriefDto;
 import com.interviewcoach.common.api.SkillMapItem;
+import com.interviewcoach.common.api.TrainingFeedbackDto;
 import com.interviewcoach.common.error.AiParseException;
 import org.springframework.stereotype.Service;
 
@@ -124,5 +125,41 @@ public class AiStructuredOutputService {
         if (value == null) {
             throw new IllegalArgumentException(field + " is required");
         }
+    }
+
+    public record TrainingPlanTaskItem(String title, String description) {}
+    public record TrainingPlanResult(List<TrainingPlanTaskItem> tasks) {}
+
+    public List<TrainingPlanTaskItem> generateTrainingPlan(AiPrompt prompt) {
+        TrainingPlanResult result = generateAndValidate(prompt, TrainingPlanResult.class, this::validateTrainingPlan);
+        return result.tasks();
+    }
+
+    private void validateTrainingPlan(TrainingPlanResult result) {
+        if (result.tasks() == null || result.tasks().size() < 2 || result.tasks().size() > 4) {
+            throw new IllegalArgumentException("Expected 2-4 training tasks");
+        }
+        for (TrainingPlanTaskItem task : result.tasks()) {
+            requireText(task.title(), "task.title");
+            requireText(task.description(), "task.description");
+        }
+    }
+
+    public TrainingFeedbackDto generateTrainingFeedback(AiPrompt prompt) {
+        return generateAndValidate(prompt, TrainingFeedbackDto.class, this::validateTrainingFeedback);
+    }
+
+    private void validateTrainingFeedback(TrainingFeedbackDto dto) {
+        if (dto == null) {
+            throw new IllegalArgumentException("TrainingFeedback is null");
+        }
+        if (dto.score() < 0 || dto.score() > 100) {
+            throw new IllegalArgumentException("score out of range");
+        }
+        requireText(dto.feedback(), "feedback");
+        requireText(dto.rewrittenAnswer(), "rewrittenAnswer");
+        requireText(dto.followUpQuestion(), "followUpQuestion");
+        requireList(dto.problems(), "problems");
+        requireList(dto.recommendedReviewPoints(), "recommendedReviewPoints");
     }
 }

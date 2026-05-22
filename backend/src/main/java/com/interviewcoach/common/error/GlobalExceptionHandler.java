@@ -45,6 +45,12 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("REPORT_NOT_FOUND", ex.getMessage(), generateRequestId()));
     }
 
+    @ExceptionHandler(TrainingNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleTrainingNotFound(TrainingNotFoundException ex) {
+        return ResponseEntity.status(404)
+                .body(new ErrorResponse("TRAINING_NOT_FOUND", ex.getMessage(), generateRequestId()));
+    }
+
     @ExceptionHandler(AiParseException.class)
     public ResponseEntity<ErrorResponse> handleAiParseFailed(AiParseException ex) {
         return ResponseEntity.badRequest()

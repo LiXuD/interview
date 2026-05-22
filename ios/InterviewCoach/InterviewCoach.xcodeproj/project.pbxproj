@@ -35,7 +35,8 @@
 		2A00000100000000000000D9 /* JobBriefView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C9 /* JobBriefView.swift */; };
 		2A00000100000000000000DA /* AssessmentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000CA /* AssessmentView.swift */; };
 		2A00000100000000000000DB /* AssessmentResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000CB /* AssessmentResultView.swift */; };
-/* End PBXBuildFile section */
+			2A00000100000000000000EA /* TrainingPlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000E8 /* TrainingPlanView.swift */; };
+			2A00000100000000000000EB /* TrainingTaskView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000E9 /* TrainingTaskView.swift */; };/* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		2A0000010000000000000010 /* InterviewCoach.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InterviewCoach.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -68,7 +69,8 @@
 		2A00000100000000000000C9 /* JobBriefView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobBriefView.swift; sourceTree = "<group>"; };
 		2A00000100000000000000CA /* AssessmentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssessmentView.swift; sourceTree = "<group>"; };
 		2A00000100000000000000CB /* AssessmentResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssessmentResultView.swift; sourceTree = "<group>"; };
-/* End PBXFileReference section */
+			2A00000100000000000000E8 /* TrainingPlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingPlanView.swift; sourceTree = "<group>"; };
+			2A00000100000000000000E9 /* TrainingTaskView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingTaskView.swift; sourceTree = "<group>"; };/* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		2A0000010000000000000020 /* Frameworks */ = {
@@ -172,6 +174,7 @@
 				2A00000100000000000000E5 /* Profiles */,
 				2A00000100000000000000E6 /* JobBrief */,
 				2A00000100000000000000E7 /* Assessment */,
+				2A00000100000000000000EC /* Training */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -259,6 +262,15 @@
 				2A00000100000000000000CB /* AssessmentResultView.swift */,
 			);
 			path = Assessment;
+			sourceTree = "<group>";
+		};
+		2A00000100000000000000EC /* Training */ = {
+			isa = PBXGroup;
+			children = (
+				2A00000100000000000000E8 /* TrainingPlanView.swift */,
+				2A00000100000000000000E9 /* TrainingTaskView.swift */,
+			);
+			path = Training;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -357,6 +369,8 @@
 				2A00000100000000000000D9 /* JobBriefView.swift in Sources */,
 				2A00000100000000000000DA /* AssessmentView.swift in Sources */,
 				2A00000100000000000000DB /* AssessmentResultView.swift in Sources */,
+				2A00000100000000000000EA /* TrainingPlanView.swift in Sources */,
+				2A00000100000000000000EB /* TrainingTaskView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
