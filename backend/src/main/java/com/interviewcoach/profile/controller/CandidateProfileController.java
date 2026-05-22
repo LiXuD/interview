@@ -4,10 +4,9 @@ import com.interviewcoach.common.api.CandidateProfileConfirmRequest;
 import com.interviewcoach.common.api.CandidateProfileDto;
 import com.interviewcoach.common.api.CandidateProfileDraftDto;
 import com.interviewcoach.common.api.CandidateProfileDraftRequest;
+import com.interviewcoach.common.security.SecurityUtils;
 import com.interviewcoach.profile.service.CandidateProfileService;
-import com.interviewcoach.user.entity.User;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -35,22 +34,17 @@ public class CandidateProfileController {
     @PostMapping("/confirm")
     public CandidateProfileDto confirmProfile(
             @RequestBody CandidateProfileConfirmRequest request) {
-        User user = currentUser();
-        return profileService.confirmProfile(user, request);
+        return profileService.confirmProfile(SecurityUtils.currentUser(), request);
     }
 
     @GetMapping("/current")
     public ResponseEntity<CandidateProfileDto> getCurrentProfile(
             @RequestParam("targetId") UUID targetId) {
-        User user = currentUser();
+        var user = SecurityUtils.currentUser();
         CandidateProfileDto dto = profileService.getProfileByTargetId(targetId, user.getId());
         if (dto == null) {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(dto);
-    }
-
-    private User currentUser() {
-        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 }

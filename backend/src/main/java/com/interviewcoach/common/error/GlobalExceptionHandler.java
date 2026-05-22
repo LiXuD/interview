@@ -33,6 +33,18 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("JOB_BRIEF_NOT_FOUND", ex.getMessage(), generateRequestId()));
     }
 
+    @ExceptionHandler(AssessmentNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleAssessmentNotFound(AssessmentNotFoundException ex) {
+        return ResponseEntity.status(404)
+                .body(new ErrorResponse("ASSESSMENT_NOT_FOUND", ex.getMessage(), generateRequestId()));
+    }
+
+    @ExceptionHandler(ReportNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleReportNotFound(ReportNotFoundException ex) {
+        return ResponseEntity.status(404)
+                .body(new ErrorResponse("REPORT_NOT_FOUND", ex.getMessage(), generateRequestId()));
+    }
+
     @ExceptionHandler(AiParseException.class)
     public ResponseEntity<ErrorResponse> handleAiParseFailed(AiParseException ex) {
         return ResponseEntity.badRequest()

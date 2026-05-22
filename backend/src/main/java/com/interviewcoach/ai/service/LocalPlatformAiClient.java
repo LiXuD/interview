@@ -2,6 +2,8 @@ package com.interviewcoach.ai.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.interviewcoach.common.api.AssessmentResultDto;
+import com.interviewcoach.common.api.DimensionScore;
 import com.interviewcoach.common.api.JobBriefDto;
 import com.interviewcoach.common.api.SkillMapItem;
 import org.springframework.stereotype.Component;
@@ -19,7 +21,20 @@ public class LocalPlatformAiClient implements PlatformAiClient {
 
     @Override
     public String generateJson(AiPrompt prompt) {
-        JobBriefDto dto = new JobBriefDto(
+        try {
+            return switch (prompt.task()) {
+                case "jobBrief" -> objectMapper.writeValueAsString(buildJobBrief(prompt));
+                case "assessmentQuestions" -> objectMapper.writeValueAsString(buildAssessmentQuestions(prompt));
+                case "assessmentResult" -> objectMapper.writeValueAsString(buildAssessmentResult(prompt));
+                default -> throw new IllegalStateException("Unknown task: " + prompt.task());
+            };
+        } catch (JsonProcessingException ex) {
+            throw new IllegalStateException("Failed to render local platform AI JSON", ex);
+        }
+    }
+
+    private JobBriefDto buildJobBrief(AiPrompt prompt) {
+        return new JobBriefDto(
                 prompt.targetId(),
                 "基于目标岗位 JD 和已确认候选人摘要生成的岗位画像。重点关注岗位职责、核心技能和面试风险点。",
                 List.of(
@@ -35,10 +50,32 @@ public class LocalPlatformAiClient implements PlatformAiClient {
                 List.of("候选人项目细节仍需在后续测评和模拟面试中确认"),
                 0.6
         );
-        try {
-            return objectMapper.writeValueAsString(dto);
-        } catch (JsonProcessingException ex) {
-            throw new IllegalStateException("Failed to render local platform AI JSON", ex);
-        }
+    }
+
+    private AiStructuredOutputService.AssessmentQuestionsResult buildAssessmentQuestions(AiPrompt prompt) {
+        return new AiStructuredOutputService.AssessmentQuestionsResult(List.of(
+                "请简述你在项目中使用 Spring Boot 处理高并发请求的经验，包括具体的优化手段。",
+                "在数据库设计中，你如何处理多表关联查询的性能问题？请举例说明索引策略的选择。",
+                "请描述一次你在生产环境中排查线上故障的经历，包括定位问题的过程和最终解决方案。",
+                "Redis 在你的项目中扮演了哪些角色？请分别说明缓存策略和数据一致性保证方式。",
+                "如果你要设计一个支持百万级用户的 API 系统，你会如何进行架构分层和容量规划？"
+        ));
+    }
+
+    private AssessmentResultDto buildAssessmentResult(AiPrompt prompt) {
+        return new AssessmentResultDto(
+                prompt.targetId(),
+                72,
+                List.of(
+                        new DimensionScore("Java 基础", 75, "对核心概念理解扎实，能结合项目说明使用场景"),
+                        new DimensionScore("系统设计", 70, "具备基本架构思维，但在容量规划方面需要加强"),
+                        new DimensionScore("问题排查", 80, "有实际排查经验，方法论清晰"),
+                        new DimensionScore("数据库", 65, "基本概念正确，需要深入学习索引优化和查询计划分析"),
+                        new DimensionScore("中间件", 70, "Redis 使用经验良好，但分布式场景下的一致性理解需要加强")
+                ),
+                List.of("具备实际项目经验，问题排查思路清晰", "Java 和 Spring Boot 基础扎实"),
+                List.of("系统设计能力需要加强，特别是容量规划和扩展性方面", "数据库深度优化经验不足"),
+                List.of("重点复习系统设计中的容量评估方法", "练习数据库查询优化案例", "准备分布式一致性相关面试题")
+        );
     }
 }

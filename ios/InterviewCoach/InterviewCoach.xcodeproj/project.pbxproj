@@ -20,19 +20,21 @@
 		2A000001000000000000000C /* MockInterviewDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A000001000000000000001C /* MockInterviewDTO.swift */; };
 		2A000001000000000000000D /* ReportDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A000001000000000000001D /* ReportDTO.swift */; };
 		2A000001000000000000000E /* AiProviderDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A000001000000000000001E /* AiProviderDTO.swift */; };
-			2A00000100000000000000A1 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B1 /* KeychainHelper.swift */; };
-			2A00000100000000000000A2 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B2 /* APIClient.swift */; };
-			2A00000100000000000000A3 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B3 /* AuthService.swift */; };
-			2A00000100000000000000A4 /* DevLoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B4 /* DevLoginView.swift */; };
-			2A00000100000000000000D1 /* TargetLocal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C1 /* TargetLocal.swift */; };
-			2A00000100000000000000D2 /* TargetListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C2 /* TargetListView.swift */; };
-			2A00000100000000000000D3 /* TargetCreateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C3 /* TargetCreateView.swift */; };
-			2A00000100000000000000D4 /* TargetDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C4 /* TargetDetailView.swift */; };
-			2A00000100000000000000D5 /* TargetStatusHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C5 /* TargetStatusHelper.swift */; };
-			2A00000100000000000000D6 /* CandidateProfileLocal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C6 /* CandidateProfileLocal.swift */; };
-			2A00000100000000000000D7 /* ProfileInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C7 /* ProfileInputView.swift */; };
-			2A00000100000000000000D8 /* ProfileConfirmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C8 /* ProfileConfirmView.swift */; };
-			2A00000100000000000000D9 /* JobBriefView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C9 /* JobBriefView.swift */; };
+		2A00000100000000000000A1 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B1 /* KeychainHelper.swift */; };
+		2A00000100000000000000A2 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B2 /* APIClient.swift */; };
+		2A00000100000000000000A3 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B3 /* AuthService.swift */; };
+		2A00000100000000000000A4 /* DevLoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B4 /* DevLoginView.swift */; };
+		2A00000100000000000000D1 /* TargetLocal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C1 /* TargetLocal.swift */; };
+		2A00000100000000000000D2 /* TargetListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C2 /* TargetListView.swift */; };
+		2A00000100000000000000D3 /* TargetCreateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C3 /* TargetCreateView.swift */; };
+		2A00000100000000000000D4 /* TargetDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C4 /* TargetDetailView.swift */; };
+		2A00000100000000000000D5 /* TargetStatusHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C5 /* TargetStatusHelper.swift */; };
+		2A00000100000000000000D6 /* CandidateProfileLocal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C6 /* CandidateProfileLocal.swift */; };
+		2A00000100000000000000D7 /* ProfileInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C7 /* ProfileInputView.swift */; };
+		2A00000100000000000000D8 /* ProfileConfirmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C8 /* ProfileConfirmView.swift */; };
+		2A00000100000000000000D9 /* JobBriefView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C9 /* JobBriefView.swift */; };
+		2A00000100000000000000DA /* AssessmentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000CA /* AssessmentView.swift */; };
+		2A00000100000000000000DB /* AssessmentResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000CB /* AssessmentResultView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -51,19 +53,21 @@
 		2A000001000000000000001D /* ReportDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportDTO.swift; sourceTree = "<group>"; };
 		2A000001000000000000001E /* AiProviderDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AiProviderDTO.swift; sourceTree = "<group>"; };
 		2A000001000000000000001F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-			2A00000100000000000000B1 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
-			2A00000100000000000000B2 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
-			2A00000100000000000000B3 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
-			2A00000100000000000000B4 /* DevLoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevLoginView.swift; sourceTree = "<group>"; };
-			2A00000100000000000000C1 /* TargetLocal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetLocal.swift; sourceTree = "<group>"; };
-			2A00000100000000000000C2 /* TargetListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetListView.swift; sourceTree = "<group>"; };
-			2A00000100000000000000C3 /* TargetCreateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetCreateView.swift; sourceTree = "<group>"; };
-			2A00000100000000000000C4 /* TargetDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetDetailView.swift; sourceTree = "<group>"; };
-			2A00000100000000000000C5 /* TargetStatusHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetStatusHelper.swift; sourceTree = "<group>"; };
-			2A00000100000000000000C6 /* CandidateProfileLocal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandidateProfileLocal.swift; sourceTree = "<group>"; };
-			2A00000100000000000000C7 /* ProfileInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileInputView.swift; sourceTree = "<group>"; };
-			2A00000100000000000000C8 /* ProfileConfirmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileConfirmView.swift; sourceTree = "<group>"; };
-			2A00000100000000000000C9 /* JobBriefView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobBriefView.swift; sourceTree = "<group>"; };
+		2A00000100000000000000B1 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
+		2A00000100000000000000B2 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		2A00000100000000000000B3 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		2A00000100000000000000B4 /* DevLoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevLoginView.swift; sourceTree = "<group>"; };
+		2A00000100000000000000C1 /* TargetLocal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetLocal.swift; sourceTree = "<group>"; };
+		2A00000100000000000000C2 /* TargetListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetListView.swift; sourceTree = "<group>"; };
+		2A00000100000000000000C3 /* TargetCreateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetCreateView.swift; sourceTree = "<group>"; };
+		2A00000100000000000000C4 /* TargetDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetDetailView.swift; sourceTree = "<group>"; };
+		2A00000100000000000000C5 /* TargetStatusHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetStatusHelper.swift; sourceTree = "<group>"; };
+		2A00000100000000000000C6 /* CandidateProfileLocal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandidateProfileLocal.swift; sourceTree = "<group>"; };
+		2A00000100000000000000C7 /* ProfileInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileInputView.swift; sourceTree = "<group>"; };
+		2A00000100000000000000C8 /* ProfileConfirmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileConfirmView.swift; sourceTree = "<group>"; };
+		2A00000100000000000000C9 /* JobBriefView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobBriefView.swift; sourceTree = "<group>"; };
+		2A00000100000000000000CA /* AssessmentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssessmentView.swift; sourceTree = "<group>"; };
+		2A00000100000000000000CB /* AssessmentResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssessmentResultView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -160,18 +164,19 @@
 			path = DTO;
 			sourceTree = "<group>";
 		};
-			2A0000010000000000000038 /* Features */ = {
+		2A0000010000000000000038 /* Features */ = {
 			isa = PBXGroup;
 			children = (
 				2A000001000000000000003B /* Auth */,
 				2A00000100000000000000E3 /* Targets */,
-					2A00000100000000000000E5 /* Profiles */,
-					2A00000100000000000000E6 /* JobBrief */,
+				2A00000100000000000000E5 /* Profiles */,
+				2A00000100000000000000E6 /* JobBrief */,
+				2A00000100000000000000E7 /* Assessment */,
 			);
 			path = Features;
 			sourceTree = "<group>";
 		};
-			2A0000010000000000000039 /* Security */ = {
+		2A0000010000000000000039 /* Security */ = {
 			isa = PBXGroup;
 			children = (
 				2A00000100000000000000B1 /* KeychainHelper.swift */,
@@ -179,7 +184,7 @@
 			path = Security;
 			sourceTree = "<group>";
 		};
-			2A000001000000000000003A /* Auth */ = {
+		2A000001000000000000003A /* Auth */ = {
 			isa = PBXGroup;
 			children = (
 				2A00000100000000000000B3 /* AuthService.swift */,
@@ -187,7 +192,7 @@
 			path = Auth;
 			sourceTree = "<group>";
 		};
-			2A000001000000000000003B /* Auth */ = {
+		2A000001000000000000003B /* Auth */ = {
 			isa = PBXGroup;
 			children = (
 				2A00000100000000000000B4 /* DevLoginView.swift */,
@@ -207,7 +212,7 @@
 			isa = PBXGroup;
 			children = (
 				2A00000100000000000000C1 /* TargetLocal.swift */,
-					2A00000100000000000000C6 /* CandidateProfileLocal.swift */,
+				2A00000100000000000000C6 /* CandidateProfileLocal.swift */,
 			);
 			path = LocalModels;
 			sourceTree = "<group>";
@@ -233,8 +238,8 @@
 		2A00000100000000000000E5 /* Profiles */ = {
 			isa = PBXGroup;
 			children = (
-					2A00000100000000000000C7 /* ProfileInputView.swift */,
-					2A00000100000000000000C8 /* ProfileConfirmView.swift */,
+				2A00000100000000000000C7 /* ProfileInputView.swift */,
+				2A00000100000000000000C8 /* ProfileConfirmView.swift */,
 			);
 			path = Profiles;
 			sourceTree = "<group>";
@@ -242,9 +247,18 @@
 		2A00000100000000000000E6 /* JobBrief */ = {
 			isa = PBXGroup;
 			children = (
-					2A00000100000000000000C9 /* JobBriefView.swift */,
+				2A00000100000000000000C9 /* JobBriefView.swift */,
 			);
 			path = JobBrief;
+			sourceTree = "<group>";
+		};
+		2A00000100000000000000E7 /* Assessment */ = {
+			isa = PBXGroup;
+			children = (
+				2A00000100000000000000CA /* AssessmentView.swift */,
+				2A00000100000000000000CB /* AssessmentResultView.swift */,
+			);
+			path = Assessment;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -336,11 +350,13 @@
 				2A00000100000000000000D2 /* TargetListView.swift in Sources */,
 				2A00000100000000000000D3 /* TargetCreateView.swift in Sources */,
 				2A00000100000000000000D4 /* TargetDetailView.swift in Sources */,
-					2A00000100000000000000D5 /* TargetStatusHelper.swift in Sources */,
-					2A00000100000000000000D6 /* CandidateProfileLocal.swift in Sources */,
-					2A00000100000000000000D7 /* ProfileInputView.swift in Sources */,
-					2A00000100000000000000D8 /* ProfileConfirmView.swift in Sources */,
-					2A00000100000000000000D9 /* JobBriefView.swift in Sources */,
+				2A00000100000000000000D5 /* TargetStatusHelper.swift in Sources */,
+				2A00000100000000000000D6 /* CandidateProfileLocal.swift in Sources */,
+				2A00000100000000000000D7 /* ProfileInputView.swift in Sources */,
+				2A00000100000000000000D8 /* ProfileConfirmView.swift in Sources */,
+				2A00000100000000000000D9 /* JobBriefView.swift in Sources */,
+				2A00000100000000000000DA /* AssessmentView.swift in Sources */,
+				2A00000100000000000000DB /* AssessmentResultView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

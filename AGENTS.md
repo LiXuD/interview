@@ -40,7 +40,7 @@ MVP 最窄闭环必须是：
 
 - 不得跳过 Spring Security。
 - 必须使用 Spring Security Bearer Token 拦截器链。
-- 业务接口必须从 `SecurityContextHolder` 获取当前用户。
+- 业务接口必须从 `SecurityUtils.currentUser()` 获取当前用户（封装了 `SecurityContextHolder`）。
 - 禁止在 Controller 或 Service 中硬编码用户 ID。
 - 禁止不同用户访问彼此的数据。
 

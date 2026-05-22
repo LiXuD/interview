@@ -1,10 +1,13 @@
 package com.interviewcoach.target.service;
 
+import com.interviewcoach.assessment.repository.AssessmentResultRepository;
+import com.interviewcoach.assessment.repository.AssessmentSessionRepository;
 import com.interviewcoach.common.api.InterviewTargetCreateRequest;
 import com.interviewcoach.common.api.InterviewTargetDto;
 import com.interviewcoach.common.api.InterviewTargetUpdateRequest;
 import com.interviewcoach.common.error.TargetNotFoundException;
 import com.interviewcoach.jobbrief.repository.JobBriefRepository;
+import com.interviewcoach.report.repository.ReportRepository;
 import com.interviewcoach.target.entity.InterviewTarget;
 import com.interviewcoach.profile.repository.CandidateProfileRepository;
 import com.interviewcoach.target.repository.InterviewTargetRepository;
@@ -25,13 +28,22 @@ public class InterviewTargetService {
     private final InterviewTargetRepository targetRepository;
     private final CandidateProfileRepository profileRepository;
     private final JobBriefRepository jobBriefRepository;
+    private final AssessmentResultRepository assessmentResultRepository;
+    private final AssessmentSessionRepository assessmentSessionRepository;
+    private final ReportRepository reportRepository;
 
     public InterviewTargetService(InterviewTargetRepository targetRepository,
                                   CandidateProfileRepository profileRepository,
-                                  JobBriefRepository jobBriefRepository) {
+                                  JobBriefRepository jobBriefRepository,
+                                  AssessmentResultRepository assessmentResultRepository,
+                                  AssessmentSessionRepository assessmentSessionRepository,
+                                  ReportRepository reportRepository) {
         this.targetRepository = targetRepository;
         this.profileRepository = profileRepository;
         this.jobBriefRepository = jobBriefRepository;
+        this.assessmentResultRepository = assessmentResultRepository;
+        this.assessmentSessionRepository = assessmentSessionRepository;
+        this.reportRepository = reportRepository;
     }
 
     @Transactional
@@ -83,6 +95,9 @@ public class InterviewTargetService {
     public void deleteTarget(UUID targetId, UUID userId) {
         InterviewTarget target = targetRepository.findByIdAndUserId(targetId, userId)
                 .orElseThrow(() -> new TargetNotFoundException(targetId));
+        assessmentResultRepository.deleteBySessionTargetId(targetId);
+        assessmentSessionRepository.deleteByTargetId(targetId);
+        reportRepository.deleteByTargetId(targetId);
         jobBriefRepository.deleteByTargetId(targetId);
         profileRepository.deleteByTargetId(targetId);
         targetRepository.delete(target);

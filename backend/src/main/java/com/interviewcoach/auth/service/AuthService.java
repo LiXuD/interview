@@ -1,5 +1,7 @@
 package com.interviewcoach.auth.service;
 
+import com.interviewcoach.assessment.repository.AssessmentResultRepository;
+import com.interviewcoach.assessment.repository.AssessmentSessionRepository;
 import com.interviewcoach.common.api.LoginRequest;
 import com.interviewcoach.common.api.LoginResponse;
 import com.interviewcoach.common.api.UserDto;
@@ -7,6 +9,7 @@ import com.interviewcoach.common.error.UserNotFoundException;
 import com.interviewcoach.common.security.JwtTokenProvider;
 import com.interviewcoach.jobbrief.repository.JobBriefRepository;
 import com.interviewcoach.profile.repository.CandidateProfileRepository;
+import com.interviewcoach.report.repository.ReportRepository;
 import com.interviewcoach.target.repository.InterviewTargetRepository;
 import com.interviewcoach.user.entity.User;
 import com.interviewcoach.user.repository.UserRepository;
@@ -24,16 +27,25 @@ public class AuthService {
     private final CandidateProfileRepository profileRepository;
     private final InterviewTargetRepository targetRepository;
     private final JobBriefRepository jobBriefRepository;
+    private final AssessmentResultRepository assessmentResultRepository;
+    private final AssessmentSessionRepository assessmentSessionRepository;
+    private final ReportRepository reportRepository;
 
     public AuthService(UserRepository userRepository, JwtTokenProvider jwtTokenProvider,
                        CandidateProfileRepository profileRepository,
                        InterviewTargetRepository targetRepository,
-                       JobBriefRepository jobBriefRepository) {
+                       JobBriefRepository jobBriefRepository,
+                       AssessmentResultRepository assessmentResultRepository,
+                       AssessmentSessionRepository assessmentSessionRepository,
+                       ReportRepository reportRepository) {
         this.userRepository = userRepository;
         this.jwtTokenProvider = jwtTokenProvider;
         this.profileRepository = profileRepository;
         this.targetRepository = targetRepository;
         this.jobBriefRepository = jobBriefRepository;
+        this.assessmentResultRepository = assessmentResultRepository;
+        this.assessmentSessionRepository = assessmentSessionRepository;
+        this.reportRepository = reportRepository;
     }
 
     @Transactional
@@ -61,6 +73,9 @@ public class AuthService {
 
     @Transactional
     public void deleteUser(UUID userId) {
+        assessmentResultRepository.deleteBySessionUserId(userId);
+        assessmentSessionRepository.deleteByUserId(userId);
+        reportRepository.deleteByUserId(userId);
         jobBriefRepository.deleteByUserId(userId);
         profileRepository.deleteByUserId(userId);
         targetRepository.deleteByUserId(userId);

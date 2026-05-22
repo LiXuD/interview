@@ -67,6 +67,8 @@ interview/
 ├── docs/
 │   ├── api/
 │   │   └── openapi.yaml
+│   ├── privacy/
+│   │   └── data-policy.md
 │   └── product/
 │       └── vibecoding-development-plan.md
 ├── ios/
@@ -76,7 +78,7 @@ interview/
 └── scripts/
 ```
 
-当前仓库已完成 Task 1-4：Walking Skeleton、OpenAPI 契约与 DTO、Dev Login 认证链路、Target CRUD。后续按任务顺序继续推进 CandidateProfile 隐私链路。
+当前仓库已完成 Task 1-7：Walking Skeleton、OpenAPI 契约与 DTO、Dev Login 认证链路、Target CRUD、CandidateProfile 隐私链路、Platform AI + JobBrief、Assessment 5 题测评。后续按任务顺序继续推进 TrainingPlan 1 天任务。
 
 ## 开发计划
 
@@ -127,7 +129,7 @@ interview/
 
 ## 当前状态
 
-当前阶段：Task 5 CandidateProfile 隐私链路已完成，下一步 Task 6 Platform AI + JobBrief。
+当前阶段：Task 7 Assessment 5 题测评已完成，下一步 Task 8 TrainingPlan 1 天任务。
 
 已完成：
 
@@ -147,7 +149,15 @@ interview/
 - Task 5：后端 ProfileNotFoundException、隐私约束（原文内存使用、不记录日志）。
 - Task 5：iOS CandidateProfileLocal SwiftData 模型、ProfileInputView、ProfileConfirmView。
 - Task 5：docs/privacy/data-policy.md 隐私文档。
+- Task 6：后端 PlatformAiClient 接口 + LocalPlatformAiClient（stub）、AiStructuredOutputService（generateJobBrief + retry）。
+- Task 6：后端 JobBrief 实体、Repository、Service、Controller（2 个端点）、6 个集成测试。
+- Task 6：iOS JobBriefView（岗位画像展示 + 重新生成）。
+- Task 7：后端 AssessmentSession/AssessmentResult/Report 实体、AssessmentDimension @Embeddable。
+- Task 7：后端 AssessmentService（start/answer/finish 流程 + 状态机）、AssessmentController（4 端点）。
+- Task 7：后端 ReportService/ReportController、6 个集成测试。
+- Task 7：iOS AssessmentView（答题流程）、AssessmentResultView（评分展示）。
+- 代码清理：提取 SecurityUtils.currentUser()、AI 泛型重试方法、ReportNotFoundException。
 
 尚未创建：
 
-- AI、测评、训练和模拟面试业务模块。
+- 训练和模拟面试业务模块。
