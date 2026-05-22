@@ -523,6 +523,22 @@ Report 来源：
 
 ## 3. Vibecoding Task Plan
 
+任务总览：
+
+1. Walking Skeleton：iOS 启动、后端 health、iOS 调通后端。
+2. OpenAPI 与基础 DTO：建立 `docs/api/openapi.yaml`，锁定 camelCase DTO。
+3. Dev Login：Spring Security Bearer Token、`SecurityContextHolder`、Keychain。
+4. Target CRUD：岗位目标完整闭环。
+5. CandidateProfile 隐私链路：本地原文、临时上传、确认摘要、远端只存摘要。
+6. Platform AI + JobBrief：第一个 AI 结构化输出完整跑通。
+7. Assessment：5 题测评、评分、`Report(type=assessment)`。
+8. TrainingPlan：基于短板生成 1 天任务。
+9. MockInterview：文字面试、最近 6 轮上下文限制、`Report(type=mockInterview)`。
+10. User OpenAI Provider：OpenAI-compatible Provider、加密 API Key、连接测试。
+11. Delete Account：删除远端数据，清空 SwiftData 和 Keychain。
+12. TestFlight Polish：空状态、加载状态、错误提示、隐私说明、首次使用引导。
+13. Sign in with Apple：TestFlight 提审前置认证任务，不属于 Task1-12 MVP 功能闭环。
+
 ### Task 1: Walking Skeleton
 
 目标：打通 iOS -> 后端。
@@ -824,9 +840,56 @@ Report 来源：
 - 无明显崩溃。
 - 用户知道什么时候数据会发送给 AI。
 
+### Task 13: Sign in with Apple
+
+目标：完成 TestFlight 提审前置认证任务。
+
+说明：
+
+- Task13 不属于 Task1-12 MVP 功能闭环。
+- Task13 不改变 Task1-12 MVP 功能闭环验收结论。
+- Task13 只解决 TestFlight 提审前的正式登录入口问题。
+
+范围：
+
+- `POST /api/auth/apple`。
+- 后端真实校验 Apple `identityToken`。
+- iOS Release 使用原生 Sign in with Apple 登录。
+- iOS Debug 保留 dev login 入口。
+- 生产/TestFlight 环境关闭 dev login。
+- 更新 OpenAPI 与必要配置文档。
+
+文件边界：
+
+- `backend/src/main/java/com/interviewcoach/auth`
+- `backend/src/main/java/com/interviewcoach/common/security`
+- `backend/src/main/java/com/interviewcoach/common/api`
+- `docs/api/openapi.yaml`
+- `ios/InterviewCoach/InterviewCoach/Core/Auth`
+- `ios/InterviewCoach/InterviewCoach/Features/Auth`
+- iOS entitlement 与 project 配置。
+
+验收：
+
+- 有效 Apple 登录成功，后端返回现有 `LoginResponse`。
+- 错误 token、issuer、audience、nonce 均登录失败。
+- Release 构建不显示 dev login。
+- Debug 构建保留 dev login。
+- 后续业务接口继续使用 `Authorization: Bearer <token>`。
+- 删除账号逻辑不变，仍清理远端数据、本地 SwiftData 和 Keychain。
+
+限制：
+
+- 不做 Apple authorization code exchange。
+- 不保存 Apple refresh token。
+- 不实现 OAuth revoke 生命周期。
+- 不做 dev 账号与 Apple 账号自动合并。
+
 ---
 
 ## 4. 最终 MVP 验收路径
+
+Task1-12 的最终验收仍按 MVP 功能闭环执行；Task13 是 TestFlight 提审前置认证任务，不改变 MVP 功能闭环验收路径。
 
 最终只按这一条路径验收：
 
