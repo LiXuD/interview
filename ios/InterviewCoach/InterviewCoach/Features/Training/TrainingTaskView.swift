@@ -144,6 +144,7 @@ struct TrainingTaskView: View {
         }
     }
 
+    @MainActor
     private func submitAnswer() async {
         isLoading = true
         errorMessage = nil
@@ -169,6 +170,7 @@ struct TrainingTaskView: View {
         isLoading = false
     }
 
+    @MainActor
     private func completeTask() async {
         isLoading = true
         errorMessage = nil
