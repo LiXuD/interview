@@ -7,6 +7,7 @@ import com.interviewcoach.common.api.AppleLoginRequest;
 import com.interviewcoach.common.api.LoginRequest;
 import com.interviewcoach.common.api.LoginResponse;
 import com.interviewcoach.common.api.UserDto;
+import com.interviewcoach.common.error.AppleAuthFailedException;
 import com.interviewcoach.common.error.UserNotFoundException;
 import com.interviewcoach.common.security.AppleTokenVerifier;
 import com.interviewcoach.common.security.JwtTokenProvider;
@@ -83,9 +84,9 @@ public class AuthService {
 
     public LoginResponse appleLogin(AppleLoginRequest request) {
         if (request.identityToken() == null || request.identityToken().isBlank()) {
-            throw new IllegalArgumentException("identityToken is required");
+            throw new AppleAuthFailedException("identityToken is required");
         }
-        String appleUserId = appleTokenVerifier.verifyAndGetSub(request.identityToken());
+        String appleUserId = appleTokenVerifier.verifyAndGetSub(request.identityToken(), request.nonce());
         return findOrCreateAppleUser(appleUserId, request.fullName());
     }
 
@@ -94,10 +95,7 @@ public class AuthService {
         User user = userRepository.findByAppleUserId(appleUserId)
                 .orElseGet(() -> {
                     User newUser = new User();
-                    String username = fullName;
-                    if (username == null || username.isBlank()) {
-                        username = "用户" + appleUserId.substring(0, Math.min(6, appleUserId.length()));
-                    }
+                    String username = "用户" + appleUserId.substring(0, Math.min(6, appleUserId.length()));
                     try {
                         newUser.setUsername(username);
                         newUser.setAppleUserId(appleUserId);

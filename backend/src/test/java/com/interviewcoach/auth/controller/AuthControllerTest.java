@@ -103,23 +103,23 @@ class AuthControllerTest {
 
     @Test
     void appleLoginEndpointIsAccessibleWithoutAuth() throws Exception {
-        AppleLoginRequest request = new AppleLoginRequest("invalid-token", null);
+        AppleLoginRequest request = new AppleLoginRequest("invalid-token", null, null);
 
         mockMvc.perform(post("/api/auth/apple")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").exists());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("APPLE_AUTH_FAILED"));
     }
 
     @Test
-    void appleLoginWithEmptyTokenReturns400() throws Exception {
-        AppleLoginRequest request = new AppleLoginRequest("", null);
+    void appleLoginWithEmptyTokenReturns401() throws Exception {
+        AppleLoginRequest request = new AppleLoginRequest("", null, null);
 
         mockMvc.perform(post("/api/auth/apple")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("APPLE_AUTH_FAILED"));
     }
 }

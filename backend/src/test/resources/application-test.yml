@@ -13,6 +13,8 @@ spring:
         dialect: org.hibernate.dialect.H2Dialect
 
 app:
+  auth:
+    dev-login-enabled: true
   jwt:
     secret: dGVzdC1zZWNyZXQta2V5LWZvci11bml0LXRlc3RzLW9ubHktMzJieXRlcw==
     expiration-ms: 3600000

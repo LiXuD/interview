@@ -18,4 +18,5 @@ struct UserDTO: Decodable, Equatable {
 struct AppleLoginRequestDTO: Encodable {
   let identityToken: String
   let fullName: String?
+  let nonce: String?
 }

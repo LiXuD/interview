@@ -24,8 +24,8 @@ final class AuthService: ObservableObject {
         await performLogin(path: "/api/auth/dev-login", body: LoginRequestDTO(username: username))
     }
 
-    func appleLogin(identityToken: String, fullName: String?) async {
-        await performLogin(path: "/api/auth/apple", body: AppleLoginRequestDTO(identityToken: identityToken, fullName: fullName))
+    func appleLogin(identityToken: String, fullName: String?, nonce: String? = nil) async {
+        await performLogin(path: "/api/auth/apple", body: AppleLoginRequestDTO(identityToken: identityToken, fullName: fullName, nonce: nonce))
     }
 
     private func performLogin<Body: Encodable>(path: String, body: Body) async {

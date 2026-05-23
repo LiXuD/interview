@@ -1,4 +1,4 @@
 package com.interviewcoach.common.api;
 
-public record AppleLoginRequest(String identityToken, String fullName) {
+public record AppleLoginRequest(String identityToken, String fullName, String nonce) {
 }

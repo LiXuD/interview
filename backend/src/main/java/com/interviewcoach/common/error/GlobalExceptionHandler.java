@@ -75,6 +75,12 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("AI_PARSE_FAILED", ex.getMessage(), generateRequestId()));
     }
 
+    @ExceptionHandler(AppleAuthFailedException.class)
+    public ResponseEntity<ErrorResponse> handleAppleAuthFailed(AppleAuthFailedException ex) {
+        return ResponseEntity.status(401)
+                .body(new ErrorResponse("APPLE_AUTH_FAILED", ex.getMessage(), generateRequestId()));
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(IllegalArgumentException ex) {
         return ResponseEntity.badRequest()
