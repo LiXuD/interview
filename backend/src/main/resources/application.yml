@@ -20,3 +20,5 @@ app:
     expiration-ms: 604800000
   ai:
     encryption-key: ZGV2LWFpLWVuY3J5cHRpb24ta2V5LTMyLWJ5dGVzISE=
+  apple:
+    services-id: com.interviewcoach.app

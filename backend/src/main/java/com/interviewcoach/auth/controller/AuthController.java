@@ -1,6 +1,7 @@
 package com.interviewcoach.auth.controller;
 
 import com.interviewcoach.auth.service.AuthService;
+import com.interviewcoach.common.api.AppleLoginRequest;
 import com.interviewcoach.common.api.LoginRequest;
 import com.interviewcoach.common.api.LoginResponse;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,11 @@ public class AuthController {
     @PostMapping("/dev-login")
     public LoginResponse devLogin(@RequestBody LoginRequest request) {
         return authService.devLogin(request);
+    }
+
+    @PostMapping("/apple")
+    public LoginResponse appleLogin(@RequestBody AppleLoginRequest request) {
+        return authService.appleLogin(request);
     }
 
     @PostMapping("/logout")

@@ -15,6 +15,12 @@ public class User {
     @Column(unique = true, nullable = false)
     private String username;
 
+    @Column(unique = true)
+    private String appleUserId;
+
+    @Column
+    private String email;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -39,5 +45,21 @@ public class User {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public String getAppleUserId() {
+        return appleUserId;
+    }
+
+    public void setAppleUserId(String appleUserId) {
+        this.appleUserId = appleUserId;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }

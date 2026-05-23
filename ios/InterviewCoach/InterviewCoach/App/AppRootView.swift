@@ -50,7 +50,7 @@ struct AppRootView: View {
             OnboardingView(hasCompletedOnboarding: $hasCompletedOnboarding)
           }
       } else {
-        DevLoginView(authService: authService)
+        LoginView(authService: authService)
       }
     }
     .task {

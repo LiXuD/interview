@@ -3,10 +3,12 @@ package com.interviewcoach.auth.service;
 import com.interviewcoach.ai.repository.AiProviderRepository;
 import com.interviewcoach.assessment.repository.AssessmentResultRepository;
 import com.interviewcoach.assessment.repository.AssessmentSessionRepository;
+import com.interviewcoach.common.api.AppleLoginRequest;
 import com.interviewcoach.common.api.LoginRequest;
 import com.interviewcoach.common.api.LoginResponse;
 import com.interviewcoach.common.api.UserDto;
 import com.interviewcoach.common.error.UserNotFoundException;
+import com.interviewcoach.common.security.AppleTokenVerifier;
 import com.interviewcoach.common.security.JwtTokenProvider;
 import com.interviewcoach.jobbrief.repository.JobBriefRepository;
 import com.interviewcoach.mockinterview.repository.MockInterviewRepository;
@@ -27,6 +29,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final AppleTokenVerifier appleTokenVerifier;
     private final CandidateProfileRepository profileRepository;
     private final InterviewTargetRepository targetRepository;
     private final JobBriefRepository jobBriefRepository;
@@ -38,6 +41,7 @@ public class AuthService {
     private final AiProviderRepository aiProviderRepository;
 
     public AuthService(UserRepository userRepository, JwtTokenProvider jwtTokenProvider,
+                       AppleTokenVerifier appleTokenVerifier,
                        CandidateProfileRepository profileRepository,
                        InterviewTargetRepository targetRepository,
                        JobBriefRepository jobBriefRepository,
@@ -49,6 +53,7 @@ public class AuthService {
                        AiProviderRepository aiProviderRepository) {
         this.userRepository = userRepository;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.appleTokenVerifier = appleTokenVerifier;
         this.profileRepository = profileRepository;
         this.targetRepository = targetRepository;
         this.jobBriefRepository = jobBriefRepository;
@@ -70,6 +75,31 @@ public class AuthService {
                         return userRepository.save(newUser);
                     } catch (DataIntegrityViolationException e) {
                         return userRepository.findByUsername(request.username()).orElseThrow();
+                    }
+                });
+        String token = jwtTokenProvider.generateToken(user.getId());
+        return new LoginResponse(token, user.getId().toString(), user.getUsername());
+    }
+
+    @Transactional
+    public LoginResponse appleLogin(AppleLoginRequest request) {
+        if (request.identityToken() == null || request.identityToken().isBlank()) {
+            throw new IllegalArgumentException("identityToken is required");
+        }
+        String appleUserId = appleTokenVerifier.verifyAndGetSub(request.identityToken());
+        User user = userRepository.findByAppleUserId(appleUserId)
+                .orElseGet(() -> {
+                    User newUser = new User();
+                    String username = request.fullName();
+                    if (username == null || username.isBlank()) {
+                        username = "用户" + appleUserId.substring(0, Math.min(6, appleUserId.length()));
+                    }
+                    try {
+                        newUser.setUsername(username);
+                        newUser.setAppleUserId(appleUserId);
+                        return userRepository.save(newUser);
+                    } catch (DataIntegrityViolationException e) {
+                        return userRepository.findByAppleUserId(appleUserId).orElseThrow();
                     }
                 });
         String token = jwtTokenProvider.generateToken(user.getId());

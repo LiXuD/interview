@@ -1,6 +1,7 @@
 package com.interviewcoach.auth.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.interviewcoach.common.api.AppleLoginRequest;
 import com.interviewcoach.common.api.LoginRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,5 +99,27 @@ class AuthControllerTest {
         mockMvc.perform(get("/api/health"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("UP"));
+    }
+
+    @Test
+    void appleLoginEndpointIsAccessibleWithoutAuth() throws Exception {
+        AppleLoginRequest request = new AppleLoginRequest("invalid-token", null);
+
+        mockMvc.perform(post("/api/auth/apple")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").exists());
+    }
+
+    @Test
+    void appleLoginWithEmptyTokenReturns400() throws Exception {
+        AppleLoginRequest request = new AppleLoginRequest("", null);
+
+        mockMvc.perform(post("/api/auth/apple")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
     }
 }

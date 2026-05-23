@@ -49,6 +49,7 @@
 			2A0000010000000000000109 /* ReportListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000108 /* ReportListView.swift */; };
 			2A000001000000000000010B /* ReportDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A000001000000000000010A /* ReportDetailView.swift */; };
 			2A000001000000000000010C /* DateHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A000001000000000000010D /* DateHelper.swift */; };
+			2A0000010000000000000110 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000111 /* LoginView.swift */; };
 /* End PBXBuildFile section */
 /* Begin PBXFileReference section */
 		2A0000010000000000000010 /* InterviewCoach.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InterviewCoach.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -95,6 +96,8 @@
 			2A0000010000000000000108 /* ReportListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportListView.swift; sourceTree = "<group>"; };
 			2A000001000000000000010A /* ReportDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportDetailView.swift; sourceTree = "<group>"; };
 			2A000001000000000000010D /* DateHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateHelper.swift; sourceTree = "<group>"; };
+			2A0000010000000000000111 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+			2A0000010000000000000112 /* InterviewCoach.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = InterviewCoach.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 /* Begin PBXFrameworksBuildPhase section */
 		2A0000010000000000000020 /* Frameworks */ = {
@@ -111,6 +114,7 @@
 			isa = PBXGroup;
 			children = (
 				2A0000010000000000000031 /* InterviewCoach */,
+				2A0000010000000000000112 /* InterviewCoach.entitlements */,
 				2A0000010000000000000032 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -226,6 +230,7 @@
 		2A000001000000000000003B /* Auth */ = {
 			isa = PBXGroup;
 			children = (
+				2A0000010000000000000111 /* LoginView.swift */,
 				2A00000100000000000000B4 /* DevLoginView.swift */,
 			);
 			path = Auth;
@@ -451,6 +456,7 @@
 					2A0000010000000000000109 /* ReportListView.swift in Sources */,
 					2A000001000000000000010B /* ReportDetailView.swift in Sources */,
 					2A000001000000000000010C /* DateHelper.swift in Sources */,
+					2A0000010000000000000110 /* LoginView.swift in Sources */,
 				);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -576,6 +582,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = InterviewCoach.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
@@ -600,6 +607,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = InterviewCoach.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
