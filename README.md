@@ -78,7 +78,7 @@ interview/
 └── scripts/
 ```
 
-当前仓库已完成 Task 1-12：Walking Skeleton、OpenAPI 契约与 DTO、Dev Login 认证链路、Target CRUD、CandidateProfile 隐私链路、Platform AI + JobBrief、Assessment 5 题测评、TrainingPlan 1 天任务、MockInterview 文字模拟面试、User OpenAI Provider、Delete Account、TestFlight Polish。MVP 闭环已全部打通。
+当前仓库已完成 Task 1-13：Walking Skeleton、OpenAPI 契约与 DTO、Dev Login 认证链路、Target CRUD、CandidateProfile 隐私链路、Platform AI + JobBrief、Assessment 5 题测评、TrainingPlan 1 天任务、MockInterview 文字模拟面试、User OpenAI Provider、Delete Account、TestFlight Polish、Sign in with Apple。MVP 闭环已全部打通。
 
 ## 开发计划
 
@@ -100,6 +100,7 @@ interview/
 10. User OpenAI Provider
 11. Delete Account
 12. TestFlight Polish
+13. Sign in with Apple
 
 ## 开发约束
 
@@ -129,7 +130,7 @@ interview/
 
 ## 当前状态
 
-当前阶段：Task 12 TestFlight Polish 已完成，MVP 闭环全部打通（Task 1-12）。
+当前阶段：Task 13 Sign in with Apple 已完成，MVP 闭环全部打通（Task 1-13）。
 
 已完成：
 
@@ -175,7 +176,16 @@ interview/
 - Task 11：iOS AuthService 新增 deleteAccount() 方法（调用 DELETE /api/me 后 logout 清除本地数据）。
 - Task 11：iOS SettingsView 新增删除账号区域 + confirmationDialog 二次确认。
 - Task 11：后端 9 个测试通过（deleteMeWithValidTokenReturns204 + deleteUserAfterProfileConfirmSucceeds）。
+- Task 13：后端 User 实体新增 appleUserId（unique）+ email 字段。
+- Task 13：后端 AppleTokenVerifier（ES256 JWT 验证 + JWKS 缓存 1 小时 TTL）。
+- Task 13：后端 AppleLoginRequest DTO、AuthService.appleLogin() + findOrCreateAppleUser()。
+- Task 13：后端 AuthController POST /api/auth/apple 端点、SecurityConfig permitAll。
+- Task 13：后端 2 个新测试（端点可达性 + 空 token 返回 400），全部 54 测试通过。
+- Task 13：iOS LoginView（SignInWithAppleButton + #if DEBUG dev login 入口）。
+- Task 13：iOS AuthService.appleLogin()、AppleLoginRequestDTO、performLogin 通用方法。
+- Task 13：iOS InterviewCoach.entitlements（com.apple.developer.applesignin）。
+- Task 13：OpenAPI 新增 /api/auth/apple 路径和 AppleLoginRequest schema。
 
 尚未创建：
 
-- 无（Task 1-11 全部完成）。
+- 无（Task 1-13 全部完成）。

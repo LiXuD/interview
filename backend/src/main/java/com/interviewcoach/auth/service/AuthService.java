@@ -81,16 +81,20 @@ public class AuthService {
         return new LoginResponse(token, user.getId().toString(), user.getUsername());
     }
 
-    @Transactional
     public LoginResponse appleLogin(AppleLoginRequest request) {
         if (request.identityToken() == null || request.identityToken().isBlank()) {
             throw new IllegalArgumentException("identityToken is required");
         }
         String appleUserId = appleTokenVerifier.verifyAndGetSub(request.identityToken());
+        return findOrCreateAppleUser(appleUserId, request.fullName());
+    }
+
+    @Transactional
+    LoginResponse findOrCreateAppleUser(String appleUserId, String fullName) {
         User user = userRepository.findByAppleUserId(appleUserId)
                 .orElseGet(() -> {
                     User newUser = new User();
-                    String username = request.fullName();
+                    String username = fullName;
                     if (username == null || username.isBlank()) {
                         username = "用户" + appleUserId.substring(0, Math.min(6, appleUserId.length()));
                     }

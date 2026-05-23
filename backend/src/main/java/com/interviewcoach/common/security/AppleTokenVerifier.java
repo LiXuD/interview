@@ -46,7 +46,7 @@ public class AppleTokenVerifier {
 
     public String verifyAndGetSub(String identityToken) {
         try {
-            ensureKeysLoaded();
+            ensureKeysLoaded(false);
             Claims claims = Jwts.parser()
                     .verifyWith(resolveKey(identityToken))
                     .requireIssuer(APPLE_ISSUER)
@@ -64,9 +64,7 @@ public class AppleTokenVerifier {
         String kid = extractKid(token);
         PublicKey key = keyCache.get(kid);
         if (key == null) {
-            // Keys may have been rotated, force reload
-            cacheExpiry = Instant.MIN;
-            ensureKeysLoaded();
+            ensureKeysLoaded(true);
             key = keyCache.get(kid);
         }
         if (key == null) {
@@ -93,8 +91,8 @@ public class AppleTokenVerifier {
         }
     }
 
-    private synchronized void ensureKeysLoaded() {
-        if (Instant.now().isBefore(cacheExpiry) && !keyCache.isEmpty()) {
+    private synchronized void ensureKeysLoaded(boolean force) {
+        if (!force && Instant.now().isBefore(cacheExpiry) && !keyCache.isEmpty()) {
             return;
         }
         try {
@@ -111,14 +109,12 @@ public class AppleTokenVerifier {
             if (keys == null || !keys.isArray()) {
                 throw new IllegalArgumentException("Invalid JWKS response");
             }
-            Map<String, PublicKey> newKeys = new ConcurrentHashMap<>();
+            keyCache.clear();
             for (JsonNode jwk : keys) {
                 String kid = jwk.get("kid").asText();
                 PublicKey publicKey = parseEcPublicKey(jwk);
-                newKeys.put(kid, publicKey);
+                keyCache.put(kid, publicKey);
             }
-            keyCache.clear();
-            keyCache.putAll(newKeys);
             cacheExpiry = Instant.now().plusSeconds(3600);
         } catch (IllegalArgumentException e) {
             throw e;
@@ -143,7 +139,7 @@ public class AppleTokenVerifier {
             KeyFactory keyFactory = KeyFactory.getInstance("EC");
             return keyFactory.generatePublic(spec);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to parse Apple EC public key", e);
+            throw new IllegalArgumentException("Failed to parse Apple EC public key", e);
         }
     }
 

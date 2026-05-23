@@ -260,6 +260,7 @@ dto/
 - OpenAI Provider：主要改 `backend/src/main/java/com/interviewcoach/ai`、`ios/InterviewCoach/InterviewCoach/Features/Settings`。
 - Delete Account：主要改 `backend/src/main/java/com/interviewcoach/user`、`backend/src/main/java/com/interviewcoach/auth`、`ios/InterviewCoach/InterviewCoach/Core/Auth`、`ios/InterviewCoach/InterviewCoach/Core/Storage`。
 - TestFlight Polish：只允许改 `ios/InterviewCoach/InterviewCoach/Core/UI`（共享组件）、`ios/InterviewCoach/InterviewCoach/Features`（各 View 替换 LoadingOverlay/ErrorBanner）、`ios/InterviewCoach/InterviewCoach/Features/Onboarding`（首次引导）、`ios/InterviewCoach/InterviewCoach/Features/Reports`（报告查看）、`ios/InterviewCoach/InterviewCoach/Features/Settings/PrivacyPolicyView.swift`（隐私政策）。
+- Sign in with Apple：主要改 `backend/src/main/java/com/interviewcoach/auth`、`backend/src/main/java/com/interviewcoach/common/security`（新增 AppleTokenVerifier）、`backend/src/main/java/com/interviewcoach/common/api`（新增 AppleLoginRequest）、`backend/src/main/java/com/interviewcoach/user`（User 新增 appleUserId）、`ios/InterviewCoach/InterviewCoach/Core/Auth`、`ios/InterviewCoach/InterviewCoach/Core/API/DTO`、`ios/InterviewCoach/InterviewCoach/Features/Auth`（新建 LoginView）、`docs/api/openapi.yaml`。
 
 禁止为了一个任务横跨无关模块做大改。若确实需要跨越上述边界，必须先说明原因、风险和替代方案，并等待用户确认。
 
@@ -528,6 +529,7 @@ Report API：
 10. User OpenAI Provider：OpenAI-compatible Provider、加密 API Key、连接测试。
 11. Delete Account：删除远端数据，清空 SwiftData 和 Keychain。
 12. TestFlight Polish：空状态、加载状态、错误提示、隐私说明、首次使用引导。
+13. Sign in with Apple：Apple 登录链路、TestFlight 提审前置认证。
 
 ## 15. 每次任务输出格式
 

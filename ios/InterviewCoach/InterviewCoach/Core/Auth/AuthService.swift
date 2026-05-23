@@ -21,32 +21,21 @@ final class AuthService: ObservableObject {
     }
 
     func devLogin(username: String) async {
-        isLoading = true
-        errorMessage = nil
-        do {
-            let response: LoginResponseDTO = try await apiClient.request(
-                "POST",
-                path: "/api/auth/dev-login",
-                body: LoginRequestDTO(username: username),
-                authorized: false
-            )
-            KeychainHelper.saveToken(response.token)
-            currentUser = UserDTO(id: response.userId, username: response.username)
-            isAuthenticated = true
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-        isLoading = false
+        await performLogin(path: "/api/auth/dev-login", body: LoginRequestDTO(username: username))
     }
 
     func appleLogin(identityToken: String, fullName: String?) async {
+        await performLogin(path: "/api/auth/apple", body: AppleLoginRequestDTO(identityToken: identityToken, fullName: fullName))
+    }
+
+    private func performLogin<Body: Encodable>(path: String, body: Body) async {
         isLoading = true
         errorMessage = nil
         do {
             let response: LoginResponseDTO = try await apiClient.request(
                 "POST",
-                path: "/api/auth/apple",
-                body: AppleLoginRequestDTO(identityToken: identityToken, fullName: fullName),
+                path: path,
+                body: body,
                 authorized: false
             )
             KeychainHelper.saveToken(response.token)

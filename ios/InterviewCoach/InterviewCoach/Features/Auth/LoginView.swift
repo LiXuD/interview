@@ -88,7 +88,7 @@ struct LoginView: View {
                 await authService.appleLogin(identityToken: identityToken, fullName: fullName)
             }
         case .failure(let error):
-            if (error as NSError).code != ASAuthorizationError.canceled.rawValue {
+            if (error as? ASAuthorizationError)?.code != .canceled {
                 authService.errorMessage = error.localizedDescription
             }
         }
