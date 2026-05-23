@@ -801,6 +801,7 @@ components:
       type: object
       required:
         - identityToken
+        - nonce
       properties:
         identityToken:
           type: string

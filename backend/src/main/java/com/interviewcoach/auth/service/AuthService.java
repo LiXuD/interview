@@ -86,6 +86,9 @@ public class AuthService {
         if (request.identityToken() == null || request.identityToken().isBlank()) {
             throw new AppleAuthFailedException("identityToken is required");
         }
+        if (request.nonce() == null || request.nonce().isBlank()) {
+            throw new AppleAuthFailedException("nonce is required");
+        }
         String appleUserId = appleTokenVerifier.verifyAndGetSub(request.identityToken(), request.nonce());
         return findOrCreateAppleUser(appleUserId, request.fullName());
     }

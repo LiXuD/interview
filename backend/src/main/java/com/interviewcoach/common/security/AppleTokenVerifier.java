@@ -56,15 +56,13 @@ public class AppleTokenVerifier {
                     .parseSignedClaims(identityToken)
                     .getPayload();
 
-            if (rawNonce != null && !rawNonce.isBlank()) {
-                String tokenNonce = claims.get("nonce", String.class);
-                if (tokenNonce == null) {
-                    throw new AppleAuthFailedException("Apple identity token missing nonce claim");
-                }
-                String hashedNonce = hashNonce(rawNonce);
-                if (!tokenNonce.equals(hashedNonce)) {
-                    throw new AppleAuthFailedException("Nonce mismatch");
-                }
+            String tokenNonce = claims.get("nonce", String.class);
+            if (tokenNonce == null) {
+                throw new AppleAuthFailedException("Apple identity token missing nonce claim");
+            }
+            String hashedNonce = hashNonce(rawNonce);
+            if (!tokenNonce.equals(hashedNonce)) {
+                throw new AppleAuthFailedException("Nonce mismatch");
             }
 
             return claims.getSubject();
