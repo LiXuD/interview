@@ -95,7 +95,7 @@ public class AuthService {
         User user = userRepository.findByAppleUserId(appleUserId)
                 .orElseGet(() -> {
                     User newUser = new User();
-                    String username = "用户" + appleUserId.substring(0, Math.min(6, appleUserId.length()));
+                    String username = "apple_" + appleUserId;
                     try {
                         newUser.setUsername(username);
                         newUser.setAppleUserId(appleUserId);

@@ -806,6 +806,9 @@ components:
           type: string
         fullName:
           type: string
+        nonce:
+          type: string
+          description: raw nonce for replay protection; backend SHA256 hashes it and compares against the JWT nonce claim
 
     LoginResponse:
       type: object
