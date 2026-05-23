@@ -23,6 +23,7 @@ struct LoginView: View {
             Spacer()
 
             SignInWithAppleButton(.signIn) { request in
+                guard currentRawNonce == nil else { return }
                 request.requestedScopes = [.fullName]
                 let rawNonce = generateNonce()
                 currentRawNonce = rawNonce

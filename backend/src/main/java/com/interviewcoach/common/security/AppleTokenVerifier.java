@@ -155,17 +155,20 @@ public class AppleTokenVerifier {
         }
     }
 
+    private static final char[] HEX = "0123456789abcdef".toCharArray();
+
     private String hashNonce(String nonce) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(nonce.getBytes(StandardCharsets.UTF_8));
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hash) {
-                sb.append(String.format("%02x", b));
+            char[] hex = new char[hash.length * 2];
+            for (int i = 0; i < hash.length; i++) {
+                hex[i * 2] = HEX[(hash[i] >> 4) & 0x0F];
+                hex[i * 2 + 1] = HEX[hash[i] & 0x0F];
             }
-            return sb.toString();
+            return new String(hex);
         } catch (NoSuchAlgorithmException e) {
-            throw new AppleAuthFailedException("Failed to hash nonce", e);
+            throw new AssertionError("SHA-256 not available", e);
         }
     }
 }
