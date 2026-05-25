@@ -62,6 +62,11 @@ iOS Simulator
 - `app.auth.dev-login-enabled: true`
 - `app.jwt.secret`
 - `app.ai.encryption-key`
+- `app.ai.platform.enabled`（默认 `false`，启用平台真实 AI 设为 `true`）
+- `app.ai.platform.base-url`（通过 `${IC_PLATFORM_AI_BASE_URL:}` 注入）
+- `app.ai.platform.api-key`（通过 `${IC_PLATFORM_AI_API_KEY:}` 注入）
+- `app.ai.platform.model`（通过 `${IC_PLATFORM_AI_MODEL:}` 注入）
+- `app.ai.platform.mode`（通过 `${IC_PLATFORM_AI_MODE:chatCompletions}` 注入）
 - `app.apple.services-id`
 
 ### 2.2 常用启动命令
@@ -210,8 +215,11 @@ AI 模块是后端唯一允许接触模型原始响应的地方。
 
 主要文件：
 
-- `PlatformAiClient`：平台默认 AI 抽象。
-- `LocalPlatformAiClient`：本地 stub 实现，返回结构化 JSON。
+- `PlatformAiClient`：平台默认 AI 抽象接口。
+- `LocalPlatformAiClient`：本地 stub 实现，返回结构化 JSON，始终可用作无密钥兜底。
+- `PlatformRealAiClient`：封装 `OpenAiCompatibleClient` 调用外部模型，通过 `@ConditionalOnProperty` 按 `app.ai.platform.enabled` 条件启用，启用时为 `@Primary`。
+- `PlatformAiProperties`：平台 AI 配置绑定（`app.ai.platform.*`）。
+- `AiConfig`：条件化 bean 创建，管理平台 AI bean 切换。
 - `OpenAiCompatibleClient`：支持 OpenAI-compatible Provider，包含 chatCompletions 与 responses 模式。
 - `AiProvider`：用户自定义 Provider 实体，API Key 加密保存。
 - `ApiKeyEncryption`：AES-GCM 加解密 API Key。
@@ -923,12 +931,15 @@ iOS 当前主要通过 Xcode/XcodeBuildMCP 编译和模拟器手动流程验证�
 
 ## 13. 当前已知实现特征
 
-- 本地默认 AI 通过 `LocalPlatformAiClient` 返回稳定 stub JSON，便于完整流程演示。
+- 平台 AI 通过 `@ConditionalOnProperty` 条件切换：`app.ai.platform.enabled=false` 时使用 `LocalPlatformAiClient` stub，`true` 时使用 `PlatformRealAiClient` 调用外部模型。
+- `LocalPlatformAiClient` 始终可用作无密钥兜底，不因平台真实 AI 启用而消失。
+- 用户自定义 Provider 优先于平台默认 AI。
 - 自定义 Provider 支持 OpenAI-compatible `chatCompletions` 与 `responses` 两种模式。
+- 所有 AI Prompt 已统一为中文系统提示，包含明确的 JSON 字段约束和防幻觉指令。
+- `TrainingService.buildPlanPrompt` 会携带 CandidateProfile 上下文，使训练计划更贴合候选人实际短板。
 - iOS Debug 下保留 dev login；Release 下不显示开发登录入口。
 - `TargetCreateView` Debug 支持启动参数预填目标岗位。
 - 报告详情和列表会解析报告 JSON 做结构化展示。
-- `README.md` 中部分 Task13 描述可能与后续修复后的实现细节存在文字滞后；代码事实以当前源码和 OpenAPI 为准。
 
 ## 14. 修改代码时的快速检查清单
 
