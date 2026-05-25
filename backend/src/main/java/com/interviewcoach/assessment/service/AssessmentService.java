@@ -143,25 +143,26 @@ public class AssessmentService {
 
     private AiPrompt buildQuestionPrompt(InterviewTarget target, CandidateProfile profile) {
         String systemPrompt = """
-                You are an AI technical interview coach. Generate exactly 5 interview questions.
-                Return only valid JSON with a "questions" array of 5 strings.
-                Questions should be based on the job description and candidate profile.
-                Mix different difficulty levels: 2 foundational, 2 applied, 1 deep-dive.
+                你是 AI 技术面试教练。根据岗位 JD 和候选人摘要生成 5 道面试测评题。
+                只返回合法 JSON，格式为 {"questions": ["题1", "题2", "题3", "题4", "题5"]}。
+                难度分布：2 道基础题、2 道应用题、1 道深度题。
+                题目应结合岗位 JD 中的核心技能要求和候选人的已确认经历。
+                不得编造候选人未提供的项目或技术细节。
                 """;
         String userPrompt = """
-                Target title:
+                目标岗位：
                 %s
 
-                Job description:
+                岗位 JD：
                 %s
 
-                Candidate summary:
+                候选人摘要：
                 %s
 
-                Candidate skills:
+                候选人技能：
                 %s
 
-                Candidate projects:
+                候选人项目经历：
                 %s
                 """.formatted(
                 target.getTitle(),
@@ -183,20 +184,18 @@ public class AssessmentService {
         }
 
         String systemPrompt = """
-                You are an AI technical interview coach. Score the candidate's answers.
-                Return valid JSON matching AssessmentResultDto with camelCase fields.
-                assessmentId must match the provided ID.
-                totalScore: 0-100 overall score.
-                dimensions: score each dimension 0-100 with name and reason.
-                strengths: list of specific strengths demonstrated.
-                weaknesses: list of specific areas for improvement.
-                nextActions: list of concrete next steps for the candidate.
+                你是 AI 技术面试教练，对候选人的面试回答进行评分。
+                只返回合法 JSON，使用 camelCase 字段。
+                assessmentId 必须与传入的测评 ID 完全一致。
+                totalScore 范围 0-100。dimensions 每项 score 范围 0-100，需包含 name、score、reason。
+                strengths 和 weaknesses 必须基于实际回答中的具体表现，不得泛泛而谈。
+                nextActions 必须是可执行的具体行动建议。
                 """;
         String userPrompt = """
-                Assessment ID:
+                测评 ID：
                 %s
 
-                Questions and Answers:
+                题目与回答：
                 %s
                 """.formatted(session.getId().toString(), qaBuilder);
         return new AiPrompt("assessmentResult", session.getId().toString(), systemPrompt, userPrompt);

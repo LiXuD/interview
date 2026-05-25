@@ -9,6 +9,8 @@ import com.interviewcoach.common.api.TrainingPlanDto;
 import com.interviewcoach.common.api.TrainingTaskDto;
 import com.interviewcoach.common.error.TargetNotFoundException;
 import com.interviewcoach.common.error.TrainingNotFoundException;
+import com.interviewcoach.profile.entity.CandidateProfile;
+import com.interviewcoach.profile.repository.CandidateProfileRepository;
 import com.interviewcoach.target.entity.InterviewTarget;
 import com.interviewcoach.target.repository.InterviewTargetRepository;
 import com.interviewcoach.training.entity.TrainingFeedback;
@@ -31,17 +33,20 @@ public class TrainingService {
     private final TrainingTaskRepository taskRepository;
     private final AssessmentResultRepository assessmentResultRepository;
     private final InterviewTargetRepository targetRepository;
+    private final CandidateProfileRepository profileRepository;
     private final AiStructuredOutputService aiService;
 
     public TrainingService(TrainingPlanRepository planRepository,
                            TrainingTaskRepository taskRepository,
                            AssessmentResultRepository assessmentResultRepository,
                            InterviewTargetRepository targetRepository,
+                           CandidateProfileRepository profileRepository,
                            AiStructuredOutputService aiService) {
         this.planRepository = planRepository;
         this.taskRepository = taskRepository;
         this.assessmentResultRepository = assessmentResultRepository;
         this.targetRepository = targetRepository;
+        this.profileRepository = profileRepository;
         this.aiService = aiService;
     }
 
@@ -56,13 +61,15 @@ public class TrainingService {
 
         InterviewTarget target = targetRepository.findByIdAndUserId(targetId, user.getId())
                 .orElseThrow(() -> new TargetNotFoundException(targetId));
+        CandidateProfile profile = profileRepository.findByTargetIdAndUserId(targetId, user.getId())
+                .orElse(null);
 
         // Delete existing plan to avoid duplicates on regenerate
         planRepository.findByTargetIdAndUserId(targetId, user.getId())
                 .ifPresent(planRepository::delete);
 
         List<AiStructuredOutputService.TrainingPlanTaskItem> taskItems =
-                aiService.generateTrainingPlan(buildPlanPrompt(target, latestResult));
+                aiService.generateTrainingPlan(buildPlanPrompt(target, latestResult, profile));
 
         TrainingPlan plan = new TrainingPlan();
         plan.setUser(user);
@@ -137,52 +144,45 @@ public class TrainingService {
         return toTaskDto(task);
     }
 
-    private AiPrompt buildPlanPrompt(InterviewTarget target, AssessmentResult result) {
+    private AiPrompt buildPlanPrompt(InterviewTarget target, AssessmentResult result, CandidateProfile profile) {
         String systemPrompt = """
-                You are an AI technical interview coach. Generate a 1-day training plan with 2-4 tasks.
-                Each task should target a specific weakness from the assessment.
-                Return valid JSON with a "tasks" array, each item having "title" and "description".
+                你是 AI 技术面试教练。根据测评短板为候选人生成 1 天训练计划，包含 2-4 个任务。
+                只返回合法 JSON，格式为 {"tasks": [{"title": "...", "description": "..."}]}。
+                每个任务必须针对一个具体短板，description 需说明练习目标和方法。
+                可结合候选人已确认的技能和经历设计更有针对性的练习。
                 """;
-        String userPrompt = """
-                Target title:
-                %s
-
-                Assessment weaknesses:
-                %s
-
-                Assessment next actions:
-                %s
-                """.formatted(
-                target.getTitle(),
+        StringBuilder userPrompt = new StringBuilder();
+        userPrompt.append("目标岗位：\n%s\n\n岗位 JD：\n%s\n\n".formatted(target.getTitle(), target.getJd()));
+        if (profile != null) {
+            userPrompt.append("候选人摘要：\n%s\n\n候选人技能：\n%s\n\n".formatted(profile.getSummary(), profile.getSkills()));
+        }
+        userPrompt.append("测评短板：\n%s\n\n建议行动：\n%s\n".formatted(
                 String.join("\n", result.getWeaknesses()),
-                String.join("\n", result.getNextActions())
-        );
-        return new AiPrompt("trainingPlan", target.getId().toString(), systemPrompt, userPrompt);
+                String.join("\n", result.getNextActions())));
+        return new AiPrompt("trainingPlan", target.getId().toString(), systemPrompt, userPrompt.toString());
     }
 
     private AiPrompt buildFeedbackPrompt(InterviewTarget target, TrainingTask task, String answer) {
         String systemPrompt = """
-                You are an AI technical interview coach. Score the candidate's answer to a training task.
-                Return valid JSON matching TrainingFeedbackDto with camelCase fields.
-                taskId must match the provided ID.
-                score: 0-100 overall score.
-                feedback: detailed feedback on the answer.
-                problems: list of specific issues found.
-                rewrittenAnswer: an improved version of the answer.
-                followUpQuestion: a related follow-up question.
-                recommendedReviewPoints: list of topics to review.
+                你是 AI 技术面试教练，对候选人的训练任务回答进行评分。
+                只返回合法 JSON，使用 camelCase 字段。
+                taskId 必须与传入的训练任务 ID 一致。score 范围 0-100。
+                feedback 应具体指出回答的优缺点，不得泛泛而谈。
+                rewrittenAnswer 应是改进后的示范回答，结构清晰。
+                followUpQuestion 应围绕回答中的薄弱点追问。
+                recommendedReviewPoints 应列出需要复习的具体知识点。
                 """;
         String userPrompt = """
-                Target title:
+                目标岗位：
                 %s
 
-                Task title:
+                训练任务：
                 %s
 
-                Task description:
+                任务描述：
                 %s
 
-                Candidate answer:
+                候选人回答：
                 %s
                 """.formatted(
                 target.getTitle(),

@@ -67,28 +67,30 @@ public class JobBriefService {
 
     private AiPrompt buildPrompt(InterviewTarget target, CandidateProfile profile) {
         String systemPrompt = """
-                You are an AI technical interview coach. Return only valid JSON matching JobBriefDto.
-                Use camelCase fields, confidence from 0 to 1, importance values required/important/bonus,
-                and userLevel values unknown/weak/basic/solid/strong. Do not invent projects or experience.
-                Distinguish confirmed experience from areas that need user confirmation.
+                你是 AI 技术面试教练。根据岗位 JD 和已确认的候选人摘要生成岗位画像。
+                只返回合法 JSON，不返回 Markdown、解释或代码块。使用 camelCase 字段。
+                targetId 必须与传入值一致。confidence 范围 0 到 1。
+                importance 只允许 required/important/bonus。userLevel 只允许 unknown/weak/basic/solid/strong。
+                只基于已确认的候选人摘要分析，不得编造候选人未提供的项目、技术或经历。
+                skillMap.gap 描述候选人需要补充的能力，而非猜测已有水平。
                 """;
         String userPrompt = """
-                Target title:
+                目标岗位：
                 %s
 
-                Job description:
+                岗位 JD：
                 %s
 
-                Confirmed candidate summary:
+                已确认的候选人摘要：
                 %s
 
-                Confirmed skills:
+                已确认的技能：
                 %s
 
-                Confirmed projects:
+                已确认的项目经历：
                 %s
 
-                Confirmed experience:
+                已确认的工作经验：
                 %s
                 """.formatted(
                 target.getTitle(),

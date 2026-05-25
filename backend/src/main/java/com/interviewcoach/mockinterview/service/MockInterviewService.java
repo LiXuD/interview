@@ -156,24 +156,25 @@ public class MockInterviewService {
 
     private AiPrompt buildStartPrompt(InterviewTarget target, CandidateProfile profile) {
         String systemPrompt = """
-                You are an AI interviewer conducting a technical mock interview.
-                Start with an opening question based on the job description and candidate profile.
-                Ask one question at a time. Be professional and conversational.
+                你是 AI 技术面试官，进行技术模拟面试。
+                只返回合法 JSON，格式为 {"question": "..."}。
+                每次只问一个问题，问题应围绕岗位 JD 核心技能和候选人已确认经历。
+                不得编造候选人未提供的项目或技术细节。
                 """;
         String userPrompt = """
-                Target title:
+                目标岗位：
                 %s
 
-                Job description:
+                岗位 JD：
                 %s
 
-                Candidate summary:
+                候选人摘要：
                 %s
 
-                Candidate skills:
+                候选人技能：
                 %s
 
-                Candidate projects:
+                候选人项目经历：
                 %s
                 """.formatted(
                 target.getTitle(),
@@ -187,15 +188,16 @@ public class MockInterviewService {
 
     private AiPrompt buildAnswerPrompt(InterviewTarget target, List<MockInterviewMessage> contextMessages) {
         String systemPrompt = """
-                You are an AI interviewer conducting a technical mock interview.
-                Based on the conversation so far, ask a relevant follow-up question.
-                Ask one question at a time. Be professional and conversational.
+                你是 AI 技术面试官，进行技术模拟面试。
+                只返回合法 JSON，格式为 {"question": "..."}。
+                必须基于候选人上一条回答进行追问，追问应挖掘技术深度或暴露逻辑漏洞。
+                每次只问一个问题，保持专业和对话性。
                 """;
         String userPrompt = """
-                Target title:
+                目标岗位：
                 %s
 
-                Conversation so far:
+                对话记录：
                 %s
                 """.formatted(target.getTitle(), formatConversation(contextMessages));
         return new AiPrompt("mockInterviewQuestion", target.getId().toString(), systemPrompt, userPrompt);
@@ -208,25 +210,25 @@ public class MockInterviewService {
                 : allMessages.subList(allMessages.size() - MAX_CONTEXT_MESSAGES, allMessages.size());
 
         String systemPrompt = """
-                You are an AI technical interview coach. Evaluate this mock interview.
-                Return valid JSON matching MockInterviewReportDto with camelCase fields.
-                mockInterviewId must match the provided ID.
-                overallScore: 0-100 overall score.
-                dimensionScores: array of {name, score, reason} for each dimension, each score 0-100.
-                summary: brief summary of the interview performance.
-                strengths: list of specific strengths demonstrated.
-                weaknesses: list of specific areas for improvement.
-                improvedAnswers: list of improved versions of key answers.
-                nextTrainingTasks: list of recommended next training topics.
+                你是 AI 技术面试教练，对模拟面试进行复盘评估。
+                只返回合法 JSON，使用 camelCase 字段。
+                mockInterviewId 必须与传入的面试 ID 完全一致。
+                overallScore 范围 0-100。
+                dimensionScores 每项必须包含 name（非空）、score（0-100）、reason（非空）。
+                summary 必须基于实际对话表现，不得泛泛而谈。
+                strengths 和 weaknesses 必须基于实际回答中的具体表现。
+                improvedAnswers 应是关键回答的改进示范。
+                nextTrainingTasks 应列出具体的后续训练主题。
+                输出必须围绕面试教练复盘，不涉及招聘投递、题库社区、订阅付费或语音面试。
                 """;
         String userPrompt = """
-                Mock interview ID:
+                模拟面试 ID：
                 %s
 
-                Target title:
+                目标岗位：
                 %s
 
-                Full conversation:
+                面试对话：
                 %s
                 """.formatted(interview.getId().toString(), target.getTitle(), formatConversation(reportMessages));
         return new AiPrompt("mockInterviewReport", interview.getId().toString(), systemPrompt, userPrompt);
