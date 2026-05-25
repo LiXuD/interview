@@ -191,14 +191,14 @@ Post-MVP AI 质量路线：
 - Task 11：iOS SettingsView 新增删除账号区域 + confirmationDialog 二次确认。
 - Task 11：后端 9 个测试通过（deleteMeWithValidTokenReturns204 + deleteUserAfterProfileConfirmSucceeds）。
 - Task 13：后端 User 实体新增 appleUserId（unique）+ email 字段。
-- Task 13：后端 AppleTokenVerifier（ES256 JWT 验证 + JWKS 缓存 1 小时 TTL）。
-- Task 13：后端 AppleLoginRequest DTO、AuthService.appleLogin() + findOrCreateAppleUser()。
+- Task 13：后端 AppleTokenVerifier（RS256 RSA 公钥验签 + JWKS 缓存 1 小时 TTL + nonce 重放保护）。
+- Task 13：后端 AppleLoginRequest DTO（identityToken + nonce 必填）、AuthService.appleLogin() + findOrCreateAppleUser()。
 - Task 13：后端 AuthController POST /api/auth/apple 端点、SecurityConfig permitAll。
-- Task 13：后端 2 个新测试（端点可达性 + 空 token 返回 400），全部 54 测试通过。
-- Task 13：iOS LoginView（SignInWithAppleButton + #if DEBUG dev login 入口）。
-- Task 13：iOS AuthService.appleLogin()、AppleLoginRequestDTO、performLogin 通用方法。
-- Task 13：iOS InterviewCoach.entitlements（com.apple.developer.applesignin）。
-- Task 13：OpenAPI 新增 /api/auth/apple 路径和 AppleLoginRequest schema。
+- Task 13：后端 54 个测试全部通过。
+- Task 13：iOS LoginView（SignInWithAppleButton + CryptoKit nonce 生成 + #if DEBUG dev login 入口）。
+- Task 13：iOS AuthService.appleLogin()、AppleLoginRequestDTO（含 nonce）、performLogin 通用方法。
+- Task 13：iOS InterviewCoach.entitlements（com.apple.developer.applesignin array）。
+- Task 13：OpenAPI 新增 /api/auth/apple 路径、AppleLoginRequest schema（nonce required）、错误响应 401。
 
 尚未创建：
 
