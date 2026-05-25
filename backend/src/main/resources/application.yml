@@ -22,5 +22,11 @@ app:
     expiration-ms: 604800000
   ai:
     encryption-key: ZGV2LWFpLWVuY3J5cHRpb24ta2V5LTMyLWJ5dGVzISE=
+    platform:
+      enabled: false
+      # base-url: ${IC_PLATFORM_AI_BASE_URL:}
+      # api-key: ${IC_PLATFORM_AI_API_KEY:}
+      # model: ${IC_PLATFORM_AI_MODEL:}
+      # mode: ${IC_PLATFORM_AI_MODE:chatCompletions}
   apple:
     services-id: com.interviewcoach.app

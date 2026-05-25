@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewcoach.ai.entity.AiProvider;
 import com.interviewcoach.common.api.AssessmentResultDto;
+import com.interviewcoach.common.api.CandidateProfileDraftDto;
 import com.interviewcoach.common.api.DimensionScore;
 import com.interviewcoach.common.api.JobBriefDto;
 import com.interviewcoach.common.api.MockInterviewReportDto;
@@ -236,5 +237,30 @@ public class AiStructuredOutputService {
             }
             requireText(dim.reason(), "dimension.reason");
         }
+    }
+
+    /**
+     * Generate candidate profile draft from AI.
+     * Returns DTO with AI-generated content fields; rawTextLength is NOT taken from AI output.
+     */
+    public CandidateProfileDraftDto generateCandidateProfileDraft(AiPrompt prompt, int rawTextLength) {
+        CandidateProfileDraftDto aiResult = generateAndValidate(prompt, CandidateProfileDraftDto.class, this::validateCandidateProfileDraft);
+        return new CandidateProfileDraftDto(
+                aiResult.summary(),
+                aiResult.skills() != null ? aiResult.skills() : List.of(),
+                aiResult.projects() != null ? aiResult.projects() : List.of(),
+                aiResult.experience() != null ? aiResult.experience() : List.of(),
+                rawTextLength
+        );
+    }
+
+    private void validateCandidateProfileDraft(CandidateProfileDraftDto dto) {
+        if (dto == null) {
+            throw new IllegalArgumentException("CandidateProfileDraft is null");
+        }
+        requireText(dto.summary(), "summary");
+        requireList(dto.skills(), "skills");
+        requireList(dto.projects(), "projects");
+        requireList(dto.experience(), "experience");
     }
 }

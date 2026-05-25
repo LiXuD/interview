@@ -3,16 +3,14 @@ package com.interviewcoach.ai.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewcoach.common.api.AssessmentResultDto;
+import com.interviewcoach.common.api.CandidateProfileDraftDto;
 import com.interviewcoach.common.api.DimensionScore;
 import com.interviewcoach.common.api.JobBriefDto;
 import com.interviewcoach.common.api.MockInterviewReportDto;
 import com.interviewcoach.common.api.SkillMapItem;
 import com.interviewcoach.common.api.TrainingFeedbackDto;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
 
-@Component
 public class LocalPlatformAiClient implements PlatformAiClient {
 
     private final ObjectMapper objectMapper;
@@ -32,6 +30,7 @@ public class LocalPlatformAiClient implements PlatformAiClient {
                 case "trainingFeedback" -> objectMapper.writeValueAsString(buildTrainingFeedback(prompt));
                 case "mockInterviewQuestion" -> objectMapper.writeValueAsString(buildMockInterviewQuestion(prompt));
                 case "mockInterviewReport" -> objectMapper.writeValueAsString(buildMockInterviewReport(prompt));
+                case "candidateProfileDraft" -> objectMapper.writeValueAsString(buildCandidateProfileDraft(prompt));
                 default -> throw new IllegalStateException("Unknown task: " + prompt.task());
             };
         } catch (JsonProcessingException ex) {
@@ -135,6 +134,16 @@ public class LocalPlatformAiClient implements PlatformAiClient {
                 List.of("系统设计回答缺少容量估算的具体数字", "部分回答过于冗长，需要练习精简表达"),
                 List.of("在项目中，我负责设计订单系统架构。采用微服务拆分，订单服务独立部署，通过消息队列异步处理库存扣减，P99 延迟控制在 200ms 以内。"),
                 List.of("系统设计容量规划", "STAR 法则面试表达", "分布式一致性原理复习")
+        );
+    }
+
+    private CandidateProfileDraftDto buildCandidateProfileDraft(AiPrompt prompt) {
+        return new CandidateProfileDraftDto(
+                "候选人具备后端开发经验，熟悉 Java 技术栈和常见中间件，有实际项目交付经验。建议在后续测评中重点确认系统设计和问题排查能力。",
+                List.of("Java", "Spring Boot", "SQL", "Redis"),
+                List.of("后端服务开发", "API 设计与实现"),
+                List.of("3 年后端开发经验"),
+                0
         );
     }
 }
