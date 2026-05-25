@@ -3,7 +3,7 @@ import Foundation
 actor APIClient {
     static let shared = APIClient()
 
-    private let baseURL = URL(string: "http://127.0.0.1:18080")!
+    private let baseURL = APIClient.resolveBaseURL()
     private let decoder = JSONDecoder()
     private let encoder = JSONEncoder()
 
@@ -79,6 +79,28 @@ actor APIClient {
             }
             throw APIError.serverError(http.statusCode, nil)
         }
+    }
+
+    private static func resolveBaseURL() -> URL {
+#if DEBUG
+        if let value = ProcessInfo.processInfo.environment["IC_API_BASE_URL"],
+           let url = configuredURL(from: value) {
+            return url
+        }
+#endif
+        if let value = Bundle.main.object(forInfoDictionaryKey: "ICAPIBaseURL") as? String,
+           let url = configuredURL(from: value) {
+            return url
+        }
+        return URL(string: "http://127.0.0.1:18080")!
+    }
+
+    private static func configuredURL(from value: String) -> URL? {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, !trimmed.hasPrefix("$(") else {
+            return nil
+        }
+        return URL(string: trimmed)
     }
 }
 

@@ -22,6 +22,23 @@ struct LoginView: View {
 
             Spacer()
 
+#if DEBUG
+            Button("开发模式登录") {
+                showDevLogin = true
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(authService.isLoading)
+            .sheet(isPresented: $showDevLogin) {
+                NavigationStack {
+                    DevLoginView(authService: authService)
+                        .toolbar {
+                            ToolbarItem(placement: .topBarLeading) {
+                                Button("关闭") { showDevLogin = false }
+                            }
+                    }
+                }
+            }
+#else
             SignInWithAppleButton(.signIn) { request in
                 guard currentRawNonce == nil else { return }
                 request.requestedScopes = [.fullName]
@@ -36,6 +53,7 @@ struct LoginView: View {
             .frame(height: 50)
             .cornerRadius(10)
             .disabled(authService.isLoading)
+#endif
 
             if let error = authService.errorMessage {
                 Text(error)
@@ -47,27 +65,6 @@ struct LoginView: View {
             if authService.isLoading {
                 ProgressView()
             }
-
-            #if DEBUG
-            Divider()
-                .padding(.horizontal, 40)
-
-            Button("开发模式登录") {
-                showDevLogin = true
-            }
-            .font(.footnote)
-            .foregroundStyle(.secondary)
-            .sheet(isPresented: $showDevLogin) {
-                NavigationStack {
-                    DevLoginView(authService: authService)
-                        .toolbar {
-                            ToolbarItem(placement: .topBarLeading) {
-                                Button("关闭") { showDevLogin = false }
-                            }
-                        }
-                }
-            }
-            #endif
 
             Spacer()
                 .frame(height: 20)
