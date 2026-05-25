@@ -83,7 +83,7 @@ interview/
 
 当前仓库已完成 Task 1-13：Walking Skeleton、OpenAPI 契约与 DTO、Dev Login 认证链路、Target CRUD、CandidateProfile 隐私链路、Platform AI + JobBrief、Assessment 5 题测评、TrainingPlan 1 天任务、MockInterview 文字模拟面试、User OpenAI Provider、Delete Account、TestFlight Polish、Sign in with Apple。MVP 闭环已全部打通。
 
-说明：MVP 阶段已打通完整功能路径，但 AI 质量仍进入 Post-MVP 增强阶段。当前平台默认 AI 仍保留本地 stub 以支持无密钥演示，真实 AI 摘要生成和平台默认真实 AI 接入将在 Task 14-17 中推进。
+说明：MVP 阶段已打通完整功能路径。Post-MVP AI 质量阶段已完成 Task 14（平台默认真实 AI 接入）和 Task 15（CandidateProfile AI 摘要生成）。平台默认 AI 支持通过环境变量配置真实模型，未启用时保留本地 stub 以支持无密钥演示。剩余 Task 16-17 按计划推进。
 
 ## 开发计划
 
@@ -142,9 +142,9 @@ Post-MVP AI 质量路线：
 
 ## 当前状态
 
-当前阶段：Task 13 Sign in with Apple 已完成，MVP 闭环全部打通（Task 1-13）。
+当前阶段：Post-MVP AI 质量阶段进行中，Task 14-15 已完成（平台默认真实 AI 接入、CandidateProfile AI 摘要生成）。
 
-下一阶段：Post-MVP AI 质量闭环，优先补齐平台默认真实 AI 接入与 CandidateProfile AI 摘要生成。
+下一阶段：Task 16-17（AI Prompt 契约补齐、AI 质量迭代）。
 
 已完成：
 

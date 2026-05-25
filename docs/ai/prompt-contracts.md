@@ -44,6 +44,7 @@
 
 | task | 输入边界 | 输出结构 |
 |------|----------|----------|
+| `candidateProfileDraft` | 简历原文、项目经历原文（内存使用，不落库） | `CandidateProfileDraftDto` |
 | `jobBrief` | 目标岗位、JD、已确认 CandidateProfile 摘要 | `JobBriefDto` |
 | `assessmentQuestions` | 目标岗位、岗位画像、候选人摘要 | `{ "questions": string[5] }` |
 | `assessmentResult` | 5 题测评问题与用户回答 | `AssessmentResultDto` |
