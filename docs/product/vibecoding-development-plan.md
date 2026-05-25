@@ -112,10 +112,9 @@ interview/
 │   ├── api/
 │   │   └── openapi.yaml
 │   ├── product/
-│   │   ├── mvp-spec.md
 │   │   └── vibecoding-development-plan.md
 │   ├── architecture/
-│   │   └── system-design.md
+│   │   └── code-wiki.md
 │   ├── privacy/
 │   │   └── data-policy.md
 │   └── ai/
@@ -538,6 +537,10 @@ Report 来源：
 11. Delete Account：删除远端数据，清空 SwiftData 和 Keychain。
 12. TestFlight Polish：空状态、加载状态、错误提示、隐私说明、首次使用引导。
 13. Sign in with Apple：TestFlight 提审前置认证任务，不属于 Task1-12 MVP 功能闭环。
+14. 平台默认真实 AI 接入：Post-MVP AI 质量任务，OpenAI-compatible 平台配置。
+15. CandidateProfile AI 摘要：`draft-summary` 接入结构化 AI 输出。
+16. AI Prompt 契约补齐：记录 task、输入边界、输出 DTO 和失败策略。
+17. AI 质量迭代：优化 JobBrief、Assessment、Training、MockInterview 的 Prompt 和校验。
 
 ### Task 1: Walking Skeleton
 
@@ -887,7 +890,108 @@ Report 来源：
 
 ---
 
-## 4. 最终 MVP 验收路径
+## 4. Post-MVP AI Quality Roadmap
+
+Task1-13 已完成 MVP 功能闭环和 TestFlight 提审前置认证任务。Post-MVP 阶段优先补齐 AI 质量闭环，不改变 MVP 已完成结论。
+
+当前 AI 状态：
+
+- 用户自定义 OpenAI-compatible Provider 已可用于业务 AI 调用。
+- 平台默认 AI 当前仍以 `LocalPlatformAiClient` 本地 stub 保持开发和演示稳定。
+- `POST /api/profiles/draft-summary` 当前仍是固定草稿摘要，真实 AI 摘要生成需要在 Post-MVP 阶段补齐。
+- iOS 仍禁止直接调用 AI，所有 AI 调用继续由后端统一代理。
+
+### Task 14: 平台默认真实 AI 接入
+
+目标：将平台默认 AI 从纯本地 stub 升级为可配置的 OpenAI-compatible 后端模型能力。
+
+范围：
+
+- 新增平台默认 AI 配置项。
+- 复用现有 `OpenAiCompatibleClient`。
+- 用户默认 Provider 仍优先于平台默认 AI。
+- 未启用平台真实 AI 时，保留 `LocalPlatformAiClient` 作为开发、测试和无密钥演示兜底。
+- 启用平台真实 AI 但配置缺失时，返回明确失败，不静默回退。
+
+配置边界：
+
+- `IC_PLATFORM_AI_ENABLED`
+- `IC_PLATFORM_AI_BASE_URL`
+- `IC_PLATFORM_AI_API_KEY`
+- `IC_PLATFORM_AI_MODEL`
+- `IC_PLATFORM_AI_MODE`
+
+验收：
+
+- 有用户默认 Provider 时优先调用用户 Provider。
+- 无用户默认 Provider 且平台 AI 启用时调用平台配置。
+- 平台 AI 未启用时继续使用本地 stub。
+- 平台 AI 启用但配置缺失时失败明确。
+- 平台密钥只通过环境变量或部署配置提供，不写入仓库、不返回 iOS、不写日志。
+
+### Task 15: CandidateProfile AI 摘要
+
+目标：将候选人摘要草稿从固定 stub 改为结构化 AI 输出。
+
+范围：
+
+- 为 `AiStructuredOutputService` 新增内部任务 `candidateProfileDraft`。
+- `POST /api/profiles/draft-summary` 调用统一 AI 路由生成 `CandidateProfileDraftDto`。
+- 后端继续自行计算 `rawTextLength`。
+- iOS 请求和响应 DTO 保持不变。
+- 用户仍必须先明确同意临时上传简历原文。
+
+强约束：
+
+- 简历原文只允许在内存中用于本次 AI 摘要生成。
+- 简历原文不得落 PostgreSQL、Redis、文件、缓存或审计表。
+- 禁止将 `resumeText`、`projectRawText`、`rawResume`、`originalText` 或任何原文片段写入日志。
+- 后端仍必须返回强类型 DTO，禁止把 AI 原始字符串返回给 iOS。
+
+验收：
+
+- `draft-summary` 返回非固定占位文案的结构化摘要。
+- `summary`、`skills`、`projects`、`experience` 字段可被用户编辑确认。
+- AI 输出为空、字段缺失、非法 JSON 时返回统一 `AI_PARSE_FAILED`。
+- 代码搜索确认没有原文日志输出。
+
+### Task 16: AI Prompt 契约补齐
+
+目标：补齐 AI 输入输出契约文档，降低后续 Prompt 迭代风险。
+
+范围：
+
+- 新增 `docs/ai/prompt-contracts.md`。
+- 记录 AI task 名、输入边界、输出 DTO、解析失败策略。
+- 首批覆盖 `candidateProfileDraft`。
+- 同步列出现有 `jobBrief`、`assessmentQuestions`、`assessmentResult`、`trainingPlan`、`trainingFeedback`、`mockInterviewQuestion`、`mockInterviewReport`。
+
+验收：
+
+- 每个 task 都有输入来源、输出结构和失败策略说明。
+- 文档明确 iOS 不解析 AI 原始文本。
+- 文档明确 Anthropic Provider 不进入当前实现范围。
+
+### Task 17: AI 质量迭代
+
+目标：围绕 AI 面试教练定位提升输出质量和稳定性。
+
+范围：
+
+- 优化 JobBrief、Assessment、Training、MockInterview 的 Prompt。
+- 补充典型 JD、简历、面试回答 fixture。
+- 加强结构化输出校验和错误定位。
+- 默认测试不依赖 live AI 调用。
+
+验收：
+
+- 典型样例下输出更贴合目标岗位和候选人摘要。
+- 结构化输出失败时可定位到具体 task。
+- 不引入非 MVP 产品方向，如题库社区、招聘投递、订阅付费、语音面试。
+
+---
+
+## 5. 最终 MVP 验收路径
 
 Task1-12 的最终验收仍按 MVP 功能闭环执行；Task13 是 TestFlight 提审前置认证任务，不改变 MVP 功能闭环验收路径。
 
@@ -914,7 +1018,7 @@ dev login
 
 只要这条路径不完整，就不算 MVP 完成。
 
-## 5. 每次任务完成输出
+## 6. 每次任务完成输出
 
 每次实现后必须回复：
 

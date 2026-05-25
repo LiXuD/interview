@@ -20,14 +20,17 @@ MVP 最窄闭环必须是：
 
 所有新增功能必须服务这条闭环。
 
+当前 MVP 功能闭环已完成。MVP 之后的新增内容必须继续服务 AI 面试教练定位，并且只能按 `docs/product/vibecoding-development-plan.md` 中已批准的 Post-MVP 任务推进；当前允许的 Post-MVP 主线是 AI 质量闭环（Task 14-17）。
+
 ## 硬约束
 
 - 必须使用 `rtk` 前缀运行 shell 命令。
 - 必须每次只实现一个小任务。
 - 禁止一次实现多个 Phase。
-- 禁止扩展非 MVP 功能。
+- MVP 阶段禁止扩展非 MVP 功能；MVP 完成后，禁止扩展未写入已批准开发计划的功能。
 - 禁止添加题库社区、招聘投递、企业端、订阅付费、多人协作、语音面试。
-- 禁止实现 Anthropic 自定义 Provider；MVP 只支持平台默认 AI 和 OpenAI-compatible 自定义 Provider。
+- 禁止实现 Anthropic 自定义 Provider；当前只支持平台默认 AI 和 OpenAI-compatible 自定义 Provider。
+- 平台默认真实 AI 必须走后端 OpenAI-compatible 代理配置，禁止 iOS 直连 AI，禁止在仓库中提交平台 API Key。
 
 ## 目录规范红线
 

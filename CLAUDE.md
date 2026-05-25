@@ -16,6 +16,8 @@
 
 MVP 只验收这条最窄闭环。只要这条路径不完整，就不算 MVP 完成。
 
+当前 Task 1-13 已完成 MVP 功能闭环和 TestFlight 提审前置认证任务。MVP 完成后的新增开发必须继续服务 AI 面试教练定位，并且只能按 `docs/product/vibecoding-development-plan.md` 中已批准的 Post-MVP 任务推进；当前允许的 Post-MVP 主线是 AI 质量闭环（Task 14-17）。
+
 ## 2. MVP 范围
 
 MVP 必须支持：
@@ -42,7 +44,7 @@ MVP 禁止实现：
 - 多人协作。
 - 语音面试。
 - 简历自动投递。
-- 任意模型厂商适配。
+- 任意未进入已批准计划的模型厂商适配。
 - Anthropic 自定义 Provider。
 - 多天复杂训练计划。
 
@@ -55,7 +57,7 @@ MVP 禁止实现：
 - 必须只实现当前任务指定的一个小模块。
 - 禁止一次实现多个 Phase。
 - 禁止顺手增加计划外页面、计划外 API、计划外数据表。
-- 禁止为了“看起来完整”加入不在 MVP 范围内的功能。
+- 禁止为了“看起来完整”加入不在当前批准任务范围内的功能。
 - 必须优先保证当前垂直切片可运行、可测试、可演示。
 - 必须保持已有功能可运行。
 - 修改完成后必须说明：改了哪些文件、如何运行、如何测试、已知限制。
@@ -101,6 +103,8 @@ AI 调用必须遵守：
 - 后端默认提供平台 AI。
 - MVP 支持 OpenAI-compatible 自定义 Provider。
 - Anthropic 协议只作为 post-MVP 扩展点预留，MVP 禁止实现。
+- Post-MVP 平台默认真实 AI 只能采用 OpenAI-compatible 后端代理配置。
+- 平台 API Key 只能通过环境变量或部署配置提供，禁止写入仓库、返回给 iOS 或写入日志。
 
 ## 5. 项目目录与模块边界规范
 
@@ -116,9 +120,9 @@ interview/
 │   ├── api/
 │   │   └── openapi.yaml
 │   ├── product/
-│   │   └── mvp-spec.md
+│   │   └── vibecoding-development-plan.md
 │   ├── architecture/
-│   │   └── system-design.md
+│   │   └── code-wiki.md
 │   ├── privacy/
 │   │   └── data-policy.md
 │   └── ai/
@@ -229,8 +233,8 @@ dto/
 文档目录职责必须固定：
 
 - `docs/api/openapi.yaml`：唯一 API 契约来源。
-- `docs/product/mvp-spec.md`：产品范围和 MVP 路径。
-- `docs/architecture/system-design.md`：系统架构、数据流、模块边界。
+- `docs/product/vibecoding-development-plan.md`：产品范围、MVP 路径、Task 计划和 Post-MVP 路线。
+- `docs/architecture/code-wiki.md`：系统架构、数据流、模块边界和代码导航。
 - `docs/privacy/data-policy.md`：简历、API Key、账号删除、日志脱敏策略。
 - `docs/ai/prompt-contracts.md`：AI 输入输出 JSON、Prompt 版本、解析失败策略。
 - `docs/ai/provider-contracts.md`：平台 AI、OpenAI-compatible Provider 规则。
@@ -261,6 +265,10 @@ dto/
 - Delete Account：主要改 `backend/src/main/java/com/interviewcoach/user`、`backend/src/main/java/com/interviewcoach/auth`、`ios/InterviewCoach/InterviewCoach/Core/Auth`、`ios/InterviewCoach/InterviewCoach/Core/Storage`。
 - TestFlight Polish：只允许改 `ios/InterviewCoach/InterviewCoach/Core/UI`（共享组件）、`ios/InterviewCoach/InterviewCoach/Features`（各 View 替换 LoadingOverlay/ErrorBanner）、`ios/InterviewCoach/InterviewCoach/Features/Onboarding`（首次引导）、`ios/InterviewCoach/InterviewCoach/Features/Reports`（报告查看）、`ios/InterviewCoach/InterviewCoach/Features/Settings/PrivacyPolicyView.swift`（隐私政策）。
 - Sign in with Apple：主要改 `backend/src/main/java/com/interviewcoach/auth`、`backend/src/main/java/com/interviewcoach/common/security`（新增 AppleTokenVerifier）、`backend/src/main/java/com/interviewcoach/common/api`（新增 AppleLoginRequest）、`backend/src/main/java/com/interviewcoach/user`（User 新增 appleUserId）、`ios/InterviewCoach/InterviewCoach/Core/Auth`、`ios/InterviewCoach/InterviewCoach/Core/API/DTO`、`ios/InterviewCoach/InterviewCoach/Features/Auth`（新建 LoginView）、`docs/api/openapi.yaml`。
+- 平台默认真实 AI 接入：主要改 `backend/src/main/java/com/interviewcoach/ai`、`backend/src/main/resources/application.yml`、`backend/src/test`、`docs/ai/provider-contracts.md`。
+- CandidateProfile AI 摘要：主要改 `backend/src/main/java/com/interviewcoach/profile`、`backend/src/main/java/com/interviewcoach/ai`、`backend/src/main/java/com/interviewcoach/common/api`、`docs/ai/prompt-contracts.md`、`docs/privacy/data-policy.md`。
+- AI Prompt 契约补齐：只允许改 `docs/ai/prompt-contracts.md`、`docs/ai/provider-contracts.md`、`docs/product/vibecoding-development-plan.md`。
+- AI 质量迭代：主要改 `backend/src/main/java/com/interviewcoach/ai`、对应业务模块的 Prompt 组装服务、`backend/src/test`、`docs/ai/prompt-contracts.md`。
 
 禁止为了一个任务横跨无关模块做大改。若确实需要跨越上述边界，必须先说明原因、风险和替代方案，并等待用户确认。
 
@@ -387,7 +395,7 @@ MVP 不做 iOS 本地 AI 摘要。
 
 ## 10. AI Provider 约束
 
-MVP 只支持：
+当前只支持以下 Provider 类型：
 
 - `platformDefault`
 - `userOpenAICompatible`
@@ -417,11 +425,28 @@ Provider API：
 - Provider 调用失败时，禁止自动切换平台 AI，必须让用户确认。
 - 删除 Provider 时必须删除密钥。
 
-MVP 禁止实现 Anthropic Provider。Anthropic 只允许在架构中保留扩展点，不允许创建可用业务入口。
+平台默认真实 AI 约束：
+
+- 平台默认真实 AI 只允许采用 OpenAI-compatible 协议。
+- 平台配置必须来自环境变量或部署配置，不允许提交真实密钥。
+- 配置项必须使用 `IC_PLATFORM_AI_ENABLED`、`IC_PLATFORM_AI_BASE_URL`、`IC_PLATFORM_AI_API_KEY`、`IC_PLATFORM_AI_MODEL`、`IC_PLATFORM_AI_MODE`。
+- 用户已配置默认 Provider 时，用户 Provider 优先于平台默认 AI。
+- 平台真实 AI 未启用时，可以保留 `LocalPlatformAiClient` 作为开发、测试和无密钥演示兜底。
+- 平台真实 AI 启用但配置缺失时必须明确失败，不允许静默回退到本地 stub。
+
+禁止实现 Anthropic Provider。Anthropic 只允许在架构中保留扩展点，不允许创建可用业务入口。
 
 ## 11. AI 结构化输出约束
 
 所有 AI 输出必须结构化。后端必须解析为 DTO 后返回给 iOS。
+
+`CandidateProfileDraftDto` 必须包含：
+
+- `summary`
+- `skills`
+- `projects`
+- `experience`
+- `rawTextLength`
 
 `JobBriefDto` 必须包含：
 
@@ -470,7 +495,9 @@ MVP 禁止实现 Anthropic Provider。Anthropic 只允许在架构中保留扩�
 
 AI 生成内容必须遵守：
 
-- 必须基于 JD、岗位画像、用户确认后的经历摘要生成内容。
+- 必须只基于当前 task 已提供的上下文生成内容。
+- `candidateProfileDraft` 只能基于本次临时上传的简历原文和项目经历生成摘要草稿。
+- JobBrief、Assessment、Training、MockInterview 必须基于 JD、岗位画像、用户确认后的经历摘要等已确认上下文生成内容。
 - 可以优化表达，禁止虚构用户没有做过的项目、技术、业务结果。
 - 必须区分“真实经历”“合理迁移表达”“需要用户确认”。
 - 模拟面试追问必须围绕用户上一条回答。
@@ -530,6 +557,10 @@ Report API：
 11. Delete Account：删除远端数据，清空 SwiftData 和 Keychain。
 12. TestFlight Polish：空状态、加载状态、错误提示、隐私说明、首次使用引导。
 13. Sign in with Apple：Apple 登录链路、TestFlight 提审前置认证。
+14. 平台默认真实 AI 接入：OpenAI-compatible 平台配置，未启用时保留本地 stub。
+15. CandidateProfile AI 摘要：`draft-summary` 接入结构化 AI 输出。
+16. AI Prompt 契约补齐：记录 task、输入边界、输出 DTO 和失败策略。
+17. AI 质量迭代：优化 JobBrief、Assessment、Training、MockInterview 的 Prompt 和校验。
 
 ## 15. 每次任务输出格式
 
@@ -594,7 +625,9 @@ Agent-Limitation: 仅完成 health 链路，未实现认证、业务数据和 AI
 
 ## 17. 最终 MVP 验收路径
 
-最终只按这一条路径验收：
+Task 1-13 已完成后，MVP 功能闭环验收结论不因 Post-MVP AI 质量任务而改变。
+
+MVP 最终只按这一条路径验收：
 
 ```text
 dev login

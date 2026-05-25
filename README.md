@@ -67,6 +67,9 @@ interview/
 ├── docs/
 │   ├── api/
 │   │   └── openapi.yaml
+│   ├── ai/
+│   │   ├── prompt-contracts.md
+│   │   └── provider-contracts.md
 │   ├── privacy/
 │   │   └── data-policy.md
 │   └── product/
@@ -79,6 +82,8 @@ interview/
 ```
 
 当前仓库已完成 Task 1-13：Walking Skeleton、OpenAPI 契约与 DTO、Dev Login 认证链路、Target CRUD、CandidateProfile 隐私链路、Platform AI + JobBrief、Assessment 5 题测评、TrainingPlan 1 天任务、MockInterview 文字模拟面试、User OpenAI Provider、Delete Account、TestFlight Polish、Sign in with Apple。MVP 闭环已全部打通。
+
+说明：MVP 阶段已打通完整功能路径，但 AI 质量仍进入 Post-MVP 增强阶段。当前平台默认 AI 仍保留本地 stub 以支持无密钥演示，真实 AI 摘要生成和平台默认真实 AI 接入将在 Task 14-17 中推进。
 
 ## 开发计划
 
@@ -102,6 +107,13 @@ interview/
 12. TestFlight Polish
 13. Sign in with Apple
 
+Post-MVP AI 质量路线：
+
+14. 平台默认真实 AI 接入：OpenAI-compatible 平台配置，未启用时保留本地 stub。
+15. CandidateProfile AI 摘要：`draft-summary` 接入结构化 AI 输出。
+16. AI Prompt 契约补齐：记录 task、输入边界、输出 DTO 和失败策略。
+17. AI 质量迭代：优化 JobBrief、Assessment、Training、MockInterview 的 Prompt 和校验。
+
 ## 开发约束
 
 本项目采用 vibecoding 方式开发。任何 AI 开发代理或人工协作者在修改项目之前，必须先阅读：
@@ -112,7 +124,7 @@ interview/
 关键红线：
 
 - 每次只实现一个小任务。
-- 禁止扩展非 MVP 功能。
+- MVP 阶段禁止扩展非 MVP 功能；MVP 完成后只允许按已批准的 Post-MVP 计划推进。
 - 后端必须使用 Spring Security Bearer Token。
 - 所有后端返回给 iOS 的 JSON 必须使用 camelCase。
 - 后端必须返回强类型 DTO。
@@ -131,6 +143,8 @@ interview/
 ## 当前状态
 
 当前阶段：Task 13 Sign in with Apple 已完成，MVP 闭环全部打通（Task 1-13）。
+
+下一阶段：Post-MVP AI 质量闭环，优先补齐平台默认真实 AI 接入与 CandidateProfile AI 摘要生成。
 
 已完成：
 

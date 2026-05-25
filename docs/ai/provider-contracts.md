@@ -15,10 +15,32 @@ MVP 禁止实现 Anthropic Provider。Anthropic 只允许在架构中保留扩�
 
 ## 2. 平台默认 AI
 
-- 由 `LocalPlatformAiClient` 实现（stub）。
-- 返回硬编码的结构化 JSON。
-- 作为所有 AI 结构化输出的 fallback。
-- 当用户未配置自定义 Provider 时自动使用。
+MVP 阶段平台默认 AI 由 `LocalPlatformAiClient` 提供本地 stub，返回稳定的结构化 JSON，保证无外部密钥时仍可完成演示闭环。
+
+Post-MVP AI 质量阶段将平台默认 AI 升级为可配置的 OpenAI-compatible 后端模型能力：
+
+- 平台真实 AI 启用时，后端使用平台配置调用 OpenAI-compatible API。
+- 平台真实 AI 未启用时，继续使用 `LocalPlatformAiClient` 作为开发、测试和无密钥演示兜底。
+- 用户已配置默认 Provider 时，用户 Provider 优先于平台默认 AI。
+- 平台真实 AI 启用但配置缺失时必须明确失败，不允许静默回退到本地 stub。
+
+### 2.1 平台默认 AI 配置
+
+平台真实 AI 配置只能来自环境变量或部署配置，禁止把平台 API Key 写入仓库。
+
+| 环境变量 | 必填条件 | 说明 |
+|----------|----------|------|
+| `IC_PLATFORM_AI_ENABLED` | 是 | 是否启用平台真实 AI，建议取值 `true` 或 `false` |
+| `IC_PLATFORM_AI_BASE_URL` | 启用时必填 | OpenAI-compatible API 基础 URL |
+| `IC_PLATFORM_AI_API_KEY` | 启用时必填 | 平台默认 AI API Key |
+| `IC_PLATFORM_AI_MODEL` | 启用时必填 | 平台默认模型名称 |
+| `IC_PLATFORM_AI_MODE` | 启用时必填 | `chatCompletions` 或 `responses` |
+
+安全要求：
+
+- `IC_PLATFORM_AI_API_KEY` 不得返回给 iOS。
+- 禁止将平台 API Key、Authorization Header 或完整请求头写入日志。
+- 平台默认 AI 仍必须通过后端统一代理，iOS 禁止直接调用 AI。
 
 ## 3. 用户自定义 OpenAI-compatible Provider
 
@@ -54,7 +76,8 @@ MVP 禁止实现 Anthropic Provider。Anthropic 只允许在架构中保留扩�
 1. 通过 `SecurityContextHolder` 获取当前用户。
 2. 调用 `AiProviderService.findDefaultProvider(userId)` 查询默认 Provider。
 3. 若存在默认 Provider → 解密 apiKey → 调用 `OpenAiCompatibleClient.generateJson()`。
-4. 若不存在 → 回退到 `PlatformAiClient.generateJson()`（平台默认 AI）。
+4. 若不存在 → 调用 `PlatformAiClient.generateJson()`（平台默认 AI）。
+5. 平台真实 AI 未启用时 → 由 `LocalPlatformAiClient` 返回本地 stub JSON。
 
 **禁止自动回退**：当用户 Provider 调用失败时，不自动切换到平台 AI，必须让用户确认。
 
