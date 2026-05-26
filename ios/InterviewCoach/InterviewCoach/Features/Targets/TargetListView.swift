@@ -91,6 +91,8 @@ struct TargetListView: View {
             let fetched: [InterviewTargetDTO] = try await APIClient.shared.request("GET", path: "/api/targets")
             targets = fetched
             TargetLocal.syncAll(fetched, in: modelContext)
+        } catch APIError.unauthorized {
+            authService.logout()
         } catch {
             errorMessage = "加载失败: \(error.localizedDescription)"
             loadFromLocal()

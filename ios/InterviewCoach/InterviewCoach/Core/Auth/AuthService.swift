@@ -80,8 +80,7 @@ final class AuthService: ObservableObject {
             let user: UserDTO = try await apiClient.request("GET", path: "/api/me")
             currentUser = user
         } catch APIError.unauthorized {
-            _ = KeychainHelper.deleteToken()
-            isAuthenticated = false
+            logout()
         } catch {
             // Network error — keep token, user can retry
         }
