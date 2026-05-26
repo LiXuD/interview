@@ -20,7 +20,7 @@ MVP 最窄闭环必须是：
 
 所有新增功能必须服务这条闭环。
 
-当前 MVP 功能闭环已完成。MVP 之后的新增内容必须继续服务 AI 面试教练定位，并且只能按 `docs/product/vibecoding-development-plan.md` 中已批准的 Post-MVP 任务推进；Post-MVP AI 质量闭环（Task 14-17）已全部完成。
+当前 MVP 功能闭环已完成。MVP 之后的新增内容必须继续服务 AI 面试教练定位，并且只能按 `docs/product/vibecoding-development-plan.md` 中已批准的 Post-MVP 任务推进；Post-MVP AI 质量闭环（Task 14-17）已全部完成。下一阶段已批准为 Post-MVP Real AI Adaptive Coaching（Task 18-25）：开发环境真实 AI 基线、真实 AI 验收样例、结构化测评、教练记忆、用户纠错、逐题诊断、自适应训练和自适应模拟面试增强。
 
 ## 硬约束
 
@@ -31,6 +31,7 @@ MVP 最窄闭环必须是：
 - 禁止添加题库社区、招聘投递、企业端、订阅付费、多人协作、语音面试。
 - 禁止实现 Anthropic 自定义 Provider；当前只支持平台默认 AI 和 OpenAI-compatible 自定义 Provider。
 - 平台默认真实 AI 必须走后端 OpenAI-compatible 代理配置，禁止 iOS 直连 AI，禁止在仓库中提交平台 API Key。
+- Task 18-25 阶段，开发环境也必须能连接真实 AI；测评、训练、模拟面试等核心教练路径禁止静默使用 `LocalPlatformAiClient` stub。
 
 ## 目录规范红线
 
@@ -55,6 +56,8 @@ MVP 最窄闭环必须是：
 - 禁止记录简历原文到 `System.out`、`System.err` 或任何日志框架。
 - 禁止在日志中输出 `resumeText`、`rawResume`、`projectRawText`、`originalText` 或任何原文字段。
 - API Key 必须加密保存，禁止返回给 iOS，禁止写入日志。
+- Post-MVP 教练记忆禁止保存简历原文、API Key 或 AI hidden chain-of-thought。
+- 删除账号时远端数据必须删除；本机 `CoachingMemoryArchive` 默认保留，只有用户勾选“同时删除本机教练记忆文件”才允许删除。
 
 ## API 与 AI 输出红线
 
@@ -64,6 +67,7 @@ MVP 最窄闭环必须是：
 - 禁止让 iOS 解析 AI 原始文本。
 - AI 结构化输出必须在后端解析为 DTO。
 - AI 解析失败必须返回统一错误响应，禁止返回半成品字符串。
+- 教练记忆必须区分 `confirmed`、`observed`、`corrected`、`inferred`、`rejected` 来源；`inferred` 不能当事实使用，`rejected` 禁止再次作为事实使用。
 
 ## MockInterview 红线
 
@@ -127,7 +131,7 @@ Agent-Limitation: <已知局限或后续 TODO>
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **interview** (2459 symbols, 7599 relationships, 207 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **interview** (2528 symbols, 7800 relationships, 213 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 

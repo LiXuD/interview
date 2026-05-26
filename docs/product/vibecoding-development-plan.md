@@ -47,7 +47,7 @@ MVP Provider 范围：
 11. 完成 1 个 `TrainingTask`。
 12. 完成 1 次文字 `MockInterview`。
 13. 查看 `MockInterview Report`。
-14. 删除账号，本地和远端数据清理完成。
+14. 删除账号，远端数据、本地登录态和远端同步缓存清理完成。
 
 ### 1.3 MVP 不做
 
@@ -233,7 +233,8 @@ Token 规则：
 - iOS 使用 Bearer Token。
 - Token 存 Keychain。
 - 所有业务 API 必须要求登录。
-- `DELETE /api/me` 删除远端用户数据后，iOS 必须清空 SwiftData 和 Keychain。
+- `DELETE /api/me` 删除远端用户数据后，iOS 必须清空 Keychain 和远端同步缓存。
+- Post-MVP 本机 `CoachingMemoryArchive` 属于用户设备上的本地教练记忆归档，删除账号时默认保留；只有用户勾选“同时删除本机教练记忆文件”才删除。
 - 后端必须使用 Spring Security 标准过滤器链解析 Bearer Token。
 - 认证通过后，当前用户必须通过 `SecurityContextHolder` 获取。
 - 禁止在业务接口里硬编码用户 ID 或绕过认证。
@@ -246,6 +247,7 @@ Token 规则：
 - 用户未确认上传的项目经历原文。
 - 本地草稿。
 - 页面缓存状态。
+- Post-MVP 本机 `CoachingMemoryArchive` 教练记忆归档。
 
 远端 PostgreSQL：
 
@@ -256,13 +258,15 @@ Token 规则：
 - `TrainingPlan`。
 - `MockInterview`。
 - `Report`。
+- Post-MVP 远端 `CoachingMemory`、纠错记录和训练观察摘要。
 - 加密后的 OpenAI Provider API Key。
 
 同步规则：
 
 - App 启动后以远端业务数据为准同步。
 - 简历原文永不落远端库。
-- 用户删除账号后，远端数据删除，本地 SwiftData 和 Keychain 同步清空。
+- 用户删除账号后，远端数据删除，Keychain 和远端同步缓存同步清空。
+- Post-MVP 本机教练记忆归档默认保留；重新登录或重新注册时不得自动上传，必须用户主动确认导入。
 
 ### 2.7 简历摘要隐私链路
 
@@ -534,13 +538,21 @@ Report 来源：
 8. TrainingPlan：基于短板生成 1 天任务。
 9. MockInterview：文字面试、最近 6 轮上下文限制、`Report(type=mockInterview)`。
 10. User OpenAI Provider：OpenAI-compatible Provider、加密 API Key、连接测试。
-11. Delete Account：删除远端数据，清空 SwiftData 和 Keychain。
+11. Delete Account：删除远端数据，清空远端同步缓存和 Keychain。
 12. TestFlight Polish：空状态、加载状态、错误提示、隐私说明、首次使用引导。
 13. Sign in with Apple：TestFlight 提审前置认证任务，不属于 Task1-12 MVP 功能闭环。
 14. 平台默认真实 AI 接入：Post-MVP AI 质量任务，OpenAI-compatible 平台配置。
 15. CandidateProfile AI 摘要：`draft-summary` 接入结构化 AI 输出。
 16. AI Prompt 契约补齐：记录 task、输入边界、输出 DTO 和失败策略。
 17. AI 质量迭代：优化 JobBrief、Assessment、Training、MockInterview 的 Prompt 和校验。
+18. 开发环境真实 AI 基线：核心教练路径禁止静默走 stub。
+19. 真实 AI 验收样例集：用典型岗位样例验证真实模型输出质量。
+20. 固定 5 题结构化测评：题目包含维度、难度、意图和评分 rubric。
+21. 教练记忆 Coaching Memory：沉淀训练、测评、模拟面试中的结构化用户理解。
+22. 用户纠错与记忆可信度：支持用户纠正 AI 判断，并标注记忆来源和可信度。
+23. 逐题评分与回答结构诊断：按题诊断回答内容、结构、追问风险和改进示范。
+24. 自适应专项训练会话：根据回答动态决定追问、换角度、达标或停止。
+25. 自适应模拟面试增强与本地记忆策略：增强真实面试追问，并明确本地记忆保留/删除规则。
 
 ### Task 1: Walking Skeleton
 
@@ -802,13 +814,13 @@ Report 来源：
 
 ### Task 11: Delete Account
 
-目标：完成账号删除和本地清理。
+目标：完成账号删除和本地登录态/业务缓存清理。
 
 范围：
 
 - `DELETE /api/me`
 - 删除远端业务数据。
-- iOS 清空 SwiftData。
+- iOS 清空远端同步缓存。
 - iOS 清空 Keychain。
 
 文件边界：
@@ -820,7 +832,7 @@ Report 来源：
 
 验收：
 
-- 删除账号后重新打开 App 无历史数据。
+- 删除账号后重新打开 App 无远端同步业务数据和登录态。
 - 远端无法查询旧数据。
 - API Key、Report、Target、Profile、Assessment、Training、MockInterview 都被删除。
 
@@ -897,7 +909,7 @@ Task1-13 已完成 MVP 功能闭环和 TestFlight 提审前置认证任务。Pos
 当前 AI 状态：
 
 - 用户自定义 OpenAI-compatible Provider 已可用于业务 AI 调用。
-- 平台默认 AI 已支持通过 `IC_PLATFORM_AI_*` 环境变量启用真实 OpenAI-compatible 后端模型；未启用时仍以 `LocalPlatformAiClient` 本地 stub 保持开发和演示稳定。
+- 平台默认 AI 已支持通过 `IC_PLATFORM_AI_*` 环境变量启用真实 OpenAI-compatible 后端模型；未启用时仍以 `LocalPlatformAiClient` 本地 stub 保持测试、离线演示和基础健康检查稳定。Task18 之后核心教练路径禁止静默走 stub。
 - `POST /api/profiles/draft-summary` 已接入统一 AI 路由生成结构化 `CandidateProfileDraftDto`；后端仍自行计算 `rawTextLength`，并继续禁止保存或记录简历原文。
 - iOS 仍禁止直接调用 AI，所有 AI 调用继续由后端统一代理。
 
@@ -910,7 +922,7 @@ Task1-13 已完成 MVP 功能闭环和 TestFlight 提审前置认证任务。Pos
 - 新增平台默认 AI 配置项。
 - 复用现有 `OpenAiCompatibleClient`。
 - 用户默认 Provider 仍优先于平台默认 AI。
-- 未启用平台真实 AI 时，保留 `LocalPlatformAiClient` 作为开发、测试和无密钥演示兜底。
+- 未启用平台真实 AI 时，保留 `LocalPlatformAiClient` 作为测试、离线演示和基础健康检查兜底。
 - 启用平台真实 AI 但配置缺失时，返回明确失败，不静默回退。
 
 配置边界：
@@ -991,7 +1003,199 @@ Task1-13 已完成 MVP 功能闭环和 TestFlight 提审前置认证任务。Pos
 
 ---
 
-## 5. 最终 MVP 验收路径
+## 5. Post-MVP Real AI Adaptive Coaching Roadmap
+
+Task1-17 已完成 MVP 功能闭环、TestFlight 提审前置认证和第一轮 Post-MVP AI 质量闭环。下一阶段以真实 AI 面试能力提升为核心，将产品从一次性测评工具升级为持续理解用户的 AI 面试教练。
+
+阶段目标：
+
+```text
+真实 AI 基线
+-> 固定 5 题结构化测评
+-> 逐题评分与结构诊断
+-> 教练记忆
+-> 自适应专项训练
+-> 自适应模拟面试
+```
+
+阶段硬约束：
+
+- 开发环境也必须能连接真实 AI；核心教练路径不得静默使用 `LocalPlatformAiClient` stub。
+- `LocalPlatformAiClient` 只能用于单元测试、CI 非 live AI 回归、明确标记的离线演示或基础健康检查。
+- 初始能力测评保持固定 5 题一次性生成，保证稳定、公平、可比较。
+- 专项训练和模拟面试必须自适应，根据用户上一轮回答决定追问、换角度、达标或停止。
+- 教练记忆只保存结构化依据、用户回答摘要、评分、短板、纠错和训练观察，禁止保存 AI hidden chain-of-thought。
+- 记忆必须区分 `confirmed`、`observed`、`corrected`、`inferred`、`rejected` 等来源和可信度。
+- 远端 Coaching Memory 随删除账号删除；本机 `CoachingMemoryArchive` 默认保留，只有用户勾选“同时删除本机教练记忆文件”才删除。
+- 重新登录或重新注册时，不得自动上传本机历史记忆，必须让用户主动确认导入。
+
+### Task 18: 开发环境真实 AI 基线
+
+目标：避免开发者被稳定 stub 输出误导，确保真实教练流程在开发环境也能暴露真实模型的质量波动、解析失败和幻觉风险。
+
+范围：
+
+- 后端提供当前 AI 运行状态：`realUserProvider`、`realPlatformProvider`、`stubOnly`、`unavailable`。
+- iOS 在开始测评、训练和模拟面试前展示或检查当前 AI 状态。
+- 测评出题、测评评分、训练反馈、专项训练、模拟面试追问和报告复盘等核心教练路径，在 `stubOnly` 状态下必须阻止继续。
+- 本地开发文档明确真实 AI 配置要求。
+- 保留单元测试、CI 非 live AI 回归、离线演示和基础健康检查使用 stub 的能力。
+
+文件边界：
+
+- `backend/src/main/java/com/interviewcoach/ai`
+- `backend/src/main/resources/application.yml`
+- `ios/InterviewCoach/InterviewCoach/Features/Settings`
+- `docs/ai/provider-contracts.md`
+- `README.md`
+
+验收：
+
+- 未配置用户 Provider 且平台真实 AI 未启用时，核心教练入口提示无法进入真实教练流程。
+- 配置用户默认 Provider 时，核心教练路径使用用户 Provider。
+- 配置平台真实 AI 时，核心教练路径使用平台 Provider。
+- stub 状态不会被误展示为真实 AI。
+- API Key、Authorization Header 和完整请求头不写入日志。
+
+### Task 19: 真实 AI 验收样例集
+
+目标：建立可重复运行的真实 AI 质量验收样例，验证模型是否真正贴合岗位、候选人经历和面试能力提升目标。
+
+范围：
+
+- 准备典型岗位样例：Java 后端/支付系统、AI 应用工程师/RAG Agent、数据平台/调度数仓。
+- 每组样例包含目标岗位、JD、候选人摘要、样例回答。
+- 覆盖 JobBrief、5 题测评、评分、训练计划、训练反馈、模拟面试追问。
+- 默认 CI 不依赖 live AI；live AI 验收必须显式开启。
+
+验收：
+
+- 样例能验证输出是否贴合岗位和候选人摘要。
+- 样例能发现 AI 是否虚构候选人经历。
+- 样例能检查题目是否有区分度、评分是否具体、训练建议是否可执行。
+- live AI 失败时能定位具体 AI task 和模型配置状态。
+
+### Task 20: 固定 5 题结构化测评
+
+目标：保持初始测评固定 5 题一次性生成，同时把题目从字符串升级为结构化测评对象。
+
+范围：
+
+- 测评题包含 `question`、`dimension`、`difficulty`、`intent`、`rubric`。
+- iOS 仍优先展示题干，必要时可以展示维度和难度。
+- 后端保存完整题目结构，评分时将 rubric 一并传给 AI。
+- 建立稳定面试能力维度：`technicalDepth`、`projectSpecificity`、`systemThinking`、`tradeoffAwareness`、`failureHandling`、`communicationClarity`、`businessContext`。
+
+验收：
+
+- 每次初始测评仍为恰好 5 题。
+- 题目结构字段完整，评分 rubric 不为空。
+- 评分 Prompt 使用题目 rubric，而不是只使用题干。
+- 输出不引入题库社区或刷题系统。
+
+### Task 21: 教练记忆 Coaching Memory
+
+目标：让产品逐步形成对用户的长期理解，避免每次训练都从零开始。
+
+范围：
+
+- 建立会话级记录：AI 问题、题目维度、难度、rubric、用户回答、评分、反馈、追问。
+- 生成每日或训练计划级 `DailyCoachingMemory`，总结强项、短板、重复问题、已验证经历、未验证声明、下一步重点和避免重复内容。
+- 建立长期 `LongTermCoachingProfile`，记录持续短板、进步趋势、已验证项目表达和下次追问方向。
+- 后续 AI 使用记忆时只取必要摘要，禁止把完整历史无限塞入 Prompt。
+
+强约束：
+
+- 禁止保存 AI hidden chain-of-thought。
+- 禁止保存简历原文。
+- 禁止把 `inferred` 记忆当事实使用。
+- Prompt 必须优先使用 `confirmed`、`observed`、`corrected`，对 `inferred` 只能通过追问验证。
+
+验收：
+
+- 完成测评、训练或模拟面试后能生成结构化教练记忆。
+- 记忆记录来源和可信度。
+- 后续训练可以使用历史短板和已验证经历定制问题。
+- MockInterview 仍保持最多最近 6 轮上下文限制，不因记忆引入无限增长 Prompt。
+
+### Task 22: 用户纠错与记忆可信度
+
+目标：让用户能纠正 AI 的误判和幻觉，避免错误记忆污染后续训练。
+
+范围：
+
+- 用户可对报告、训练反馈、记忆摘要中的判断标记“不准确”。
+- 用户可补充正确说法或否认 AI 推断。
+- 记忆来源类型至少包括：`confirmed`、`observed`、`corrected`、`inferred`、`rejected`。
+- 后续 Prompt 禁止把 `rejected` 内容再次当事实使用。
+
+验收：
+
+- 用户纠错后，后续 AI 不再重复被否认的经历或结论。
+- `corrected` 内容优先级高于 `observed` 和 `inferred`。
+- 纠错记录随远端账号数据删除；本机记忆归档按 Task 25 规则处理。
+
+### Task 23: 逐题评分与回答结构诊断
+
+目标：把测评报告从总分反馈升级为可训练的逐题诊断。
+
+范围：
+
+- 每道题单独评分并输出短板、亮点、改进示范和追问风险。
+- 诊断回答结构：背景、任务、行动、结果、权衡、复盘。
+- 聚合总分、能力维度分、主要短板和下一步训练建议。
+- 输出必须继续解析为强类型 DTO，不允许 iOS 解析 AI 原始文本。
+
+验收：
+
+- 报告能指出每题具体问题，而不是泛泛建议。
+- 改进示范不得虚构用户未确认的业务指标或项目结果。
+- 逐题诊断能驱动专项训练任务生成。
+
+### Task 24: 自适应专项训练会话
+
+目标：将训练从“一题一答一反馈”升级为围绕短板的 2-4 轮自适应训练。
+
+范围：
+
+- 新增训练会话概念，围绕一个短板展开多轮追问。
+- AI 根据用户上一轮回答返回下一步动作：`continue`、`pass`、`switch`、`stop`。
+- `continue` 表示继续追问；`pass` 表示当前短板基本达标；`switch` 表示换相关角度；`stop` 表示用户明显卡住，需要先给讲解。
+- 训练结束后生成本次训练总结和记忆更新。
+
+验收：
+
+- 自适应训练必须真实调用 AI。
+- 每轮下一题必须基于用户上一轮回答。
+- 训练轮数默认 2-4 轮，不扩展为多天课程系统。
+- TrainingTask answer 仍不创建 Report，训练总结写入训练反馈或教练记忆。
+
+### Task 25: 自适应模拟面试增强与本地记忆策略
+
+目标：增强模拟面试的真实追问能力，并明确删除账号时本机教练记忆的保留策略。
+
+范围：
+
+- 模拟面试开场问题基于目标岗位、JD、候选人摘要、最近测评短板和可用教练记忆。
+- 追问必须引用用户上一条回答中的具体内容。
+- AI 可选择追深、换维度、要求举例、要求量化结果或要求解释权衡。
+- finish 报告指出真实面试中最可能被继续追问的点。
+- 删除账号时远端账号和远端业务数据必须删除；本机 `CoachingMemoryArchive` 默认保留。
+- 删除账号页提供“同时删除本机教练记忆文件”选项，用户勾选后才删除本机记忆。
+- 重新登录或重新注册时，检测到本机历史记忆也不得自动上传，必须用户主动确认导入。
+
+验收：
+
+- 模拟面试仍限制最多最近 6 轮上下文。
+- 后续追问能体现历史短板和本轮回答细节。
+- 删除账号后远端无法查询旧数据。
+- 未勾选删除本机记忆时，本机教练记忆归档保留。
+- 勾选删除本机记忆时，本机教练记忆归档被清除。
+- 本机记忆归档不包含简历原文、API Key 或 AI hidden chain-of-thought。
+
+---
+
+## 6. 最终 MVP 验收路径
 
 Task1-12 的最终验收仍按 MVP 功能闭环执行；Task13 是 TestFlight 提审前置认证任务，不改变 MVP 功能闭环验收路径。
 
@@ -1018,7 +1222,7 @@ dev login
 
 只要这条路径不完整，就不算 MVP 完成。
 
-## 6. 每次任务完成输出
+## 7. 每次任务完成输出
 
 每次实现后必须回复：
 

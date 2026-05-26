@@ -20,9 +20,10 @@ MVP 阶段平台默认 AI 由 `LocalPlatformAiClient` 提供本地 stub，返回
 Post-MVP AI 质量阶段将平台默认 AI 升级为可配置的 OpenAI-compatible 后端模型能力：
 
 - 平台真实 AI 启用时，后端使用平台配置调用 OpenAI-compatible API。
-- 平台真实 AI 未启用时，继续使用 `LocalPlatformAiClient` 作为开发、测试和无密钥演示兜底。
+- 平台真实 AI 未启用时，`LocalPlatformAiClient` 只能作为单元测试、CI 非 live AI 回归、明确标记的离线演示和基础健康检查兜底。
 - 用户已配置默认 Provider 时，用户 Provider 优先于平台默认 AI。
 - 平台真实 AI 启用但配置缺失时必须明确失败，不允许静默回退到本地 stub。
+- Task 18-25 阶段，开发环境也必须能连接真实 AI；测评、训练、模拟面试等核心教练路径禁止静默使用 stub。
 
 ### 2.1 平台默认 AI 配置
 
@@ -82,6 +83,19 @@ Post-MVP AI 质量阶段将平台默认 AI 升级为可配置的 OpenAI-compatib
 5. 平台真实 AI 未启用时 → 由 `LocalPlatformAiClient` 返回本地 stub JSON。
 
 **禁止自动回退**：当用户 Provider 调用失败时，不自动切换到平台 AI，必须让用户确认。
+
+### 4.1 真实教练模式门禁
+
+Post-MVP Real AI Adaptive Coaching 阶段必须区分 AI 运行状态：
+
+| 状态 | 含义 | 核心教练路径 |
+|------|------|--------------|
+| `realUserProvider` | 当前用户配置了默认 OpenAI-compatible Provider | 允许 |
+| `realPlatformProvider` | 平台真实 AI 已启用且配置完整 | 允许 |
+| `stubOnly` | 仅有 `LocalPlatformAiClient` stub | 阻止 |
+| `unavailable` | 没有可用 Provider 或配置错误 | 阻止 |
+
+核心教练路径包括：测评出题、测评评分、训练反馈、专项训练、模拟面试追问和报告复盘。`stubOnly` 只能用于测试、CI 非 live AI 回归、离线演示和基础健康检查，不能让开发者误以为真实 AI 能力已达标。
 
 ## 5. 安全要求
 

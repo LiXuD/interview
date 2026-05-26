@@ -14,6 +14,8 @@
 - Prompt 必须要求模型只返回合法 JSON，不返回 Markdown、解释文字或代码块。
 - Prompt 必须明确 DTO 字段名和字段类型。
 - 依赖用户摘要或 JD 的 task，Prompt 必须提醒模型只基于已提供上下文，不得编造未提供的经历。
+- 禁止要求、保存或返回 AI hidden chain-of-thought；如需解释依据，只能返回结构化的题目意图、rubric、评分理由、证据引用和记忆摘要。
+- 教练记忆必须区分 `confirmed`、`observed`、`corrected`、`inferred`、`rejected` 来源；`inferred` 只能用于追问验证，`rejected` 禁止再次作为事实使用。
 
 ## 2. Task: `candidateProfileDraft`
 
@@ -390,11 +392,109 @@ System Prompt 要求：
 - `summary` 非空。
 - 所有数组字段非 null。
 
-## 10. 测试要求
+## 10. Post-MVP Real AI Adaptive Coaching 计划契约
+
+Task 18-25 将在现有 AI task 基础上扩展以下契约。实现前必须同步 `docs/api/openapi.yaml`、后端 DTO、iOS DTO 和本文件。
+
+### 10.1 结构化测评题
+
+当前 `assessmentQuestions` 返回 5 个字符串。Task 20 将升级为固定 5 题结构化输出：
+
+```json
+{
+  "questions": [
+    {
+      "question": "请结合你的支付项目说明一次 Redis 缓存一致性问题。",
+      "dimension": "systemThinking",
+      "difficulty": "medium",
+      "intent": "验证候选人是否能把缓存一致性问题讲到业务约束和技术权衡。",
+      "rubric": ["说明业务场景", "解释一致性策略", "讲清权衡和结果"]
+    }
+  ]
+}
+```
+
+固定能力维度：
+
+- `technicalDepth`
+- `projectSpecificity`
+- `systemThinking`
+- `tradeoffAwareness`
+- `failureHandling`
+- `communicationClarity`
+- `businessContext`
+
+### 10.2 逐题评分与回答结构诊断
+
+Task 23 的测评结果必须支持逐题诊断：
+
+- 每题独立评分。
+- 每题输出亮点、短板、改进示范和真实面试追问风险。
+- 诊断回答结构：背景、任务、行动、结果、权衡、复盘。
+- 聚合总分、维度分、主要短板和下一步训练建议。
+
+### 10.3 教练记忆生成
+
+Task 21 的教练记忆必须由后端解析为强类型 DTO。记忆内容只允许包含结构化事实和观察：
+
+```json
+{
+  "targetId": "uuid-string",
+  "sourceType": "assessment",
+  "observedStrengths": ["能讲清项目背景"],
+  "observedWeaknesses": ["容量估算缺少数字依据"],
+  "recurringProblems": ["回答偏概念，缺少业务指标"],
+  "verifiedExperience": ["用户确认做过支付回调链路优化"],
+  "unverifiedClaims": ["提到高并发优化，但未给出指标"],
+  "recommendedNextFocus": ["容量规划", "故障排查复盘表达"],
+  "avoidRepeating": ["不要继续问泛泛的 Redis 基础概念"]
+}
+```
+
+### 10.4 用户纠错
+
+Task 22 必须支持用户纠正 AI 判断。纠错后的内容在后续 Prompt 中优先级高于 AI 推断：
+
+- `corrected`：用户修正后的事实或结论。
+- `rejected`：用户否认的经历、短板或判断，禁止再次作为事实使用。
+- `inferred`：AI 推断，只能作为追问验证材料。
+
+### 10.5 自适应专项训练
+
+Task 24 的专项训练会话必须根据上一轮回答返回下一步动作：
+
+```json
+{
+  "action": "continue",
+  "question": "请补充这个方案在峰值流量下的容量估算。",
+  "feedback": "回答已经覆盖整体方案，但缺少量化依据。",
+  "score": 72,
+  "memoryUpdates": ["容量估算仍需训练"]
+}
+```
+
+`action` 允许值：
+
+- `continue`：继续追问。
+- `pass`：当前短板基本达标。
+- `switch`：换一个相关角度。
+- `stop`：用户明显卡住，先给讲解或结束本轮。
+
+### 10.6 自适应模拟面试增强
+
+Task 25 的模拟面试追问必须：
+
+- 引用用户上一条回答中的具体内容。
+- 根据历史短板和本轮表现决定追深、换维度、要求举例、要求量化结果或要求解释权衡。
+- 继续遵守最近 6 轮、最多 12 条 message 的上下文限制。
+- 结合教练记忆时只使用必要摘要，不传完整历史。
+
+## 11. 测试要求
 
 - 每个 AI task 必须有结构化输出解析测试。
 - 每个 AI task 必须覆盖非法 JSON 和缺失必填字段。
 - 包含目标 ID 或会话 ID 的 task 还必须覆盖 ID 不匹配场景。
 - 默认测试不得依赖 live AI 调用。
+- Task 18-25 的真实 AI 验收必须显式开启，不能污染默认 CI。
 - 涉及简历原文的测试必须确认原文不落库、不写日志、不进入返回给 iOS 的字段。
 - `candidateProfileDraft` 测试必须确认 `rawTextLength` 由后端计算，不受 AI 输出影响。

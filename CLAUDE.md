@@ -16,7 +16,7 @@
 
 MVP 只验收这条最窄闭环。只要这条路径不完整，就不算 MVP 完成。
 
-当前 Task 1-17 全部完成：MVP 功能闭环、TestFlight 提审前置认证、Post-MVP AI 质量闭环（平台默认真实 AI 接入、CandidateProfile AI 摘要、AI Prompt 契约补齐、AI 质量迭代）。MVP 完成后的新增开发必须继续服务 AI 面试教练定位，并且只能按 `docs/product/vibecoding-development-plan.md` 中已批准的 Post-MVP 任务推进。
+当前 Task 1-17 全部完成：MVP 功能闭环、TestFlight 提审前置认证、Post-MVP AI 质量闭环（平台默认真实 AI 接入、CandidateProfile AI 摘要、AI Prompt 契约补齐、AI 质量迭代）。下一阶段已批准为 Task 18-25：Post-MVP Real AI Adaptive Coaching（真实 AI 自适应面试教练阶段）。MVP 完成后的新增开发必须继续服务 AI 面试教练定位，并且只能按 `docs/product/vibecoding-development-plan.md` 中已批准的 Post-MVP 任务推进。
 
 ## 2. MVP 范围
 
@@ -33,7 +33,7 @@ MVP 必须支持：
 - 生成 1 天 `TrainingPlan`。
 - 完成 1 次文字 `MockInterview`。
 - 查看统一 `Report`。
-- 删除账号，并清理本地和远端数据。
+- 删除账号，并清理远端数据、本地登录态和远端同步缓存。
 
 MVP 禁止实现：
 
@@ -104,6 +104,7 @@ AI 调用必须遵守：
 - MVP 支持 OpenAI-compatible 自定义 Provider。
 - Anthropic 协议只作为 post-MVP 扩展点预留，MVP 禁止实现。
 - Post-MVP 平台默认真实 AI 只能采用 OpenAI-compatible 后端代理配置。
+- Post-MVP Real AI Adaptive Coaching 阶段，开发环境也必须能连接真实 AI；测评、训练、模拟面试等核心教练路径禁止静默使用 stub。
 - 平台 API Key 只能通过环境变量或部署配置提供，禁止写入仓库、返回给 iOS 或写入日志。
 
 ## 5. 项目目录与模块边界规范
@@ -269,6 +270,12 @@ dto/
 - CandidateProfile AI 摘要：主要改 `backend/src/main/java/com/interviewcoach/profile`、`backend/src/main/java/com/interviewcoach/ai`、`backend/src/main/java/com/interviewcoach/common/api`、`docs/ai/prompt-contracts.md`、`docs/privacy/data-policy.md`。
 - AI Prompt 契约补齐：只允许改 `docs/ai/prompt-contracts.md`、`docs/ai/provider-contracts.md`、`docs/product/vibecoding-development-plan.md`。
 - AI 质量迭代：主要改 `backend/src/main/java/com/interviewcoach/ai`、对应业务模块的 Prompt 组装服务、`backend/src/test`、`docs/ai/prompt-contracts.md`。
+- 开发环境真实 AI 基线：主要改 `backend/src/main/java/com/interviewcoach/ai`、`backend/src/main/resources/application.yml`、`ios/InterviewCoach/InterviewCoach/Features/Settings`、`docs/ai/provider-contracts.md`、`README.md`。
+- 真实 AI 验收样例集：主要改 `backend/src/test`、`docs/ai/prompt-contracts.md`、`docs/product/vibecoding-development-plan.md`。
+- 固定 5 题结构化测评与逐题评分：主要改 `backend/src/main/java/com/interviewcoach/assessment`、`backend/src/main/java/com/interviewcoach/ai`、`backend/src/main/java/com/interviewcoach/common/api`、`ios/InterviewCoach/InterviewCoach/Features/Assessment`、`docs/api/openapi.yaml`、`docs/ai/prompt-contracts.md`。
+- 教练记忆与用户纠错：主要改 `backend/src/main/java/com/interviewcoach/coachingmemory`（新增模块）、`backend/src/main/java/com/interviewcoach/common/api`、`ios/InterviewCoach/InterviewCoach/Features/Reports`、`ios/InterviewCoach/InterviewCoach/Core/Storage`、`docs/privacy/data-policy.md`。
+- 自适应专项训练：主要改 `backend/src/main/java/com/interviewcoach/training`、`backend/src/main/java/com/interviewcoach/ai`、`backend/src/main/java/com/interviewcoach/coachingmemory`、`ios/InterviewCoach/InterviewCoach/Features/Training`、`docs/api/openapi.yaml`。
+- 自适应模拟面试增强与本地记忆策略：主要改 `backend/src/main/java/com/interviewcoach/mockinterview`、`backend/src/main/java/com/interviewcoach/coachingmemory`、`ios/InterviewCoach/InterviewCoach/Features/MockInterview`、`ios/InterviewCoach/InterviewCoach/Features/Settings`、`docs/privacy/data-policy.md`。
 
 禁止为了一个任务横跨无关模块做大改。若确实需要跨越上述边界，必须先说明原因、风险和替代方案，并等待用户确认。
 
@@ -331,7 +338,8 @@ AI 结构化输出解析失败时，后端最多重试 1 次；仍失败必须�
 - 业务接口必须从 `SecurityContextHolder` 获取当前用户。
 - 未认证请求访问业务接口必须返回 401。
 - iOS 必须把 Bearer Token 保存到 Keychain。
-- `DELETE /api/me` 删除远端用户数据后，iOS 必须清空 SwiftData 和 Keychain。
+- `DELETE /api/me` 删除远端用户数据后，iOS 必须清空 Keychain 和远端同步缓存。
+- Post-MVP 本机 `CoachingMemoryArchive` 是用户设备上的本地教练记忆归档，删除账号时默认保留；只有用户勾选“同时删除本机教练记忆文件”才允许删除。
 
 禁止：
 
@@ -351,6 +359,7 @@ AI 结构化输出解析失败时，后端最多重试 1 次；仍失败必须�
 - 用户未确认上传的项目经历原文。
 - 本地草稿。
 - 页面缓存状态。
+- Post-MVP 本机 `CoachingMemoryArchive` 教练记忆归档。
 
 远端 PostgreSQL 存储：
 
@@ -361,13 +370,15 @@ AI 结构化输出解析失败时，后端最多重试 1 次；仍失败必须�
 - `TrainingPlan`。
 - `MockInterview`。
 - `Report`。
+- Post-MVP 远端 `CoachingMemory`、纠错记录和训练观察摘要。
 - 加密后的 OpenAI Provider API Key。
 
 同步规则：
 
 - App 启动后以远端业务数据为准同步。
 - 简历原文永不落远端库。
-- 用户删除账号后，远端数据必须删除，本地 SwiftData 和 Keychain 必须清空。
+- 用户删除账号后，远端数据必须删除，Keychain 和远端同步缓存必须清空。
+- 本机 `CoachingMemoryArchive` 默认保留，除非用户明确勾选同时删除；重新登录或重新注册时不得自动上传本机历史记忆，必须用户主动确认导入。
 
 ## 9. 简历摘要隐私链路
 
@@ -431,7 +442,8 @@ Provider API：
 - 平台配置必须来自环境变量或部署配置，不允许提交真实密钥。
 - 配置项必须使用 `IC_PLATFORM_AI_ENABLED`、`IC_PLATFORM_AI_BASE_URL`、`IC_PLATFORM_AI_API_KEY`、`IC_PLATFORM_AI_MODEL`、`IC_PLATFORM_AI_MODE`。
 - 用户已配置默认 Provider 时，用户 Provider 优先于平台默认 AI。
-- 平台真实 AI 未启用时，可以保留 `LocalPlatformAiClient` 作为开发、测试和无密钥演示兜底。
+- 平台真实 AI 未启用时，可以保留 `LocalPlatformAiClient` 作为单元测试、CI 非 live AI 回归、明确标记的离线演示和基础健康检查兜底。
+- Post-MVP Real AI Adaptive Coaching 阶段，开发环境必须支持真实 AI 配置；测评出题、测评评分、训练反馈、专项训练、模拟面试追问和报告复盘不得静默走 stub。
 - 平台真实 AI 启用但配置缺失时必须明确失败，不允许静默回退到本地 stub。
 
 禁止实现 Anthropic Provider。Anthropic 只允许在架构中保留扩展点，不允许创建可用业务入口。
@@ -501,6 +513,9 @@ AI 生成内容必须遵守：
 - 可以优化表达，禁止虚构用户没有做过的项目、技术、业务结果。
 - 必须区分“真实经历”“合理迁移表达”“需要用户确认”。
 - 模拟面试追问必须围绕用户上一条回答。
+- 禁止保存或返回 AI hidden chain-of-thought；只能保存结构化依据、题目意图、rubric、评分、反馈、用户纠错和记忆摘要。
+- 教练记忆必须标注来源和可信度：`confirmed`、`observed`、`corrected`、`inferred`、`rejected`。
+- 后续 Prompt 只能把 `confirmed`、`observed`、`corrected` 当作可用事实；`inferred` 只能用于追问验证，`rejected` 禁止再次作为事实使用。
 
 ## 12. MockInterview 上下文限制
 
@@ -554,13 +569,21 @@ Report API：
 8. TrainingPlan：基于短板生成 1 天任务。
 9. MockInterview：文字面试、最近 6 轮上下文限制、`Report(type=mockInterview)`。
 10. User OpenAI Provider：OpenAI-compatible Provider、加密 API Key、连接测试。
-11. Delete Account：删除远端数据，清空 SwiftData 和 Keychain。
+11. Delete Account：删除远端数据，清空远端同步缓存和 Keychain。
 12. TestFlight Polish：空状态、加载状态、错误提示、隐私说明、首次使用引导。
 13. Sign in with Apple：Apple 登录链路、TestFlight 提审前置认证。
 14. 平台默认真实 AI 接入：OpenAI-compatible 平台配置，未启用时保留本地 stub。
 15. CandidateProfile AI 摘要：`draft-summary` 接入结构化 AI 输出。
 16. AI Prompt 契约补齐：记录 task、输入边界、输出 DTO 和失败策略。
 17. AI 质量迭代：优化 JobBrief、Assessment、Training、MockInterview 的 Prompt 和校验。
+18. 开发环境真实 AI 基线：核心教练路径禁止静默走 stub。
+19. 真实 AI 验收样例集：用典型岗位样例验证真实模型输出质量。
+20. 固定 5 题结构化测评：题目包含维度、难度、意图和评分 rubric。
+21. 教练记忆 Coaching Memory：沉淀训练、测评、模拟面试中的结构化用户理解。
+22. 用户纠错与记忆可信度：支持用户纠正 AI 判断，并标注记忆来源和可信度。
+23. 逐题评分与回答结构诊断：按题诊断回答内容、结构、追问风险和改进示范。
+24. 自适应专项训练会话：根据回答动态决定追问、换角度、达标或停止。
+25. 自适应模拟面试增强与本地记忆策略：增强真实面试追问，并明确本地记忆保留/删除规则。
 
 ## 15. 每次任务输出格式
 
@@ -653,7 +676,7 @@ dev login
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **interview** (2459 symbols, 7599 relationships, 207 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **interview** (2528 symbols, 7800 relationships, 213 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 

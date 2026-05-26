@@ -27,7 +27,7 @@ MVP 完成标准：
 11. 完成 1 个 `TrainingTask`。
 12. 完成 1 次文字 `MockInterview`。
 13. 查看 `MockInterview Report`。
-14. 删除账号并清理本地和远端数据。
+14. 删除账号并清理远端数据、本地登录态和远端同步缓存。
 
 ## 技术方向
 
@@ -83,7 +83,7 @@ interview/
 
 当前仓库已完成 Task 1-13：Walking Skeleton、OpenAPI 契约与 DTO、Dev Login 认证链路、Target CRUD、CandidateProfile 隐私链路、Platform AI + JobBrief、Assessment 5 题测评、TrainingPlan 1 天任务、MockInterview 文字模拟面试、User OpenAI Provider、Delete Account、TestFlight Polish、Sign in with Apple。MVP 闭环已全部打通。
 
-说明：MVP 阶段已打通完整功能路径。Post-MVP AI 质量阶段已全部完成：Task 14（平台默认真实 AI 接入）、Task 15（CandidateProfile AI 摘要生成）、Task 16（AI Prompt 契约补齐）、Task 17（AI 质量迭代）。平台默认 AI 支持通过环境变量配置真实模型，未启用时保留本地 stub 以支持无密钥演示。所有 AI Prompt 已统一为中文系统提示并增加明确的 JSON 字段约束。
+说明：MVP 阶段已打通完整功能路径。Post-MVP AI 质量阶段已全部完成：Task 14（平台默认真实 AI 接入）、Task 15（CandidateProfile AI 摘要生成）、Task 16（AI Prompt 契约补齐）、Task 17（AI 质量迭代）。下一阶段已批准为 Post-MVP Real AI Adaptive Coaching（Task 18-25），目标是用真实 AI、结构化测评、教练记忆、用户纠错、逐题诊断和自适应训练/模拟面试，把产品从一次性测评工具升级为持续理解用户的面试教练。
 
 ## 开发计划
 
@@ -114,6 +114,17 @@ Post-MVP AI 质量路线：
 16. AI Prompt 契约补齐：记录 task、输入边界、输出 DTO 和失败策略。
 17. AI 质量迭代：优化 JobBrief、Assessment、Training、MockInterview 的 Prompt 和校验。
 
+Post-MVP Real AI Adaptive Coaching 路线：
+
+18. 开发环境真实 AI 基线：核心教练路径禁止静默走 stub。
+19. 真实 AI 验收样例集：用典型岗位样例验证真实模型输出质量。
+20. 固定 5 题结构化测评：题目包含维度、难度、意图和评分 rubric。
+21. 教练记忆 Coaching Memory：沉淀训练、测评、模拟面试中的结构化用户理解。
+22. 用户纠错与记忆可信度：支持用户纠正 AI 判断，并标注记忆来源和可信度。
+23. 逐题评分与回答结构诊断：按题诊断回答内容、结构、追问风险和改进示范。
+24. 自适应专项训练会话：根据回答动态决定追问、换角度、达标或停止。
+25. 自适应模拟面试增强与本地记忆策略：增强真实面试追问，并明确本地记忆保留/删除规则。
+
 ## 开发约束
 
 本项目采用 vibecoding 方式开发。任何 AI 开发代理或人工协作者在修改项目之前，必须先阅读：
@@ -125,6 +136,7 @@ Post-MVP AI 质量路线：
 
 - 每次只实现一个小任务。
 - MVP 阶段禁止扩展非 MVP 功能；MVP 完成后只允许按已批准的 Post-MVP 计划推进。
+- Task 18-25 阶段，开发环境也必须能连接真实 AI；测评、训练、模拟面试等核心教练路径禁止静默使用 stub。
 - 后端必须使用 Spring Security Bearer Token。
 - 所有后端返回给 iOS 的 JSON 必须使用 camelCase。
 - 后端必须返回强类型 DTO。
@@ -132,6 +144,7 @@ Post-MVP AI 质量路线：
 - 简历原文默认只保存在 iOS 本地。
 - 生成摘要时，简历原文只允许临时上传并在后端内存中使用。
 - 禁止记录简历原文或 API Key 到日志。
+- 禁止保存或返回 AI hidden chain-of-thought；教练记忆只能保存结构化依据、题目意图、rubric、评分、反馈、用户纠错和记忆摘要。
 - 模拟面试 Prompt 最多携带最近 6 轮，也就是 12 条 message。
 
 ## GitHub
@@ -142,7 +155,7 @@ Post-MVP AI 质量路线：
 
 ## 当前状态
 
-当前阶段：Post-MVP AI 质量闭环已全部完成（Task 14-17）。
+当前阶段：Post-MVP AI 质量闭环已全部完成（Task 14-17），下一阶段准备进入 Post-MVP Real AI Adaptive Coaching（Task 18-25）。
 
 已完成：
 
@@ -185,7 +198,7 @@ Post-MVP AI 质量路线：
 - Task 10：后端 7 个集成测试（全生命周期、认证、跨用户隔离、级联删除、API Key 不泄露）。
 - Task 10：iOS SettingsView、AiProviderListView（列表+默认切换+滑动删除）、AiProviderCreateView（创建表单+连接测试）。
 - Task 11：后端无改动，DELETE /api/me 已在 Task 3+10 中完整实现（10 张表级联删除）。
-- Task 11：iOS AuthService 新增 deleteAccount() 方法（调用 DELETE /api/me 后 logout 清除本地数据）。
+- Task 11：iOS AuthService 新增 deleteAccount() 方法（调用 DELETE /api/me 后 logout 清除本地登录态和业务缓存；Post-MVP 本机教练记忆按 Task 25 规则默认保留）。
 - Task 11：iOS SettingsView 新增删除账号区域 + confirmationDialog 二次确认。
 - Task 11：后端 9 个测试通过（deleteMeWithValidTokenReturns204 + deleteUserAfterProfileConfirmSucceeds）。
 - Task 13：后端 User 实体新增 appleUserId（unique）+ email 字段。

@@ -11,6 +11,8 @@
 | Bearer Token | iOS Keychain | 高 | 登录凭证 |
 | API Key | 远端 PostgreSQL（加密） | 高 | 用户自定义 AI Provider 密钥 |
 | 岗位目标 | 远端 PostgreSQL + iOS 本地 | 低 | 非敏感业务数据 |
+| 远端教练记忆 | 远端 PostgreSQL | 中 | 结构化训练观察、用户纠错、能力短板和进步摘要 |
+| 本机教练记忆归档 | iOS 本地 SwiftData 或本机文件 | 中 | 用户设备上的 `CoachingMemoryArchive`，删除账号时默认保留，可由用户选择删除 |
 
 ## 2. 简历摘要隐私链路
 
@@ -33,10 +35,12 @@
 - 简历原文。
 - 用户未确认上传的项目经历原文。
 - 已确认的候选人摘要（离线缓存）。
+- Post-MVP 本机 `CoachingMemoryArchive` 教练记忆归档。
 
 **远端 PostgreSQL（服务端）：**
 
 - 确认后的 `CandidateProfile`（摘要、技能、项目、经历）。
+- Post-MVP 远端 `CoachingMemory`、用户纠错记录和训练观察摘要。
 - 不包含任何简历原文字段。
 
 **远端数据库禁止存储：**
@@ -86,9 +90,47 @@ grep -r "System.out\|System.err\|logger\." backend/src/main/java/com/interviewco
 `DELETE /api/me` 必须：
 
 - 删除远端 PostgreSQL 中该用户的所有数据（Target、Profile、Assessment、Training、MockInterview、Report、Provider）。
-- iOS 必须清空本地 SwiftData 和 Keychain Token。
+- 删除远端 `CoachingMemory`、用户纠错记录和训练观察摘要。
+- iOS 必须清空 Keychain Token 和远端同步缓存。
+- 本机 `CoachingMemoryArchive` 默认保留，除非用户在删除账号页勾选“同时删除本机教练记忆文件”。
 
-## 5. 数据隔离
+删除账号页必须明确说明：
+
+- 云端账号、训练记录、报告、AI Provider 配置和远端教练记忆会永久删除。
+- 本机教练记忆文件默认保留在当前设备上，方便用户继续复盘或后续手动导入。
+- 如果用户也希望删除本机记忆，必须主动勾选删除选项。
+
+重新登录或重新注册时：
+
+- 如果检测到本机历史教练记忆，App 不得自动上传到新账号。
+- App 必须让用户主动确认是否导入。
+- 用户拒绝导入时，本机记忆不得参与后续 AI Prompt。
+
+## 5. 教练记忆隐私边界
+
+教练记忆只能保存结构化、可审计的信息：
+
+- AI 实际提出的问题、题目维度、难度、考察意图和评分 rubric。
+- 用户回答摘要、评分、反馈、追问、训练总结。
+- 用户纠错和被用户否认的结论。
+- 短板、强项、进步趋势、下一步训练重点。
+
+教练记忆禁止保存：
+
+- 简历原文或项目经历原文。
+- API Key、Bearer Token 或 Authorization Header。
+- AI hidden chain-of-thought。
+- 未经用户确认的敏感原文片段。
+
+记忆来源和可信度必须标注：
+
+- `confirmed`：来自用户确认摘要或用户明确确认。
+- `observed`：来自训练、测评、模拟面试中的实际表现。
+- `corrected`：用户手动纠正过。
+- `inferred`：AI 推断，只能用于追问验证，不能当事实使用。
+- `rejected`：用户否认过，禁止后续再次当事实使用。
+
+## 6. 数据隔离
 
 - 不同用户禁止互相访问对方的 Target、Profile、Report、Provider。
 - 所有业务查询必须包含用户 ID 过滤。
