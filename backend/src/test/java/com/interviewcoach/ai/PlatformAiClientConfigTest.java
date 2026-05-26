@@ -26,6 +26,9 @@ class PlatformAiClientConfigTest {
 
 @SpringBootTest(properties = {
         "app.ai.platform.enabled=true",
+        "app.ai.platform.base-url=",
+        "app.ai.platform.api-key=",
+        "app.ai.platform.model=",
         "app.ai.encryption-key=0123456789abcdef0123456789abcdef"
 })
 @ActiveProfiles("test")
