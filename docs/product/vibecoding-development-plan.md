@@ -1033,6 +1033,8 @@ Task1-17 已完成 MVP 功能闭环、TestFlight 提审前置认证和第一轮 
 
 目标：避免开发者被稳定 stub 输出误导，确保真实教练流程在开发环境也能暴露真实模型的质量波动、解析失败和幻觉风险。
 
+状态：已完成。后端已提供 AI runtime status，iOS 核心教练入口已接入状态门禁，`stubOnly` 状态不再允许静默进入测评、训练和模拟面试核心流程。
+
 范围：
 
 - 后端提供当前 AI 运行状态：`realUserProvider`、`realPlatformProvider`、`stubOnly`、`unavailable`。

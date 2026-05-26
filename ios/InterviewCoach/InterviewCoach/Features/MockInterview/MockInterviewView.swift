@@ -116,6 +116,7 @@ struct MockInterviewView: View {
         isLoading = true
         errorMessage = nil
         do {
+            try await AiRuntimeStatusGuard.requireCoreAiAvailable()
             session = try await APIClient.shared.request(
                 "POST",
                 path: "/api/mock-interviews/start",
@@ -132,6 +133,7 @@ struct MockInterviewView: View {
         isLoading = true
         errorMessage = nil
         do {
+            try await AiRuntimeStatusGuard.requireCoreAiAvailable()
             let trimmed = answerText.trimmingCharacters(in: .whitespacesAndNewlines)
             self.session = try await APIClient.shared.request(
                 "POST",
@@ -150,6 +152,7 @@ struct MockInterviewView: View {
         isLoading = true
         errorMessage = nil
         do {
+            try await AiRuntimeStatusGuard.requireCoreAiAvailable()
             report = try await APIClient.shared.request(
                 "POST",
                 path: "/api/mock-interviews/\(session.id)/finish"

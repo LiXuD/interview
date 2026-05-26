@@ -125,6 +125,20 @@ Post-MVP Real AI Adaptive Coaching 路线：
 24. 自适应专项训练会话：根据回答动态决定追问、换角度、达标或停止。
 25. 自适应模拟面试增强与本地记忆策略：增强真实面试追问，并明确本地记忆保留/删除规则。
 
+## 本地真实 AI 配置
+
+Task 18 起，测评出题、测评评分、训练计划/反馈、模拟面试追问和报告复盘必须使用真实 AI。开发环境可以二选一：
+
+- 在 App 的 `AI Provider` 设置页配置用户 OpenAI-compatible Provider。
+- 在后端环境变量中配置平台 Provider：
+  - `IC_PLATFORM_AI_ENABLED=true`
+  - `IC_PLATFORM_AI_BASE_URL`
+  - `IC_PLATFORM_AI_API_KEY`
+  - `IC_PLATFORM_AI_MODEL`
+  - `IC_PLATFORM_AI_MODE=chatCompletions` 或 `responses`
+
+默认 `IC_REQUIRE_REAL_AI_FOR_COACHING=true`。未配置用户 Provider 且平台真实 AI 未完整配置时，核心教练入口会阻止继续；`LocalPlatformAiClient` 仅保留给单元测试、CI 非 live AI 回归、明确离线演示和基础健康检查。
+
 ## 开发约束
 
 本项目采用 vibecoding 方式开发。任何 AI 开发代理或人工协作者在修改项目之前，必须先阅读：
@@ -155,7 +169,7 @@ Post-MVP Real AI Adaptive Coaching 路线：
 
 ## 当前状态
 
-当前阶段：Post-MVP AI 质量闭环已全部完成（Task 14-17），下一阶段准备进入 Post-MVP Real AI Adaptive Coaching（Task 18-25）。
+当前阶段：Post-MVP Real AI Adaptive Coaching 已完成 Task 18（开发环境真实 AI 基线），下一步进入 Task 19（真实 AI 验收样例集）。
 
 已完成：
 
@@ -210,7 +224,11 @@ Post-MVP Real AI Adaptive Coaching 路线：
 - Task 13：iOS AuthService.appleLogin()、AppleLoginRequestDTO（含 nonce）、performLogin 通用方法。
 - Task 13：iOS InterviewCoach.entitlements（com.apple.developer.applesignin array）。
 - Task 13：OpenAPI 新增 /api/auth/apple 路径、AppleLoginRequest schema（nonce required）、错误响应 401。
+- Task 18：后端新增 AI runtime status 接口，区分 `realUserProvider`、`realPlatformProvider`、`stubOnly`、`unavailable`。
+- Task 18：核心教练路径在真实 AI 未可用时阻止继续，测试/CI/离线演示保留显式 stub 能力。
+- Task 18：iOS Settings 展示 AI 运行状态，测评、训练、模拟面试入口调用状态门禁。
+- Task 18：OpenAPI、Provider 规约、README、CLAUDE 同步真实 AI 开发基线。
 
 尚未创建：
 
-- 无（Task 1-13 全部完成）。
+- 无（Task 1-18 已按当前计划完成）。

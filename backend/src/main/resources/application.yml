@@ -23,6 +23,7 @@ app:
   ai:
     encryption-key: ZGV2LWFpLWVuY3J5cHRpb24ta2V5LTMyLWJ5dGVzISE=
     platform:
+      require-real-for-coaching: ${IC_REQUIRE_REAL_AI_FOR_COACHING:true}
       enabled: ${IC_PLATFORM_AI_ENABLED:false}
       base-url: ${IC_PLATFORM_AI_BASE_URL:}
       api-key: ${IC_PLATFORM_AI_API_KEY:}

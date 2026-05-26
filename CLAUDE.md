@@ -422,6 +422,7 @@ OpenAI-compatible 配置字段：
 Provider API：
 
 - `GET /api/ai-providers`
+- `GET /api/ai-providers/status`
 - `POST /api/ai-providers`
 - `POST /api/ai-providers/test`
 - `PATCH /api/ai-providers/{id}/default`
@@ -441,6 +442,7 @@ Provider API：
 - 平台默认真实 AI 只允许采用 OpenAI-compatible 协议。
 - 平台配置必须来自环境变量或部署配置，不允许提交真实密钥。
 - 配置项必须使用 `IC_PLATFORM_AI_ENABLED`、`IC_PLATFORM_AI_BASE_URL`、`IC_PLATFORM_AI_API_KEY`、`IC_PLATFORM_AI_MODEL`、`IC_PLATFORM_AI_MODE`。
+- 核心教练路径真实 AI 门禁使用 `IC_REQUIRE_REAL_AI_FOR_COACHING`，Task 18-25 默认开启；测试环境可显式关闭。
 - 用户已配置默认 Provider 时，用户 Provider 优先于平台默认 AI。
 - 平台真实 AI 未启用时，可以保留 `LocalPlatformAiClient` 作为单元测试、CI 非 live AI 回归、明确标记的离线演示和基础健康检查兜底。
 - Post-MVP Real AI Adaptive Coaching 阶段，开发环境必须支持真实 AI 配置；测评出题、测评评分、训练反馈、专项训练、模拟面试追问和报告复盘不得静默走 stub。
@@ -676,7 +678,7 @@ dev login
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **interview** (2528 symbols, 7800 relationships, 213 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **interview** (2601 symbols, 8136 relationships, 219 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 

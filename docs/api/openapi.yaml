@@ -694,6 +694,26 @@ paths:
               schema:
                 $ref: "#/components/schemas/AiProviderDto"
 
+  /api/ai-providers/status:
+    get:
+      tags:
+        - AIProvider
+      summary: Get current AI runtime status
+      operationId: getAiRuntimeStatus
+      responses:
+        "200":
+          description: Current AI runtime status for coaching flows.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiRuntimeStatusDto"
+        "401":
+          description: Not authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /api/ai-providers/test:
     post:
       tags:
@@ -1438,6 +1458,25 @@ components:
         createdAt:
           type: string
           format: date-time
+
+    AiRuntimeStatusDto:
+      type: object
+      required:
+        - status
+        - coreAiAvailable
+        - activeProviderType
+        - message
+      properties:
+        status:
+          type: string
+          enum: [realUserProvider, realPlatformProvider, stubOnly, unavailable]
+        coreAiAvailable:
+          type: boolean
+        activeProviderType:
+          type: string
+          enum: [platformDefault, userOpenAICompatible]
+        message:
+          type: string
 
     AiProviderTestRequest:
       type: object

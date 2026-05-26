@@ -157,6 +157,7 @@ struct TrainingPlanView: View {
         isLoading = true
         errorMessage = nil
         do {
+            try await AiRuntimeStatusGuard.requireCoreAiAvailable()
             plan = try await APIClient.shared.request(
                 "POST",
                 path: "/api/training-plans/generate",

@@ -36,6 +36,7 @@ Post-MVP AI 质量阶段将平台默认 AI 升级为可配置的 OpenAI-compatib
 | `IC_PLATFORM_AI_API_KEY` | 启用时必填 | 平台默认 AI API Key |
 | `IC_PLATFORM_AI_MODEL` | 启用时必填 | 平台默认模型名称 |
 | `IC_PLATFORM_AI_MODE` | 启用时必填 | `chatCompletions` 或 `responses` |
+| `IC_REQUIRE_REAL_AI_FOR_COACHING` | Task 18-25 默认 `true` | 核心教练路径是否要求真实 AI；测试环境可显式关闭 |
 
 安全要求：
 
@@ -60,6 +61,7 @@ Post-MVP AI 质量阶段将平台默认 AI 升级为可配置的 OpenAI-compatib
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | `/api/ai-providers` | 列出当前用户所有 Provider |
+| GET | `/api/ai-providers/status` | 返回当前用户核心教练流程的 AI 运行状态 |
 | POST | `/api/ai-providers` | 创建 Provider |
 | POST | `/api/ai-providers/test` | 测试连接（不保存） |
 | POST | `/api/ai-providers/models` | 通过后端临时请求 Provider 的 `GET {baseUrl}/models`，返回可选模型 ID（不保存） |
@@ -79,8 +81,9 @@ Post-MVP AI 质量阶段将平台默认 AI 升级为可配置的 OpenAI-compatib
 1. 通过 `SecurityContextHolder` 获取当前用户。
 2. 调用 `AiProviderService.findDefaultProvider(userId)` 查询默认 Provider。
 3. 若存在默认 Provider → 解密 apiKey → 调用 `OpenAiCompatibleClient.generateJson()`。
-4. 若不存在 → 调用 `PlatformAiClient.generateJson()`（平台默认 AI）。
-5. 平台真实 AI 未启用时 → 由 `LocalPlatformAiClient` 返回本地 stub JSON。
+4. 若不存在默认 Provider，且当前 task 属于核心教练路径，同时 `IC_REQUIRE_REAL_AI_FOR_COACHING=true` 且平台真实 AI 未完整配置 → 明确失败。
+5. 若不存在默认 Provider，且平台真实 AI 完整配置 → 调用 `PlatformAiClient.generateJson()`（平台默认 AI）。
+6. 非核心路径、测试、CI 非 live AI 回归、明确离线演示或基础健康检查可使用 `LocalPlatformAiClient` stub。
 
 **禁止自动回退**：当用户 Provider 调用失败时，不自动切换到平台 AI，必须让用户确认。
 
@@ -96,6 +99,17 @@ Post-MVP Real AI Adaptive Coaching 阶段必须区分 AI 运行状态：
 | `unavailable` | 没有可用 Provider 或配置错误 | 阻止 |
 
 核心教练路径包括：测评出题、测评评分、训练反馈、专项训练、模拟面试追问和报告复盘。`stubOnly` 只能用于测试、CI 非 live AI 回归、离线演示和基础健康检查，不能让开发者误以为真实 AI 能力已达标。
+
+`GET /api/ai-providers/status` 返回：
+
+```json
+{
+  "status": "stubOnly",
+  "coreAiAvailable": false,
+  "activeProviderType": "platformDefault",
+  "message": "Only LocalPlatformAiClient stub is available."
+}
+```
 
 ## 5. 安全要求
 

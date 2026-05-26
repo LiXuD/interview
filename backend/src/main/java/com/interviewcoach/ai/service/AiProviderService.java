@@ -6,6 +6,7 @@ import com.interviewcoach.common.api.AiProviderCreateRequest;
 import com.interviewcoach.common.api.AiProviderDto;
 import com.interviewcoach.common.api.AiProviderModelsRequest;
 import com.interviewcoach.common.api.AiProviderModelsResponse;
+import com.interviewcoach.common.api.AiRuntimeStatusDto;
 import com.interviewcoach.common.api.AiProviderTestRequest;
 import com.interviewcoach.common.api.AiProviderTestResponse;
 import com.interviewcoach.common.error.AiProviderNotFoundException;
@@ -25,13 +26,16 @@ public class AiProviderService {
     private final AiProviderRepository providerRepository;
     private final ApiKeyEncryption encryption;
     private final OpenAiCompatibleClient openAiClient;
+    private final PlatformAiProperties platformProperties;
 
     public AiProviderService(AiProviderRepository providerRepository,
                              ApiKeyEncryption encryption,
-                             OpenAiCompatibleClient openAiClient) {
+                             OpenAiCompatibleClient openAiClient,
+                             PlatformAiProperties platformProperties) {
         this.providerRepository = providerRepository;
         this.encryption = encryption;
         this.openAiClient = openAiClient;
+        this.platformProperties = platformProperties;
     }
 
     @Transactional
@@ -108,6 +112,37 @@ public class AiProviderService {
     @Transactional(readOnly = true)
     public AiProvider findDefaultProvider(UUID userId) {
         return providerRepository.findByUserIdAndIsDefaultTrue(userId).orElse(null);
+    }
+
+    @Transactional(readOnly = true)
+    public AiRuntimeStatusDto getRuntimeStatus(UUID userId) {
+        AiProvider provider = findDefaultProvider(userId);
+        if (provider != null) {
+            return new AiRuntimeStatusDto(
+                    "realUserProvider",
+                    true,
+                    "userOpenAICompatible",
+                    "Using user default OpenAI-compatible Provider.");
+        }
+        if (platformProperties.isEnabled()) {
+            if (platformProperties.isComplete()) {
+                return new AiRuntimeStatusDto(
+                        "realPlatformProvider",
+                        true,
+                        "platformDefault",
+                        "Using platform OpenAI-compatible Provider.");
+            }
+            return new AiRuntimeStatusDto(
+                    "unavailable",
+                    false,
+                    "platformDefault",
+                    "Platform AI is enabled but configuration is incomplete.");
+        }
+        return new AiRuntimeStatusDto(
+                "stubOnly",
+                false,
+                "platformDefault",
+                "Only LocalPlatformAiClient stub is available.");
     }
 
     private AiProviderDto toDto(AiProvider provider) {

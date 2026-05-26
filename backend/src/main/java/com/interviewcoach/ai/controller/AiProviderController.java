@@ -5,6 +5,7 @@ import com.interviewcoach.common.api.AiProviderCreateRequest;
 import com.interviewcoach.common.api.AiProviderDto;
 import com.interviewcoach.common.api.AiProviderModelsRequest;
 import com.interviewcoach.common.api.AiProviderModelsResponse;
+import com.interviewcoach.common.api.AiRuntimeStatusDto;
 import com.interviewcoach.common.api.AiProviderTestRequest;
 import com.interviewcoach.common.api.AiProviderTestResponse;
 import com.interviewcoach.common.security.SecurityUtils;
@@ -29,6 +30,12 @@ public class AiProviderController {
     public List<AiProviderDto> list() {
         User user = SecurityUtils.currentUser();
         return providerService.listProviders(user.getId());
+    }
+
+    @GetMapping("/status")
+    public AiRuntimeStatusDto status() {
+        User user = SecurityUtils.currentUser();
+        return providerService.getRuntimeStatus(user.getId());
     }
 
     @PostMapping

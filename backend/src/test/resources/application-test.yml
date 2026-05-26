@@ -21,6 +21,7 @@ app:
   ai:
     encryption-key: dGVzdC1haS1lbmNyeXB0aW9uLWtleS0zMmJ5dGVzISE=
     platform:
+      require-real-for-coaching: false
       enabled: false
   apple:
     services-id: com.interviewcoach.app

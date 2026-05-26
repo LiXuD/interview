@@ -141,6 +141,7 @@ struct TrainingTaskView: View {
         isLoading = true
         errorMessage = nil
         do {
+            try await AiRuntimeStatusGuard.requireCoreAiAvailable()
             let trimmed = answerText.trimmingCharacters(in: .whitespacesAndNewlines)
             feedback = try await APIClient.shared.request(
                 "POST",

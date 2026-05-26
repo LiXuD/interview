@@ -22,6 +22,7 @@
 		2A000001000000000000000E /* AiProviderDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A000001000000000000001E /* AiProviderDTO.swift */; };
 		2A00000100000000000000A1 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B1 /* KeychainHelper.swift */; };
 		2A00000100000000000000A2 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B2 /* APIClient.swift */; };
+		2A00000100000000000000A5 /* AiRuntimeStatusGuard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B5 /* AiRuntimeStatusGuard.swift */; };
 		2A00000100000000000000A3 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B3 /* AuthService.swift */; };
 		2A00000100000000000000A4 /* DevLoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B4 /* DevLoginView.swift */; };
 		2A00000100000000000000D1 /* TargetLocal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C1 /* TargetLocal.swift */; };
@@ -70,6 +71,7 @@
 		2A000001000000000000001F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2A00000100000000000000B1 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		2A00000100000000000000B2 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		2A00000100000000000000B5 /* AiRuntimeStatusGuard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AiRuntimeStatusGuard.swift; sourceTree = "<group>"; };
 		2A00000100000000000000B3 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		2A00000100000000000000B4 /* DevLoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevLoginView.swift; sourceTree = "<group>"; };
 		2A00000100000000000000C1 /* TargetLocal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetLocal.swift; sourceTree = "<group>"; };
@@ -176,6 +178,7 @@
 			children = (
 				2A0000010000000000000037 /* DTO */,
 				2A00000100000000000000B2 /* APIClient.swift */,
+				2A00000100000000000000B5 /* AiRuntimeStatusGuard.swift */,
 			);
 			path = API;
 			sourceTree = "<group>";
@@ -433,6 +436,7 @@
 				2A000001000000000000000E /* AiProviderDTO.swift in Sources */,
 				2A00000100000000000000A1 /* KeychainHelper.swift in Sources */,
 				2A00000100000000000000A2 /* APIClient.swift in Sources */,
+				2A00000100000000000000A5 /* AiRuntimeStatusGuard.swift in Sources */,
 				2A00000100000000000000A3 /* AuthService.swift in Sources */,
 				2A00000100000000000000A4 /* DevLoginView.swift in Sources */,
 				2A00000100000000000000D1 /* TargetLocal.swift in Sources */,

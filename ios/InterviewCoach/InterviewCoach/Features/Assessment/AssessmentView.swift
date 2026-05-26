@@ -115,6 +115,7 @@ struct AssessmentView: View {
         isLoading = true
         errorMessage = nil
         do {
+            try await AiRuntimeStatusGuard.requireCoreAiAvailable()
             let startReq = AssessmentStartRequestDTO(targetId: target.id)
             session = try await APIClient.shared.request(
                 "POST",
@@ -148,6 +149,7 @@ struct AssessmentView: View {
         isLoading = true
         errorMessage = nil
         do {
+            try await AiRuntimeStatusGuard.requireCoreAiAvailable()
             result = try await APIClient.shared.request(
                 "POST",
                 path: "/api/assessments/\(sessionId)/finish"

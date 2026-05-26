@@ -3,6 +3,7 @@ import SwiftUI
 struct AiProviderListView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var providers: [AiProviderDTO] = []
+    @State private var runtimeStatus: AiRuntimeStatusDTO?
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var showCreate = false
@@ -14,6 +15,22 @@ struct AiProviderListView: View {
                     ErrorBanner(message: errorMessage) {
                         Task { await loadProviders() }
                     }
+                }
+            }
+
+            if let runtimeStatus {
+                Section("运行状态") {
+                    HStack {
+                        Label(statusTitle(runtimeStatus), systemImage: statusIcon(runtimeStatus))
+                            .foregroundStyle(runtimeStatus.coreAiAvailable ? .green : .orange)
+                        Spacer()
+                        Text(runtimeStatus.activeProviderType)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Text(runtimeStatus.message)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
 
@@ -86,6 +103,7 @@ struct AiProviderListView: View {
         isLoading = true
         errorMessage = nil
         do {
+            runtimeStatus = try await APIClient.shared.request("GET", path: "/api/ai-providers/status")
             providers = try await APIClient.shared.request("GET", path: "/api/ai-providers")
         } catch {
             errorMessage = "加载失败: \(error.localizedDescription)"
@@ -98,6 +116,7 @@ struct AiProviderListView: View {
         do {
             try await APIClient.shared.requestNoContent("DELETE", path: "/api/ai-providers/\(id)")
             providers.removeAll { $0.id == id }
+            runtimeStatus = try await APIClient.shared.request("GET", path: "/api/ai-providers/status")
         } catch {
             errorMessage = "删除失败: \(error.localizedDescription)"
         }
@@ -114,8 +133,23 @@ struct AiProviderListView: View {
                     model: p.model, openaiApiMode: p.openaiApiMode,
                     isDefault: p.id == updated.id, createdAt: p.createdAt)
             }
+            runtimeStatus = try await APIClient.shared.request("GET", path: "/api/ai-providers/status")
         } catch {
             errorMessage = "设置失败: \(error.localizedDescription)"
         }
+    }
+
+    private func statusTitle(_ status: AiRuntimeStatusDTO) -> String {
+        switch status.status {
+        case "realUserProvider": return "用户 Provider 已启用"
+        case "realPlatformProvider": return "平台真实 AI 已启用"
+        case "unavailable": return "平台 AI 配置不完整"
+        case "stubOnly": return "仅 Stub，不可训练"
+        default: return status.status
+        }
+    }
+
+    private func statusIcon(_ status: AiRuntimeStatusDTO) -> String {
+        status.coreAiAvailable ? "checkmark.seal.fill" : "exclamationmark.triangle.fill"
     }
 }

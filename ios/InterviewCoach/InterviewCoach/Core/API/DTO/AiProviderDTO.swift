@@ -18,6 +18,13 @@ struct AiProviderDTO: Decodable, Equatable {
   let createdAt: String
 }
 
+struct AiRuntimeStatusDTO: Decodable, Equatable {
+  let status: String
+  let coreAiAvailable: Bool
+  let activeProviderType: String
+  let message: String
+}
+
 struct AiProviderTestRequestDTO: Encodable {
   let baseUrl: String
   let apiKey: String

@@ -13,6 +13,7 @@ import com.interviewcoach.common.api.TrainingFeedbackDto;
 import com.interviewcoach.common.error.AiParseException;
 import com.interviewcoach.common.error.AiProviderCallFailedException;
 import com.interviewcoach.user.entity.User;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -26,23 +27,49 @@ public class AiStructuredOutputService {
 
     private static final Set<String> VALID_IMPORTANCE = Set.of("required", "important", "bonus");
     private static final Set<String> VALID_USER_LEVEL = Set.of("unknown", "weak", "basic", "solid", "strong");
+    private static final Set<String> REAL_AI_REQUIRED_TASKS = Set.of(
+            "assessmentQuestions",
+            "assessmentResult",
+            "trainingPlan",
+            "trainingFeedback",
+            "mockInterviewQuestion",
+            "mockInterviewReport"
+    );
 
     private final PlatformAiClient platformAiClient;
     private final OpenAiCompatibleClient openAiClient;
     private final AiProviderService providerService;
     private final ApiKeyEncryption encryption;
     private final ObjectMapper objectMapper;
+    private final PlatformAiProperties platformProperties;
+
+    @Autowired
+    public AiStructuredOutputService(PlatformAiClient platformAiClient,
+                                     OpenAiCompatibleClient openAiClient,
+                                     AiProviderService providerService,
+                                     ApiKeyEncryption encryption,
+                                     ObjectMapper objectMapper,
+                                     PlatformAiProperties platformProperties) {
+        this.platformAiClient = platformAiClient;
+        this.openAiClient = openAiClient;
+        this.providerService = providerService;
+        this.encryption = encryption;
+        this.objectMapper = objectMapper;
+        this.platformProperties = platformProperties;
+    }
 
     public AiStructuredOutputService(PlatformAiClient platformAiClient,
                                      OpenAiCompatibleClient openAiClient,
                                      AiProviderService providerService,
                                      ApiKeyEncryption encryption,
                                      ObjectMapper objectMapper) {
-        this.platformAiClient = platformAiClient;
-        this.openAiClient = openAiClient;
-        this.providerService = providerService;
-        this.encryption = encryption;
-        this.objectMapper = objectMapper;
+        this(platformAiClient, openAiClient, providerService, encryption, objectMapper, testPlatformProperties());
+    }
+
+    private static PlatformAiProperties testPlatformProperties() {
+        PlatformAiProperties properties = new PlatformAiProperties();
+        properties.setRequireRealForCoaching(false);
+        return properties;
     }
 
     public JobBriefDto generateJobBrief(AiPrompt prompt) {
@@ -148,7 +175,19 @@ public class AiStructuredOutputService {
                 }
             }
         }
+        if (requiresRealAi(prompt)) {
+            throw new AiProviderCallFailedException(
+                    "Real AI is required for coaching task: " + prompt.task(), null);
+        }
         return platformAiClient.generateJson(prompt);
+    }
+
+    private boolean requiresRealAi(AiPrompt prompt) {
+        if (!platformProperties.isRequireRealForCoaching()
+                || !REAL_AI_REQUIRED_TASKS.contains(prompt.task())) {
+            return false;
+        }
+        return !platformProperties.isEnabled() || !platformProperties.isComplete();
     }
 
     private void requireText(String value, String field) {

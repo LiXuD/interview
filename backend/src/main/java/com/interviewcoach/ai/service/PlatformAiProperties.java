@@ -10,6 +10,7 @@ public class PlatformAiProperties {
     private String apiKey = "";
     private String model = "";
     private String mode = "chatCompletions";
+    private boolean requireRealForCoaching = true;
 
     public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
@@ -25,4 +26,15 @@ public class PlatformAiProperties {
 
     public String getMode() { return mode; }
     public void setMode(String mode) { this.mode = mode; }
+
+    public boolean isRequireRealForCoaching() { return requireRealForCoaching; }
+    public void setRequireRealForCoaching(boolean requireRealForCoaching) { this.requireRealForCoaching = requireRealForCoaching; }
+
+    public boolean isComplete() {
+        return !isBlank(baseUrl) && !isBlank(apiKey) && !isBlank(model) && !isBlank(mode);
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
 }

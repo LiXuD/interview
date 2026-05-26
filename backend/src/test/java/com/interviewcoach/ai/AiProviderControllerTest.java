@@ -111,8 +111,24 @@ class AiProviderControllerTest {
     }
 
     @Test
+    void statusReportsStubOnlyWhenNoRealProviderConfigured() throws Exception {
+        String token = loginAndGetToken("ap_status_stub");
+
+        mockMvc.perform(get("/api/ai-providers/status")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("stubOnly"))
+                .andExpect(jsonPath("$.coreAiAvailable").value(false))
+                .andExpect(jsonPath("$.activeProviderType").value("platformDefault"))
+                .andExpect(jsonPath("$.message").isString());
+    }
+
+    @Test
     void providerRequiresAuthentication() throws Exception {
         mockMvc.perform(get("/api/ai-providers"))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(get("/api/ai-providers/status"))
                 .andExpect(status().isUnauthorized());
 
         mockMvc.perform(post("/api/ai-providers")
