@@ -294,6 +294,7 @@ System Prompt 要求：
 
 后端校验逻辑（`AiStructuredOutputService.validateTrainingFeedback`）：
 
+- `taskId` 必须与传入的训练任务 ID 一致。
 - `score` 在 [0, 100]。
 - `feedback`、`rewrittenAnswer`、`followUpQuestion` 非空。
 - `problems`、`recommendedReviewPoints` 非 null。

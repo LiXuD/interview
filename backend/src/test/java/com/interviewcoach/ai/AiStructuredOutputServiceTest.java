@@ -5,6 +5,7 @@ import com.interviewcoach.ai.service.AiPrompt;
 import com.interviewcoach.ai.service.AiStructuredOutputService;
 import com.interviewcoach.ai.service.PlatformAiClient;
 import com.interviewcoach.common.api.CandidateProfileDraftDto;
+import com.interviewcoach.common.api.TrainingFeedbackDto;
 import com.interviewcoach.common.error.AiParseException;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,8 @@ class AiStructuredOutputServiceTest {
     private AiStructuredOutputService serviceWith(PlatformAiClient client) {
         return new AiStructuredOutputService(client, null, null, null, new ObjectMapper());
     }
+
+    // --- mockInterviewReport ---
 
     @Test
     void mockInterviewReportRejectsMismatchedId() {
@@ -39,6 +42,36 @@ class AiStructuredOutputServiceTest {
     }
 
     @Test
+    void mockInterviewReportRejectsInvalidJson() {
+        PlatformAiClient client = prompt -> "not json";
+        AiParseException ex = assertThrows(AiParseException.class, () -> serviceWith(client).generateMockInterviewReport(
+                new AiPrompt("mockInterviewReport", "id-1", "system", "user")));
+        assertTrue(ex.getMessage().contains("mockInterviewReport"));
+    }
+
+    @Test
+    void mockInterviewReportRejectsMissingSummary() {
+        PlatformAiClient client = prompt -> """
+                {
+                  "mockInterviewId": "id-1",
+                  "overallScore": 70,
+                  "dimensionScores": [
+                    {"name": "tech", "score": 70, "reason": "r"}
+                  ],
+                  "summary": "",
+                  "strengths": [],
+                  "weaknesses": [],
+                  "improvedAnswers": [],
+                  "nextTrainingTasks": []
+                }
+                """;
+        assertThrows(AiParseException.class, () -> serviceWith(client).generateMockInterviewReport(
+                new AiPrompt("mockInterviewReport", "id-1", "system", "user")));
+    }
+
+    // --- candidateProfileDraft ---
+
+    @Test
     void candidateProfileDraftRejectsMissingSummary() {
         PlatformAiClient client = prompt -> """
                 {
@@ -55,8 +88,9 @@ class AiStructuredOutputServiceTest {
     @Test
     void candidateProfileDraftRejectsInvalidJson() {
         PlatformAiClient client = prompt -> "not json at all";
-        assertThrows(AiParseException.class, () -> serviceWith(client).generateCandidateProfileDraft(
+        AiParseException ex = assertThrows(AiParseException.class, () -> serviceWith(client).generateCandidateProfileDraft(
                 new AiPrompt("candidateProfileDraft", null, "system", "user"), 100));
+        assertTrue(ex.getMessage().contains("candidateProfileDraft"));
     }
 
     @Test
@@ -93,5 +127,261 @@ class AiStructuredOutputServiceTest {
 
         assertEquals("候选人信息有限", result.summary());
         assertTrue(result.skills().isEmpty());
+    }
+
+    // --- jobBrief ---
+
+    @Test
+    void jobBriefRejectsMismatchedTargetId() {
+        PlatformAiClient client = prompt -> """
+                {
+                  "targetId": "wrong-id",
+                  "roleSummary": "Backend engineer role",
+                  "skillMap": [{"name": "Java", "importance": "required", "userLevel": "unknown", "gap": "need practice"}],
+                  "mustHaveSkills": ["Java"],
+                  "niceToHaveSkills": [],
+                  "businessContext": [],
+                  "interviewTopics": [],
+                  "candidateMatch": [],
+                  "riskAreas": [],
+                  "confidence": 0.6
+                }
+                """;
+        assertThrows(AiParseException.class, () -> serviceWith(client).generateJobBrief(
+                new AiPrompt("jobBrief", "expected-id", "system", "user")));
+    }
+
+    @Test
+    void jobBriefRejectsInvalidJson() {
+        PlatformAiClient client = prompt -> "{ broken json";
+        AiParseException ex = assertThrows(AiParseException.class, () -> serviceWith(client).generateJobBrief(
+                new AiPrompt("jobBrief", "id-1", "system", "user")));
+        assertTrue(ex.getMessage().contains("jobBrief"));
+    }
+
+    @Test
+    void jobBriefRejectsMissingRoleSummary() {
+        PlatformAiClient client = prompt -> """
+                {
+                  "targetId": "id-1",
+                  "roleSummary": "",
+                  "skillMap": [],
+                  "mustHaveSkills": [],
+                  "niceToHaveSkills": [],
+                  "businessContext": [],
+                  "interviewTopics": [],
+                  "candidateMatch": [],
+                  "riskAreas": [],
+                  "confidence": 0.5
+                }
+                """;
+        assertThrows(AiParseException.class, () -> serviceWith(client).generateJobBrief(
+                new AiPrompt("jobBrief", "id-1", "system", "user")));
+    }
+
+    @Test
+    void jobBriefRejectsInvalidConfidence() {
+        PlatformAiClient client = prompt -> """
+                {
+                  "targetId": "id-1",
+                  "roleSummary": "Backend role",
+                  "skillMap": [],
+                  "mustHaveSkills": [],
+                  "niceToHaveSkills": [],
+                  "businessContext": [],
+                  "interviewTopics": [],
+                  "candidateMatch": [],
+                  "riskAreas": [],
+                  "confidence": 1.5
+                }
+                """;
+        assertThrows(AiParseException.class, () -> serviceWith(client).generateJobBrief(
+                new AiPrompt("jobBrief", "id-1", "system", "user")));
+    }
+
+    // --- assessmentQuestions ---
+
+    @Test
+    void assessmentQuestionsRejectsWrongCount() {
+        PlatformAiClient client = prompt -> """
+                {
+                  "questions": ["q1", "q2"]
+                }
+                """;
+        assertThrows(AiParseException.class, () -> serviceWith(client).generateAssessmentQuestions(
+                new AiPrompt("assessmentQuestions", null, "system", "user")));
+    }
+
+    @Test
+    void assessmentQuestionsRejectsInvalidJson() {
+        PlatformAiClient client = prompt -> "not json";
+        AiParseException ex = assertThrows(AiParseException.class, () -> serviceWith(client).generateAssessmentQuestions(
+                new AiPrompt("assessmentQuestions", null, "system", "user")));
+        assertTrue(ex.getMessage().contains("assessmentQuestions"));
+    }
+
+    // --- assessmentResult ---
+
+    @Test
+    void assessmentResultRejectsMismatchedId() {
+        PlatformAiClient client = prompt -> """
+                {
+                  "assessmentId": "wrong-id",
+                  "totalScore": 70,
+                  "dimensions": [{"name": "Java", "score": 70, "reason": "good"}],
+                  "strengths": [],
+                  "weaknesses": [],
+                  "nextActions": []
+                }
+                """;
+        assertThrows(AiParseException.class, () -> serviceWith(client).generateAssessmentResult(
+                new AiPrompt("assessmentResult", "expected-id", "system", "user")));
+    }
+
+    @Test
+    void assessmentResultRejectsScoreOutOfRange() {
+        PlatformAiClient client = prompt -> """
+                {
+                  "assessmentId": "id-1",
+                  "totalScore": 150,
+                  "dimensions": [],
+                  "strengths": [],
+                  "weaknesses": [],
+                  "nextActions": []
+                }
+                """;
+        assertThrows(AiParseException.class, () -> serviceWith(client).generateAssessmentResult(
+                new AiPrompt("assessmentResult", "id-1", "system", "user")));
+    }
+
+    // --- trainingFeedback ---
+
+    @Test
+    void trainingFeedbackRejectsMismatchedTaskId() {
+        PlatformAiClient client = prompt -> """
+                {
+                  "taskId": "wrong-task-id",
+                  "score": 70,
+                  "feedback": "Good answer but needs more detail",
+                  "problems": ["lacks specifics"],
+                  "rewrittenAnswer": "Improved answer here",
+                  "followUpQuestion": "Can you elaborate?",
+                  "recommendedReviewPoints": ["topic A"]
+                }
+                """;
+        assertThrows(AiParseException.class, () -> serviceWith(client).generateTrainingFeedback(
+                new AiPrompt("trainingFeedback", "expected-task-id", "system", "user")));
+    }
+
+    @Test
+    void trainingFeedbackRejectsScoreOutOfRange() {
+        PlatformAiClient client = prompt -> """
+                {
+                  "taskId": "task-1",
+                  "score": 200,
+                  "feedback": "feedback",
+                  "problems": [],
+                  "rewrittenAnswer": "rewritten",
+                  "followUpQuestion": "follow up?",
+                  "recommendedReviewPoints": []
+                }
+                """;
+        assertThrows(AiParseException.class, () -> serviceWith(client).generateTrainingFeedback(
+                new AiPrompt("trainingFeedback", "task-1", "system", "user")));
+    }
+
+    @Test
+    void trainingFeedbackRejectsMissingFeedback() {
+        PlatformAiClient client = prompt -> """
+                {
+                  "taskId": "task-1",
+                  "score": 70,
+                  "feedback": "",
+                  "problems": [],
+                  "rewrittenAnswer": "rewritten",
+                  "followUpQuestion": "follow up?",
+                  "recommendedReviewPoints": []
+                }
+                """;
+        assertThrows(AiParseException.class, () -> serviceWith(client).generateTrainingFeedback(
+                new AiPrompt("trainingFeedback", "task-1", "system", "user")));
+    }
+
+    @Test
+    void trainingFeedbackRejectsInvalidJson() {
+        PlatformAiClient client = prompt -> "{invalid}";
+        AiParseException ex = assertThrows(AiParseException.class, () -> serviceWith(client).generateTrainingFeedback(
+                new AiPrompt("trainingFeedback", "task-1", "system", "user")));
+        assertTrue(ex.getMessage().contains("trainingFeedback"));
+    }
+
+    // --- trainingPlan ---
+
+    @Test
+    void trainingPlanRejectsTooFewTasks() {
+        PlatformAiClient client = prompt -> """
+                {
+                  "tasks": [{"title": "Only one task", "description": "desc"}]
+                }
+                """;
+        assertThrows(AiParseException.class, () -> serviceWith(client).generateTrainingPlan(
+                new AiPrompt("trainingPlan", null, "system", "user")));
+    }
+
+    @Test
+    void trainingPlanRejectsMissingTitle() {
+        PlatformAiClient client = prompt -> """
+                {
+                  "tasks": [
+                    {"title": "", "description": "desc1"},
+                    {"title": "t2", "description": "desc2"}
+                  ]
+                }
+                """;
+        assertThrows(AiParseException.class, () -> serviceWith(client).generateTrainingPlan(
+                new AiPrompt("trainingPlan", null, "system", "user")));
+    }
+
+    // --- mockInterviewQuestion ---
+
+    @Test
+    void mockInterviewQuestionRejectsEmptyQuestion() {
+        PlatformAiClient client = prompt -> """
+                {
+                  "question": ""
+                }
+                """;
+        assertThrows(AiParseException.class, () -> serviceWith(client).generateMockInterviewQuestion(
+                new AiPrompt("mockInterviewQuestion", null, "system", "user")));
+    }
+
+    @Test
+    void mockInterviewQuestionRejectsInvalidJson() {
+        PlatformAiClient client = prompt -> "???";
+        AiParseException ex = assertThrows(AiParseException.class, () -> serviceWith(client).generateMockInterviewQuestion(
+                new AiPrompt("mockInterviewQuestion", null, "system", "user")));
+        assertTrue(ex.getMessage().contains("mockInterviewQuestion"));
+    }
+
+    // --- cross-cutting: retry on first failure ---
+
+    @Test
+    void generateAndValidateRetriesOnceOnInvalidJson() {
+        int[] callCount = {0};
+        PlatformAiClient client = prompt -> {
+            callCount[0]++;
+            if (callCount[0] == 1) {
+                return "invalid json";
+            }
+            return """
+                    {
+                      "question": "How do you handle concurrency?"
+                    }
+                    """;
+        };
+        String result = serviceWith(client).generateMockInterviewQuestion(
+                new AiPrompt("mockInterviewQuestion", null, "system", "user"));
+        assertEquals("How do you handle concurrency?", result);
+        assertEquals(2, callCount[0], "Should have retried once");
     }
 }

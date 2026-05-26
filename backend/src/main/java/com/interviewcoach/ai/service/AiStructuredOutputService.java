@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 @Service
 public class AiStructuredOutputService {
@@ -46,7 +46,7 @@ public class AiStructuredOutputService {
     }
 
     public JobBriefDto generateJobBrief(AiPrompt prompt) {
-        return generateAndValidate(prompt, JobBriefDto.class, dto -> validateJobBrief(dto, prompt.targetId()));
+        return generateAndValidate(prompt, JobBriefDto.class, (dto, p) -> validateJobBrief(dto, p.targetId()));
     }
 
     private void validateJobBrief(JobBriefDto dto, String expectedTargetId) {
@@ -79,12 +79,12 @@ public class AiStructuredOutputService {
     public record AssessmentQuestionsResult(List<String> questions) {}
 
     public List<String> generateAssessmentQuestions(AiPrompt prompt) {
-        AssessmentQuestionsResult result = generateAndValidate(prompt, AssessmentQuestionsResult.class, r -> validateQuestions(r.questions()));
+        AssessmentQuestionsResult result = generateAndValidate(prompt, AssessmentQuestionsResult.class, (r, p) -> validateQuestions(r.questions()));
         return result.questions();
     }
 
     public AssessmentResultDto generateAssessmentResult(AiPrompt prompt) {
-        return generateAndValidate(prompt, AssessmentResultDto.class, dto -> validateAssessmentResult(dto, prompt.targetId()));
+        return generateAndValidate(prompt, AssessmentResultDto.class, (dto, p) -> validateAssessmentResult(dto, p.targetId()));
     }
 
     private void validateQuestions(List<String> questions) {
@@ -116,20 +116,20 @@ public class AiStructuredOutputService {
         }
     }
 
-    private <T> T generateAndValidate(AiPrompt prompt, Class<T> type, Consumer<T> validator) {
+    private <T> T generateAndValidate(AiPrompt prompt, Class<T> type, BiConsumer<T, AiPrompt> validator) {
         for (int attempt = 0; attempt < 2; attempt++) {
             String rawJson = generateFromProvider(prompt);
             try {
                 T result = objectMapper.readValue(rawJson, type);
-                validator.accept(result);
+                validator.accept(result, prompt);
                 return result;
             } catch (JsonProcessingException | IllegalArgumentException ex) {
                 if (attempt == 1) {
-                    throw new AiParseException();
+                    throw new AiParseException(prompt.task());
                 }
             }
         }
-        throw new AiParseException();
+        throw new AiParseException(prompt.task());
     }
 
     private String generateFromProvider(AiPrompt prompt) {
@@ -167,7 +167,7 @@ public class AiStructuredOutputService {
     public record TrainingPlanResult(List<TrainingPlanTaskItem> tasks) {}
 
     public List<TrainingPlanTaskItem> generateTrainingPlan(AiPrompt prompt) {
-        TrainingPlanResult result = generateAndValidate(prompt, TrainingPlanResult.class, this::validateTrainingPlan);
+        TrainingPlanResult result = generateAndValidate(prompt, TrainingPlanResult.class, (r, p) -> validateTrainingPlan(r));
         return result.tasks();
     }
 
@@ -185,9 +185,12 @@ public class AiStructuredOutputService {
         return generateAndValidate(prompt, TrainingFeedbackDto.class, this::validateTrainingFeedback);
     }
 
-    private void validateTrainingFeedback(TrainingFeedbackDto dto) {
+    private void validateTrainingFeedback(TrainingFeedbackDto dto, AiPrompt prompt) {
         if (dto == null) {
             throw new IllegalArgumentException("TrainingFeedback is null");
+        }
+        if (!prompt.targetId().equals(dto.taskId())) {
+            throw new IllegalArgumentException("TrainingFeedback taskId mismatch");
         }
         if (dto.score() < 0 || dto.score() > 100) {
             throw new IllegalArgumentException("score out of range");
@@ -202,7 +205,7 @@ public class AiStructuredOutputService {
     public record MockInterviewQuestionResult(String question) {}
 
     public String generateMockInterviewQuestion(AiPrompt prompt) {
-        MockInterviewQuestionResult result = generateAndValidate(prompt, MockInterviewQuestionResult.class, this::validateMockInterviewQuestion);
+        MockInterviewQuestionResult result = generateAndValidate(prompt, MockInterviewQuestionResult.class, (r, p) -> validateMockInterviewQuestion(r));
         return result.question();
     }
 
@@ -214,7 +217,7 @@ public class AiStructuredOutputService {
     }
 
     public MockInterviewReportDto generateMockInterviewReport(AiPrompt prompt) {
-        return generateAndValidate(prompt, MockInterviewReportDto.class, dto -> validateMockInterviewReport(dto, prompt.targetId()));
+        return generateAndValidate(prompt, MockInterviewReportDto.class, (dto, p) -> validateMockInterviewReport(dto, p.targetId()));
     }
 
     private void validateMockInterviewReport(MockInterviewReportDto dto, String expectedMockInterviewId) {
@@ -244,7 +247,7 @@ public class AiStructuredOutputService {
      * Returns DTO with AI-generated content fields; rawTextLength is NOT taken from AI output.
      */
     public CandidateProfileDraftDto generateCandidateProfileDraft(AiPrompt prompt, int rawTextLength) {
-        CandidateProfileDraftDto aiResult = generateAndValidate(prompt, CandidateProfileDraftDto.class, this::validateCandidateProfileDraft);
+        CandidateProfileDraftDto aiResult = generateAndValidate(prompt, CandidateProfileDraftDto.class, (dto, p) -> validateCandidateProfileDraft(dto));
         return new CandidateProfileDraftDto(
                 aiResult.summary(),
                 aiResult.skills() != null ? aiResult.skills() : List.of(),

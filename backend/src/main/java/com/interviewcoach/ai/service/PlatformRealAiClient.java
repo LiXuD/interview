@@ -1,5 +1,7 @@
 package com.interviewcoach.ai.service;
 
+import com.interviewcoach.common.error.AiProviderCallFailedException;
+
 public class PlatformRealAiClient implements PlatformAiClient {
 
     private final OpenAiCompatibleClient openAiClient;
@@ -7,28 +9,33 @@ public class PlatformRealAiClient implements PlatformAiClient {
 
     public PlatformRealAiClient(OpenAiCompatibleClient openAiClient, PlatformAiProperties properties) {
         this.openAiClient = openAiClient;
-        if (isBlank(properties.getBaseUrl()) || isBlank(properties.getApiKey())
-                || isBlank(properties.getModel()) || isBlank(properties.getMode())) {
-            throw new IllegalStateException(
-                    "Platform AI is enabled but configuration is incomplete. "
-                    + "Required: app.ai.platform.base-url, api-key, model, mode");
-        }
         this.properties = properties;
-    }
-
-    private static boolean isBlank(String s) {
-        return s == null || s.isBlank();
     }
 
     @Override
     public String generateJson(AiPrompt prompt) {
-        return openAiClient.generateJson(
-                properties.getBaseUrl(),
-                properties.getApiKey(),
-                properties.getModel(),
-                properties.getMode(),
-                prompt.systemPrompt(),
-                prompt.userPrompt()
-        );
+        if (isBlank(properties.getBaseUrl()) || isBlank(properties.getApiKey())
+                || isBlank(properties.getModel()) || isBlank(properties.getMode())) {
+            throw new AiProviderCallFailedException(
+                    "Platform AI configuration is incomplete. "
+                    + "Required: IC_PLATFORM_AI_BASE_URL, IC_PLATFORM_AI_API_KEY, IC_PLATFORM_AI_MODEL, IC_PLATFORM_AI_MODE",
+                    null);
+        }
+        try {
+            return openAiClient.generateJson(
+                    properties.getBaseUrl(),
+                    properties.getApiKey(),
+                    properties.getModel(),
+                    properties.getMode(),
+                    prompt.systemPrompt(),
+                    prompt.userPrompt());
+        } catch (Exception ex) {
+            throw new AiProviderCallFailedException(
+                    "Platform AI call failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    private static boolean isBlank(String s) {
+        return s == null || s.isBlank();
     }
 }

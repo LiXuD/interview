@@ -130,7 +130,7 @@ class JobBriefControllerTest {
                         .content(objectMapper.writeValueAsString(new JobBriefGenerateRequest(targetId))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("AI_PARSE_FAILED"))
-                .andExpect(jsonPath("$.message").value("AI returned invalid structured output."))
+                .andExpect(jsonPath("$.message").value("AI returned invalid structured output for task: jobBrief"))
                 .andExpect(jsonPath("$.requestId").isString());
 
         Mockito.verify(platformAiClient, times(2)).generateJson(any());

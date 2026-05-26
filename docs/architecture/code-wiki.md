@@ -217,7 +217,7 @@ AI 模块是后端唯一允许接触模型原始响应的地方。
 
 - `PlatformAiClient`：平台默认 AI 抽象接口。
 - `LocalPlatformAiClient`：本地 stub 实现，返回结构化 JSON，始终可用作无密钥兜底。
-- `PlatformRealAiClient`：封装 `OpenAiCompatibleClient` 调用外部模型，通过 `@ConditionalOnProperty` 按 `app.ai.platform.enabled` 条件启用，启用时为 `@Primary`。
+- `PlatformRealAiClient`：封装 `OpenAiCompatibleClient` 调用外部模型，通过 `@ConditionalOnProperty` 按 `app.ai.platform.enabled` 条件启用，启用时为 `@Primary`。配置校验在 `generateJson()` 运行时执行，不完整时抛 `AiProviderCallFailedException`（返回 502），避免启动阶段崩溃。
 - `PlatformAiProperties`：平台 AI 配置绑定（`app.ai.platform.*`）。
 - `AiConfig`：条件化 bean 创建，管理平台 AI bean 切换。
 - `OpenAiCompatibleClient`：支持 OpenAI-compatible Provider，包含 chatCompletions 与 responses 模式。
@@ -236,7 +236,7 @@ Service 组装 AiPrompt
   -> ObjectMapper 解析为强类型 DTO
   -> validateXxx()
   -> 解析失败最多重试 1 次
-  -> 仍失败抛 AiParseException
+  -> 仍失败抛 AiParseException（消息包含 task 名称，便于定位）
 ```
 
 iOS 不解析 AI 原始字符串，后端也不把 AI 原始字符串作为业务响应返回给 iOS。
@@ -897,7 +897,7 @@ iOS 当前主要通过 Xcode/XcodeBuildMCP 编译和模拟器手动流程验证�
 
 检查：
 
-1. `AiStructuredOutputService.generateAndValidate()` 抛出的是否是 `AiParseException`。
+1. `AiStructuredOutputService.generateAndValidate()` 抛出的 `AiParseException` 消息中包含 task 名称（如 `for task: jobBrief`），据此定位是哪个 task 解析失败。
 2. 对应 `validateXxx()` 是否要求字段或枚举更严格。
 3. `LocalPlatformAiClient` 或自定义 Provider 返回 JSON 是否匹配 DTO。
 4. OpenAPI 与 iOS DTO 是否同步。
@@ -931,7 +931,7 @@ iOS 当前主要通过 Xcode/XcodeBuildMCP 编译和模拟器手动流程验证�
 
 ## 13. 当前已知实现特征
 
-- 平台 AI 通过 `@ConditionalOnProperty` 条件切换：`app.ai.platform.enabled=false` 时使用 `LocalPlatformAiClient` stub，`true` 时使用 `PlatformRealAiClient` 调用外部模型。
+- 平台 AI 通过 `@ConditionalOnProperty` 条件切换：`app.ai.platform.enabled=false` 时使用 `LocalPlatformAiClient` stub，`true` 时使用 `PlatformRealAiClient` 调用外部模型。环境变量 `IC_PLATFORM_AI_ENABLED` 控制开关，其余 `IC_PLATFORM_AI_*` 变量通过 `application.yml` 的 Spring 占位符注入。
 - `LocalPlatformAiClient` 始终可用作无密钥兜底，不因平台真实 AI 启用而消失。
 - 用户自定义 Provider 优先于平台默认 AI。
 - 自定义 Provider 支持 OpenAI-compatible `chatCompletions` 与 `responses` 两种模式。
