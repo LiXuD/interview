@@ -11,6 +11,10 @@ struct AiProviderCreateView: View {
     @State private var openaiApiMode = "chatCompletions"
     @State private var isTesting = false
     @State private var isCreating = false
+    @State private var isLoadingModels = false
+    @State private var availableModels: [String] = []
+    @State private var modelsResult: String?
+    @State private var modelsSuccess = false
     @State private var testResult: String?
     @State private var testSuccess = false
     @State private var errorMessage: String?
@@ -38,11 +42,38 @@ struct AiProviderCreateView: View {
                     SecureField("API Key", text: $apiKey)
                         .textContentType(.password)
                         .autocorrectionDisabled()
-                    TextField("模型名称（如 gpt-4o）", text: $model)
+
+                    Button {
+                        Task { await fetchModels() }
+                    } label: {
+                        Label(isLoadingModels ? "获取中..." : "获取模型",
+                              systemImage: isLoadingModels ? "arrow.triangle.2.circlepath" : "list.bullet")
+                    }
+                    .disabled(isLoadingModels || baseUrl.isEmpty || apiKey.isEmpty)
+
+                    if !availableModels.isEmpty {
+                        Picker("模型", selection: $model) {
+                            ForEach(availableModels, id: \.self) { modelName in
+                                Text(modelName).tag(modelName)
+                            }
+                        }
+                    }
+
+                    TextField(availableModels.isEmpty ? "模型名称（如 gpt-4o）" : "手动输入模型名称", text: $model)
                         .autocorrectionDisabled()
                     Picker("API 模式", selection: $openaiApiMode) {
                         ForEach(apiModes, id: \.self) { mode in
                             Text(mode).tag(mode)
+                        }
+                    }
+
+                    if let modelsResult {
+                        HStack {
+                            Image(systemName: modelsSuccess ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                                .foregroundStyle(modelsSuccess ? .green : .orange)
+                            Text(modelsResult)
+                                .font(.caption)
+                                .foregroundStyle(modelsSuccess ? .green : .orange)
                         }
                     }
                 }
@@ -85,8 +116,38 @@ struct AiProviderCreateView: View {
                     Button("取消") { dismiss() }
                 }
             }
-            .loadingOverlay(isLoading: isTesting || isCreating)
+            .onChange(of: baseUrl) { _, _ in resetFetchedModels() }
+            .onChange(of: apiKey) { _, _ in resetFetchedModels() }
+            .loadingOverlay(isLoading: isTesting || isCreating || isLoadingModels)
         }
+    }
+
+    private func resetFetchedModels() {
+        availableModels = []
+        modelsResult = nil
+        modelsSuccess = false
+    }
+
+    private func fetchModels() async {
+        isLoadingModels = true
+        modelsResult = nil
+        errorMessage = nil
+        do {
+            let request = AiProviderModelsRequestDTO(baseUrl: baseUrl, apiKey: apiKey)
+            let response: AiProviderModelsResponseDTO = try await APIClient.shared.request(
+                "POST", path: "/api/ai-providers/models", body: request)
+            availableModels = response.models
+            modelsSuccess = !response.models.isEmpty
+            if let first = response.models.first, !response.models.contains(model) {
+                model = first
+            }
+            modelsResult = response.models.isEmpty ? "未获取到模型，可手动输入" : "已获取 \(response.models.count) 个模型"
+        } catch {
+            availableModels = []
+            modelsSuccess = false
+            modelsResult = "获取失败，可手动输入模型名称"
+        }
+        isLoadingModels = false
     }
 
     private func testConnection() async {

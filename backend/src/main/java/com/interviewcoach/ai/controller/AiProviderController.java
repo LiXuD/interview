@@ -3,6 +3,8 @@ package com.interviewcoach.ai.controller;
 import com.interviewcoach.ai.service.AiProviderService;
 import com.interviewcoach.common.api.AiProviderCreateRequest;
 import com.interviewcoach.common.api.AiProviderDto;
+import com.interviewcoach.common.api.AiProviderModelsRequest;
+import com.interviewcoach.common.api.AiProviderModelsResponse;
 import com.interviewcoach.common.api.AiProviderTestRequest;
 import com.interviewcoach.common.api.AiProviderTestResponse;
 import com.interviewcoach.common.security.SecurityUtils;
@@ -38,6 +40,11 @@ public class AiProviderController {
     @PostMapping("/test")
     public AiProviderTestResponse test(@RequestBody AiProviderTestRequest request) {
         return providerService.testProvider(request);
+    }
+
+    @PostMapping("/models")
+    public AiProviderModelsResponse models(@RequestBody AiProviderModelsRequest request) {
+        return providerService.listModels(request);
     }
 
     @PatchMapping("/{id}/default")

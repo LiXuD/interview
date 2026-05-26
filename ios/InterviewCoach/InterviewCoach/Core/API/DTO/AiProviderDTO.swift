@@ -29,3 +29,12 @@ struct AiProviderTestResponseDTO: Decodable, Equatable {
   let success: Bool
   let message: String?
 }
+
+struct AiProviderModelsRequestDTO: Encodable {
+  let baseUrl: String
+  let apiKey: String
+}
+
+struct AiProviderModelsResponseDTO: Decodable, Equatable {
+  let models: [String]
+}

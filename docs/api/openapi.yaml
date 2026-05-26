@@ -714,6 +714,26 @@ paths:
               schema:
                 $ref: "#/components/schemas/AiProviderTestResponse"
 
+  /api/ai-providers/models:
+    post:
+      tags:
+        - AIProvider
+      summary: List models from an OpenAI-compatible provider
+      operationId: listProviderModels
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiProviderModelsRequest"
+      responses:
+        "200":
+          description: Model IDs returned by the provider.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiProviderModelsResponse"
+
   /api/ai-providers/{id}/default:
     parameters:
       - name: id
@@ -1446,3 +1466,24 @@ components:
           type: boolean
         message:
           type: string
+
+    AiProviderModelsRequest:
+      type: object
+      required:
+        - baseUrl
+        - apiKey
+      properties:
+        baseUrl:
+          type: string
+        apiKey:
+          type: string
+
+    AiProviderModelsResponse:
+      type: object
+      required:
+        - models
+      properties:
+        models:
+          type: array
+          items:
+            type: string

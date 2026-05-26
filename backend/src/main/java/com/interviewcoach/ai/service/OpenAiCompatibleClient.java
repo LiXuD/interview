@@ -4,11 +4,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -96,6 +98,35 @@ public class OpenAiCompatibleClient {
         generateJson(baseUrl, apiKey, model, openaiApiMode,
                 "Reply with valid JSON: {\"ok\":true}",
                 "Say ok.");
+    }
+
+    public List<String> listModels(String baseUrl, String apiKey) {
+        String url = normalizeUrl(baseUrl) + "models";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(apiKey);
+
+        try {
+            HttpEntity<Void> request = new HttpEntity<>(headers);
+            ResponseEntity<JsonNode> response = restTemplate.exchange(url, HttpMethod.GET, request, JsonNode.class);
+            JsonNode data = response.getBody().path("data");
+            if (!data.isArray()) {
+                throw new IllegalStateException("Unexpected models API output structure");
+            }
+
+            List<String> models = new ArrayList<>();
+            data.forEach(item -> {
+                String id = item.path("id").asText("");
+                if (!id.isBlank() && !models.contains(id)) {
+                    models.add(id);
+                }
+            });
+            return models;
+        } catch (IllegalStateException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new IllegalStateException("OpenAI models call failed: " + ex.getMessage(), ex);
+        }
     }
 
     private String normalizeUrl(String baseUrl) {

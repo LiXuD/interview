@@ -61,6 +61,7 @@ Post-MVP AI 质量阶段将平台默认 AI 升级为可配置的 OpenAI-compatib
 | GET | `/api/ai-providers` | 列出当前用户所有 Provider |
 | POST | `/api/ai-providers` | 创建 Provider |
 | POST | `/api/ai-providers/test` | 测试连接（不保存） |
+| POST | `/api/ai-providers/models` | 通过后端临时请求 Provider 的 `GET {baseUrl}/models`，返回可选模型 ID（不保存） |
 | PATCH | `/api/ai-providers/{id}/default` | 设为默认 Provider |
 | DELETE | `/api/ai-providers/{id}` | 删除 Provider |
 
@@ -68,6 +69,7 @@ Post-MVP AI 质量阶段将平台默认 AI 升级为可配置的 OpenAI-compatib
 
 - `chatCompletions`：调用 `POST {baseUrl}/chat/completions`，使用 messages 数组。
 - `responses`：调用 `POST {baseUrl}/responses`，使用 input 字段。
+- 模型列表：调用 `GET {baseUrl}/models`，解析 OpenAI-compatible 响应中的 `data[].id`。该接口用于创建 Provider 时辅助选择模型；若 Provider 不支持或返回空列表，iOS 必须允许用户手动输入 `model`。
 
 ## 4. Provider 路由
 

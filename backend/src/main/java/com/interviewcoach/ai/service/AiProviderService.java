@@ -4,6 +4,8 @@ import com.interviewcoach.ai.entity.AiProvider;
 import com.interviewcoach.ai.repository.AiProviderRepository;
 import com.interviewcoach.common.api.AiProviderCreateRequest;
 import com.interviewcoach.common.api.AiProviderDto;
+import com.interviewcoach.common.api.AiProviderModelsRequest;
+import com.interviewcoach.common.api.AiProviderModelsResponse;
 import com.interviewcoach.common.api.AiProviderTestRequest;
 import com.interviewcoach.common.api.AiProviderTestResponse;
 import com.interviewcoach.common.error.AiProviderNotFoundException;
@@ -72,6 +74,10 @@ public class AiProviderService {
         } catch (Exception ex) {
             return new AiProviderTestResponse(false, "连接失败: " + ex.getMessage());
         }
+    }
+
+    public AiProviderModelsResponse listModels(AiProviderModelsRequest request) {
+        return new AiProviderModelsResponse(openAiClient.listModels(request.baseUrl(), request.apiKey()));
     }
 
     @Transactional
