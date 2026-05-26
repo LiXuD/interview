@@ -2,9 +2,8 @@ package com.interviewcoach.user.controller;
 
 import com.interviewcoach.auth.service.AuthService;
 import com.interviewcoach.common.api.UserDto;
-import com.interviewcoach.user.entity.User;
+import com.interviewcoach.common.security.SecurityUtils;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,17 +17,13 @@ public class UserController {
     }
 
     @GetMapping
-    public UserDto getCurrentUser(Authentication authentication) {
-        return authService.getCurrentUser(currentUser(authentication).getId());
+    public UserDto getCurrentUser() {
+        return authService.getCurrentUser(SecurityUtils.currentUser().getId());
     }
 
     @DeleteMapping
-    public ResponseEntity<Void> deleteUser(Authentication authentication) {
-        authService.deleteUser(currentUser(authentication).getId());
+    public ResponseEntity<Void> deleteUser() {
+        authService.deleteUser(SecurityUtils.currentUser().getId());
         return ResponseEntity.noContent().build();
-    }
-
-    private User currentUser(Authentication authentication) {
-        return (User) authentication.getPrincipal();
     }
 }

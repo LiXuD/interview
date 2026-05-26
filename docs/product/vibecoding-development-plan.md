@@ -897,8 +897,8 @@ Task1-13 已完成 MVP 功能闭环和 TestFlight 提审前置认证任务。Pos
 当前 AI 状态：
 
 - 用户自定义 OpenAI-compatible Provider 已可用于业务 AI 调用。
-- 平台默认 AI 当前仍以 `LocalPlatformAiClient` 本地 stub 保持开发和演示稳定。
-- `POST /api/profiles/draft-summary` 当前仍是固定草稿摘要，真实 AI 摘要生成需要在 Post-MVP 阶段补齐。
+- 平台默认 AI 已支持通过 `IC_PLATFORM_AI_*` 环境变量启用真实 OpenAI-compatible 后端模型；未启用时仍以 `LocalPlatformAiClient` 本地 stub 保持开发和演示稳定。
+- `POST /api/profiles/draft-summary` 已接入统一 AI 路由生成结构化 `CandidateProfileDraftDto`；后端仍自行计算 `rawTextLength`，并继续禁止保存或记录简历原文。
 - iOS 仍禁止直接调用 AI，所有 AI 调用继续由后端统一代理。
 
 ### Task 14: 平台默认真实 AI 接入
