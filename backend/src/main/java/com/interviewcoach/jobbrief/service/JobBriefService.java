@@ -51,7 +51,7 @@ public class JobBriefService {
         JobBriefDto generated = aiStructuredOutputService.generateJobBrief(buildPrompt(target, profile));
         JobBrief brief = jobBriefRepository.findByTargetIdAndUserId(targetId, user.getId())
                 .orElse(new JobBrief());
-        applyDto(brief, generated, user.getId());
+        applyDto(brief, generated, targetId, user.getId());
         brief = jobBriefRepository.save(brief);
         return toDto(brief);
     }
@@ -68,9 +68,23 @@ public class JobBriefService {
     private AiPrompt buildPrompt(InterviewTarget target, CandidateProfile profile) {
         String systemPrompt = """
                 你是 AI 技术面试教练。根据岗位 JD 和已确认的候选人摘要生成岗位画像。
-                只返回合法 JSON，不返回 Markdown、解释或代码块。使用 camelCase 字段。
-                targetId 必须与传入值一致。confidence 范围 0 到 1。
-                importance 只允许 required/important/bonus。userLevel 只允许 unknown/weak/basic/solid/strong。
+                只返回合法 JSON 对象，不返回任何其他文字。
+
+                JSON 结构和字段必须严格如下：
+                {
+                  "targetId": "传入的 targetId",
+                  "roleSummary": "岗位画像概述（不能为空）",
+                  "skillMap": [{"name": "技能名", "importance": "required 或 important 或 bonus", "userLevel": "unknown 或 weak 或 basic 或 solid 或 strong", "gap": "需要补充的能力描述"}],
+                  "mustHaveSkills": ["必备技能"],
+                  "niceToHaveSkills": ["加分技能"],
+                  "businessContext": ["业务背景"],
+                  "interviewTopics": ["面试主题"],
+                  "candidateMatch": ["候选人匹配点"],
+                  "riskAreas": ["风险点"],
+                  "confidence": 0.8
+                }
+
+                skillMap 中 importance 只允许 required/important/bonus，userLevel 只允许 unknown/weak/basic/solid/strong。
                 只基于已确认的候选人摘要分析，不得编造候选人未提供的项目、技术或经历。
                 skillMap.gap 描述候选人需要补充的能力，而非猜测已有水平。
                 """;
@@ -103,8 +117,8 @@ public class JobBriefService {
         return new AiPrompt("jobBrief", target.getId().toString(), systemPrompt, userPrompt);
     }
 
-    private void applyDto(JobBrief brief, JobBriefDto dto, UUID userId) {
-        brief.setTargetId(UUID.fromString(dto.targetId()));
+    private void applyDto(JobBrief brief, JobBriefDto dto, UUID targetId, UUID userId) {
+        brief.setTargetId(targetId);
         brief.setUserId(userId);
         brief.setRoleSummary(dto.roleSummary());
         brief.setSkillMap(dto.skillMap().stream()

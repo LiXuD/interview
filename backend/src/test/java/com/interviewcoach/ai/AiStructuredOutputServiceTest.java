@@ -22,7 +22,7 @@ class AiStructuredOutputServiceTest {
     // --- mockInterviewReport ---
 
     @Test
-    void mockInterviewReportRejectsMismatchedId() {
+    void mockInterviewReportAcceptsMismatchedId() {
         PlatformAiClient client = prompt -> """
                 {
                   "mockInterviewId": "wrong-id",
@@ -37,8 +37,10 @@ class AiStructuredOutputServiceTest {
                   "nextTrainingTasks": []
                 }
                 """;
-        assertThrows(AiParseException.class, () -> serviceWith(client).generateMockInterviewReport(
-                new AiPrompt("mockInterviewReport", "expected-id", "system", "user")));
+        var result = serviceWith(client).generateMockInterviewReport(
+                new AiPrompt("mockInterviewReport", "expected-id", "system", "user"));
+        assertEquals(70, result.overallScore());
+        assertEquals("summary", result.summary());
     }
 
     @Test
@@ -132,7 +134,7 @@ class AiStructuredOutputServiceTest {
     // --- jobBrief ---
 
     @Test
-    void jobBriefRejectsMismatchedTargetId() {
+    void jobBriefAcceptsMismatchedTargetId() {
         PlatformAiClient client = prompt -> """
                 {
                   "targetId": "wrong-id",
@@ -147,8 +149,9 @@ class AiStructuredOutputServiceTest {
                   "confidence": 0.6
                 }
                 """;
-        assertThrows(AiParseException.class, () -> serviceWith(client).generateJobBrief(
-                new AiPrompt("jobBrief", "expected-id", "system", "user")));
+        var result = serviceWith(client).generateJobBrief(
+                new AiPrompt("jobBrief", "expected-id", "system", "user"));
+        assertEquals("Backend engineer role", result.roleSummary());
     }
 
     @Test
@@ -223,7 +226,7 @@ class AiStructuredOutputServiceTest {
     // --- assessmentResult ---
 
     @Test
-    void assessmentResultRejectsMismatchedId() {
+    void assessmentResultAcceptsMismatchedId() {
         PlatformAiClient client = prompt -> """
                 {
                   "assessmentId": "wrong-id",
@@ -234,8 +237,9 @@ class AiStructuredOutputServiceTest {
                   "nextActions": []
                 }
                 """;
-        assertThrows(AiParseException.class, () -> serviceWith(client).generateAssessmentResult(
-                new AiPrompt("assessmentResult", "expected-id", "system", "user")));
+        var result = serviceWith(client).generateAssessmentResult(
+                new AiPrompt("assessmentResult", "expected-id", "system", "user"));
+        assertEquals(70, result.totalScore());
     }
 
     @Test
@@ -257,7 +261,7 @@ class AiStructuredOutputServiceTest {
     // --- trainingFeedback ---
 
     @Test
-    void trainingFeedbackRejectsMismatchedTaskId() {
+    void trainingFeedbackAcceptsMismatchedTaskId() {
         PlatformAiClient client = prompt -> """
                 {
                   "taskId": "wrong-task-id",
@@ -269,8 +273,10 @@ class AiStructuredOutputServiceTest {
                   "recommendedReviewPoints": ["topic A"]
                 }
                 """;
-        assertThrows(AiParseException.class, () -> serviceWith(client).generateTrainingFeedback(
-                new AiPrompt("trainingFeedback", "expected-task-id", "system", "user")));
+        var result = serviceWith(client).generateTrainingFeedback(
+                new AiPrompt("trainingFeedback", "expected-task-id", "system", "user"));
+        assertEquals(70, result.score());
+        assertEquals("Good answer but needs more detail", result.feedback());
     }
 
     @Test

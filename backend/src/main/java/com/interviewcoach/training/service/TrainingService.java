@@ -147,7 +147,12 @@ public class TrainingService {
     private AiPrompt buildPlanPrompt(InterviewTarget target, AssessmentResult result, CandidateProfile profile) {
         String systemPrompt = """
                 你是 AI 技术面试教练。根据测评短板为候选人生成 1 天训练计划，包含 2-4 个任务。
-                只返回合法 JSON，格式为 {"tasks": [{"title": "...", "description": "..."}]}。
+                只返回合法 JSON 对象，不返回任何其他文字。
+
+                JSON 结构必须严格如下：
+                {"tasks": [{"title": "任务标题", "description": "任务描述"}]}
+
+                tasks 数组必须包含 2 到 4 个任务。
                 每个任务必须针对一个具体短板，description 需说明练习目标和方法。
                 可结合候选人已确认的技能和经历设计更有针对性的练习。
                 """;
@@ -165,8 +170,20 @@ public class TrainingService {
     private AiPrompt buildFeedbackPrompt(InterviewTarget target, TrainingTask task, String answer) {
         String systemPrompt = """
                 你是 AI 技术面试教练，对候选人的训练任务回答进行评分。
-                只返回合法 JSON，使用 camelCase 字段。
-                taskId 必须与传入的训练任务 ID 一致。score 范围 0-100。
+                只返回合法 JSON 对象，不返回任何其他文字。
+
+                JSON 结构必须严格如下：
+                {
+                  "taskId": "传入的训练任务 ID（必须一致）",
+                  "score": 75,
+                  "feedback": "具体指出回答的优缺点",
+                  "problems": ["问题1"],
+                  "rewrittenAnswer": "改进后的示范回答",
+                  "followUpQuestion": "追问问题",
+                  "recommendedReviewPoints": ["复习点1"]
+                }
+
+                score 范围 0-100。
                 feedback 应具体指出回答的优缺点，不得泛泛而谈。
                 rewrittenAnswer 应是改进后的示范回答，结构清晰。
                 followUpQuestion 应围绕回答中的薄弱点追问。

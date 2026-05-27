@@ -77,8 +77,8 @@ public class AiStructuredOutputService {
     }
 
     private void validateJobBrief(JobBriefDto dto, String expectedTargetId) {
-        if (dto == null || !expectedTargetId.equals(dto.targetId())) {
-            throw new IllegalArgumentException("JobBrief targetId mismatch");
+        if (dto == null) {
+            throw new IllegalArgumentException("JobBrief is null");
         }
         requireText(dto.roleSummary(), "roleSummary");
         requireList(dto.skillMap(), "skillMap");
@@ -124,8 +124,8 @@ public class AiStructuredOutputService {
     }
 
     private void validateAssessmentResult(AssessmentResultDto dto, String expectedAssessmentId) {
-        if (dto == null || !expectedAssessmentId.equals(dto.assessmentId())) {
-            throw new IllegalArgumentException("AssessmentResult assessmentId mismatch");
+        if (dto == null) {
+            throw new IllegalArgumentException("AssessmentResult is null");
         }
         if (dto.totalScore() < 0 || dto.totalScore() > 100) {
             throw new IllegalArgumentException("totalScore out of range");
@@ -228,9 +228,6 @@ public class AiStructuredOutputService {
         if (dto == null) {
             throw new IllegalArgumentException("TrainingFeedback is null");
         }
-        if (!prompt.targetId().equals(dto.taskId())) {
-            throw new IllegalArgumentException("TrainingFeedback taskId mismatch");
-        }
         if (dto.score() < 0 || dto.score() > 100) {
             throw new IllegalArgumentException("score out of range");
         }
@@ -260,8 +257,8 @@ public class AiStructuredOutputService {
     }
 
     private void validateMockInterviewReport(MockInterviewReportDto dto, String expectedMockInterviewId) {
-        if (dto == null || !expectedMockInterviewId.equals(dto.mockInterviewId())) {
-            throw new IllegalArgumentException("MockInterviewReport mockInterviewId mismatch");
+        if (dto == null) {
+            throw new IllegalArgumentException("MockInterviewReport is null");
         }
         if (dto.overallScore() < 0 || dto.overallScore() > 100) {
             throw new IllegalArgumentException("overallScore out of range");

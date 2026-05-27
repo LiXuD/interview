@@ -157,7 +157,11 @@ public class MockInterviewService {
     private AiPrompt buildStartPrompt(InterviewTarget target, CandidateProfile profile) {
         String systemPrompt = """
                 你是 AI 技术面试官，进行技术模拟面试。
-                只返回合法 JSON，格式为 {"question": "..."}。
+                只返回合法 JSON 对象，不返回任何其他文字。
+
+                JSON 结构必须严格如下：
+                {"question": "面试问题内容（不能为空）"}
+
                 每次只问一个问题，问题应围绕岗位 JD 核心技能和候选人已确认经历。
                 不得编造候选人未提供的项目或技术细节。
                 """;
@@ -189,7 +193,11 @@ public class MockInterviewService {
     private AiPrompt buildAnswerPrompt(InterviewTarget target, List<MockInterviewMessage> contextMessages) {
         String systemPrompt = """
                 你是 AI 技术面试官，进行技术模拟面试。
-                只返回合法 JSON，格式为 {"question": "..."}。
+                只返回合法 JSON 对象，不返回任何其他文字。
+
+                JSON 结构必须严格如下：
+                {"question": "追问内容（不能为空）"}
+
                 必须基于候选人上一条回答进行追问，追问应挖掘技术深度或暴露逻辑漏洞。
                 每次只问一个问题，保持专业和对话性。
                 """;
@@ -211,9 +219,22 @@ public class MockInterviewService {
 
         String systemPrompt = """
                 你是 AI 技术面试教练，对模拟面试进行复盘评估。
-                只返回合法 JSON，使用 camelCase 字段。
+                只返回合法 JSON 对象，不返回任何其他文字。
+
+                JSON 结构必须严格如下：
+                {
+                  "mockInterviewId": "传入的面试 ID",
+                  "overallScore": 75,
+                  "dimensionScores": [{"name": "维度名", "score": 70, "reason": "评分理由"}],
+                  "summary": "面试表现总结",
+                  "strengths": ["优势1"],
+                  "weaknesses": ["短板1"],
+                  "improvedAnswers": ["改进回答1"],
+                  "nextTrainingTasks": ["训练主题1"]
+                }
+
                 mockInterviewId 必须与传入的面试 ID 完全一致。
-                overallScore 范围 0-100。
+                overallScore 和 dimensionScores.score 范围 0-100。
                 dimensionScores 每项必须包含 name（非空）、score（0-100）、reason（非空）。
                 summary 必须基于实际对话表现，不得泛泛而谈。
                 strengths 和 weaknesses 必须基于实际回答中的具体表现。

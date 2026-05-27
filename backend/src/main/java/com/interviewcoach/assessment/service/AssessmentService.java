@@ -185,9 +185,19 @@ public class AssessmentService {
 
         String systemPrompt = """
                 你是 AI 技术面试教练，对候选人的面试回答进行评分。
-                只返回合法 JSON，使用 camelCase 字段。
-                assessmentId 必须与传入的测评 ID 完全一致。
-                totalScore 范围 0-100。dimensions 每项 score 范围 0-100，需包含 name、score、reason。
+                只返回合法 JSON 对象，不返回任何其他文字。
+
+                JSON 结构必须严格如下：
+                {
+                  "assessmentId": "传入的测评 ID（必须完全一致）",
+                  "totalScore": 75,
+                  "dimensions": [{"name": "维度名", "score": 70, "reason": "评分理由"}],
+                  "strengths": ["优势1"],
+                  "weaknesses": ["短板1"],
+                  "nextActions": ["行动建议1"]
+                }
+
+                totalScore 和 dimensions.score 范围 0-100。
                 strengths 和 weaknesses 必须基于实际回答中的具体表现，不得泛泛而谈。
                 nextActions 必须是可执行的具体行动建议。
                 """;
