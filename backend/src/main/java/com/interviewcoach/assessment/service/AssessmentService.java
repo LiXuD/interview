@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewcoach.ai.service.AiPrompt;
 import com.interviewcoach.ai.service.AiStructuredOutputService;
 import com.interviewcoach.common.util.CollectionUtils;
-import com.interviewcoach.common.api.AssessmentDimensionName;
 import com.interviewcoach.common.api.AssessmentQuestionDto;
 import com.interviewcoach.assessment.entity.AssessmentDimension;
 import com.interviewcoach.assessment.entity.AssessmentResult;
