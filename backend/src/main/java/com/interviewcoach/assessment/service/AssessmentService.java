@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewcoach.ai.service.AiPrompt;
 import com.interviewcoach.ai.service.AiStructuredOutputService;
 import com.interviewcoach.common.util.CollectionUtils;
+import com.interviewcoach.common.api.AssessmentDimensionName;
+import com.interviewcoach.common.api.AssessmentQuestionDto;
 import com.interviewcoach.assessment.entity.AssessmentDimension;
 import com.interviewcoach.assessment.entity.AssessmentResult;
 import com.interviewcoach.assessment.entity.AssessmentSession;
@@ -67,7 +69,7 @@ public class AssessmentService {
         CandidateProfile profile = profileRepository.findByTargetIdAndUserId(targetId, user.getId())
                 .orElseThrow(() -> new ProfileNotFoundException(targetId));
 
-        List<String> questions = aiService.generateAssessmentQuestions(
+        List<AssessmentQuestionDto> questions = aiService.generateAssessmentQuestions(
                 buildQuestionPrompt(target, profile));
 
         AssessmentSession session = new AssessmentSession();
@@ -148,8 +150,30 @@ public class AssessmentService {
     private AiPrompt buildQuestionPrompt(InterviewTarget target, CandidateProfile profile) {
         String systemPrompt = """
                 你是 AI 技术面试教练。根据岗位 JD 和候选人摘要生成 5 道面试测评题。
-                只返回合法 JSON，格式为 {"questions": ["题1", "题2", "题3", "题4", "题5"]}。
-                难度分布：2 道基础题、2 道应用题、1 道深度题。
+                只返回合法 JSON 对象，不返回任何其他文字。
+
+                JSON 结构必须严格如下：
+                {
+                  "questions": [
+                    {
+                      "question": "题目内容（不能为空）",
+                      "dimension": "维度名",
+                      "difficulty": "难度",
+                      "intent": "出题意图",
+                      "rubric": ["评分标准1", "评分标准2"]
+                    }
+                  ]
+                }
+
+                维度名必须从以下 7 个中选择，每道题对应一个维度：
+                technicalDepth（技术深度）、projectSpecificity（项目细节）、systemThinking（系统思维）、
+                tradeoffAwareness（权衡意识）、failureHandling（问题排查）、communicationClarity（表达清晰）、
+                businessContext（业务理解）。
+
+                难度必须是以下之一：basic（基础）、medium（应用）、deep（深度）。
+                难度分布：2 道 basic、2 道 medium、1 道 deep。
+                每道题的 rubric 必须包含 2 到 4 个评分要点。
+
                 题目应结合岗位 JD 中的核心技能要求和候选人的已确认经历。
                 不得编造候选人未提供的项目或技术细节。
                 """;
@@ -180,10 +204,13 @@ public class AssessmentService {
 
     private AiPrompt buildResultPrompt(AssessmentSession session) {
         StringBuilder qaBuilder = new StringBuilder();
-        List<String> questions = session.getQuestions();
+        List<AssessmentQuestionDto> questions = session.getQuestions();
         List<String> answers = session.getAnswers();
         for (int i = 0; i < questions.size(); i++) {
-            qaBuilder.append("Q%d: %s\n".formatted(i + 1, questions.get(i)));
+            AssessmentQuestionDto q = questions.get(i);
+            qaBuilder.append("Q%d: %s\n".formatted(i + 1, q.question()));
+            qaBuilder.append("维度: %s, 难度: %s\n".formatted(q.dimension(), q.difficulty()));
+            qaBuilder.append("评分标准: %s\n".formatted(String.join("、", q.rubric())));
             qaBuilder.append("A%d: %s\n\n".formatted(i + 1, i < answers.size() ? answers.get(i) : ""));
         }
 
@@ -229,10 +256,12 @@ public class AssessmentService {
     }
 
     private AssessmentSessionDto toSessionDto(AssessmentSession session) {
-        String currentQuestion = null;
+        AssessmentQuestionDto currentQuestion = null;
+        List<AssessmentQuestionDto> questions = session.getQuestions();
         if (STATUS_IN_PROGRESS.equals(session.getStatus())
-                && session.getQuestionIndex() < session.getQuestions().size()) {
-            currentQuestion = session.getQuestions().get(session.getQuestionIndex());
+                && questions != null
+                && session.getQuestionIndex() < questions.size()) {
+            currentQuestion = questions.get(session.getQuestionIndex());
         }
         return new AssessmentSessionDto(
                 session.getId().toString(),
@@ -240,7 +269,8 @@ public class AssessmentService {
                 session.getStatus(),
                 session.getQuestionIndex(),
                 session.getTotalQuestions(),
-                currentQuestion
+                currentQuestion,
+                questions
         );
     }
 

@@ -83,7 +83,7 @@ class AiAcceptanceTest {
                         .content(objectMapper.writeValueAsString(new AssessmentStartRequest(targetId))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalQuestions").value(5))
-                .andExpect(jsonPath("$.currentQuestion").isString())
+                .andExpect(jsonPath("$.currentQuestion.question").isString())
                 .andReturn().getResponse().getContentAsString();
         sessionId = objectMapper.readTree(sessionId).get("id").asText();
 
@@ -454,11 +454,41 @@ class AiAcceptanceTest {
         return """
                 {
                   "questions": [
-                    "请解释核心概念A的基本原理。",
-                    "请解释核心概念B在项目中的应用场景。",
-                    "在你的项目中，如何处理场景C？请结合具体案例说明。",
-                    "假设遇到问题D，你会如何设计解决方案？",
-                    "请深入分析技术E的优缺点和适用边界。"
+                    {
+                      "question": "请解释核心概念A的基本原理。",
+                      "dimension": "technicalDepth",
+                      "difficulty": "basic",
+                      "intent": "考察基础概念理解",
+                      "rubric": ["能说明基本原理", "能举出应用场景"]
+                    },
+                    {
+                      "question": "请解释核心概念B在项目中的应用场景。",
+                      "dimension": "projectSpecificity",
+                      "difficulty": "basic",
+                      "intent": "考察项目经验与概念结合",
+                      "rubric": ["能描述项目背景", "能说明技术选型理由"]
+                    },
+                    {
+                      "question": "在你的项目中，如何处理场景C？请结合具体案例说明。",
+                      "dimension": "systemThinking",
+                      "difficulty": "medium",
+                      "intent": "考察系统设计和问题拆解能力",
+                      "rubric": ["能描述场景背景", "能说明处理方案", "能分析方案优劣"]
+                    },
+                    {
+                      "question": "假设遇到问题D，你会如何设计解决方案？",
+                      "dimension": "failureHandling",
+                      "difficulty": "medium",
+                      "intent": "考察问题排查和解决方案设计",
+                      "rubric": ["能定位问题根因", "能给出解决方案", "能评估风险"]
+                    },
+                    {
+                      "question": "请深入分析技术E的优缺点和适用边界。",
+                      "dimension": "tradeoffAwareness",
+                      "difficulty": "deep",
+                      "intent": "考察技术深度和权衡意识",
+                      "rubric": ["能分析优缺点", "能说明适用边界", "能对比替代方案"]
+                    }
                   ]
                 }
                 """;

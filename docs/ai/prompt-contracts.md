@@ -121,7 +121,7 @@ System Prompt 要求：
 
 ## 4. Task: `assessmentQuestions`
 
-目标：根据岗位画像和候选人摘要生成 5 道测评面试题。
+目标：根据岗位画像和候选人摘要生成 5 道结构化测评面试题。
 
 输入来源：
 
@@ -135,7 +135,9 @@ System Prompt 要求：
 
 - 角色：AI 技术面试教练。
 - 必须生成恰好 5 道题。
-- 难度分布：2 道基础题、2 道应用题、1 道深度题。
+- 每道题包含 `question`、`dimension`、`difficulty`、`intent`、`rubric`。
+- 难度分布：2 道 basic、2 道 medium、1 道 deep。
+- 固定能力维度：`technicalDepth`、`projectSpecificity`、`systemThinking`、`tradeoffAwareness`、`failureHandling`、`communicationClarity`、`businessContext`。
 - 返回 JSON 仅含 `questions` 数组。
 
 输出结构：
@@ -143,11 +145,13 @@ System Prompt 要求：
 ```json
 {
   "questions": [
-    "请简述你在项目中使用 Spring Boot 处理高并发请求的经验。",
-    "如何设计一个支持百万级用户的 API 系统？",
-    "Redis 在你的项目中扮演了哪些角色？",
-    "请描述一次线上故障排查经历。",
-    "如何保证分布式系统中的数据一致性？"
+    {
+      "question": "请结合你的支付项目说明一次 Redis 缓存一致性问题。",
+      "dimension": "systemThinking",
+      "difficulty": "medium",
+      "intent": "验证候选人是否能把缓存一致性问题讲到业务约束和技术权衡。",
+      "rubric": ["说明业务场景", "解释一致性策略", "讲清权衡和结果"]
+    }
   ]
 }
 ```
@@ -155,12 +159,18 @@ System Prompt 要求：
 字段规则：
 
 - `questions` 必须恰好 5 个元素。
-- 每个元素非空字符串。
+- 每项 `question`、`intent` 非空。
+- `dimension` 必须为 7 个固定维度之一。
+- `difficulty` 必须为 `basic`、`medium` 或 `deep`。
+- `rubric` 非空数组，每项非空字符串。
 
 后端校验逻辑（`AiStructuredOutputService.validateQuestions`）：
 
 - `questions` 非 null 且 `size() == 5`。
-- 每个 question 非空非 blank。
+- 每项 `question`、`intent` 非空非 blank。
+- `dimension` 在允许枚举中。
+- `difficulty` 在允许枚举中。
+- `rubric` 非 null 且非空，每项非空。
 
 ## 5. Task: `assessmentResult`
 
@@ -396,9 +406,9 @@ System Prompt 要求：
 
 Task 18-25 将在现有 AI task 基础上扩展以下契约。实现前必须同步 `docs/api/openapi.yaml`、后端 DTO、iOS DTO 和本文件。
 
-### 10.1 结构化测评题
+### 10.1 结构化测评题（已实现 Task 20）
 
-当前 `assessmentQuestions` 返回 5 个字符串。Task 20 将升级为固定 5 题结构化输出：
+`assessmentQuestions` 已升级为固定 5 题结构化输出（见上方 Section 4）：
 
 ```json
 {

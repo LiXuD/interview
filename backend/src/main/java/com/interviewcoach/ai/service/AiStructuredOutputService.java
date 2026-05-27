@@ -3,6 +3,8 @@ package com.interviewcoach.ai.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewcoach.ai.entity.AiProvider;
+import com.interviewcoach.common.api.AssessmentDimensionName;
+import com.interviewcoach.common.api.AssessmentQuestionDto;
 import com.interviewcoach.common.api.AssessmentResultDto;
 import com.interviewcoach.common.api.CandidateProfileDraftDto;
 import com.interviewcoach.common.api.DimensionScore;
@@ -103,9 +105,9 @@ public class AiStructuredOutputService {
         }
     }
 
-    public record AssessmentQuestionsResult(List<String> questions) {}
+    public record AssessmentQuestionsResult(List<AssessmentQuestionDto> questions) {}
 
-    public List<String> generateAssessmentQuestions(AiPrompt prompt) {
+    public List<AssessmentQuestionDto> generateAssessmentQuestions(AiPrompt prompt) {
         AssessmentQuestionsResult result = generateAndValidate(prompt, AssessmentQuestionsResult.class, (r, p) -> validateQuestions(r.questions()));
         return result.questions();
     }
@@ -114,12 +116,29 @@ public class AiStructuredOutputService {
         return generateAndValidate(prompt, AssessmentResultDto.class, (dto, p) -> validateAssessmentResult(dto));
     }
 
-    private void validateQuestions(List<String> questions) {
+    private static final Set<String> VALID_DIMENSIONS = Set.copyOf(AssessmentDimensionName.ALL);
+    private static final Set<String> VALID_DIFFICULTIES = Set.of("basic", "medium", "deep");
+
+    private void validateQuestions(List<AssessmentQuestionDto> questions) {
         if (questions == null || questions.size() != 5) {
             throw new IllegalArgumentException("Expected exactly 5 questions");
         }
-        for (String q : questions) {
-            requireText(q, "question");
+        for (AssessmentQuestionDto q : questions) {
+            requireText(q.question(), "question");
+            if (!VALID_DIMENSIONS.contains(q.dimension())) {
+                throw new IllegalArgumentException("invalid dimension: " + q.dimension());
+            }
+            if (!VALID_DIFFICULTIES.contains(q.difficulty())) {
+                throw new IllegalArgumentException("invalid difficulty: " + q.difficulty());
+            }
+            requireText(q.intent(), "intent");
+            requireList(q.rubric(), "rubric");
+            if (q.rubric().isEmpty()) {
+                throw new IllegalArgumentException("rubric must not be empty");
+            }
+            for (String r : q.rubric()) {
+                requireText(r, "rubric item");
+            }
         }
     }
 

@@ -1121,6 +1121,37 @@ components:
           type: string
           format: uuid
 
+    AssessmentQuestionDto:
+      type: object
+      required:
+        - question
+        - dimension
+        - difficulty
+        - intent
+        - rubric
+      properties:
+        question:
+          type: string
+        dimension:
+          type: string
+          enum:
+            - technicalDepth
+            - projectSpecificity
+            - systemThinking
+            - tradeoffAwareness
+            - failureHandling
+            - communicationClarity
+            - businessContext
+        difficulty:
+          type: string
+          enum: [basic, medium, deep]
+        intent:
+          type: string
+        rubric:
+          type: array
+          items:
+            type: string
+
     AssessmentSessionDto:
       type: object
       required:
@@ -1129,6 +1160,7 @@ components:
         - status
         - questionIndex
         - totalQuestions
+        - questions
       properties:
         id:
           type: string
@@ -1144,7 +1176,11 @@ components:
         totalQuestions:
           type: integer
         currentQuestion:
-          type: string
+          $ref: "#/components/schemas/AssessmentQuestionDto"
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/AssessmentQuestionDto"
 
     AssessmentAnswerRequest:
       type: object

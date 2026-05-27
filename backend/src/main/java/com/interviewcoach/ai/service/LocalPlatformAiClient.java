@@ -2,6 +2,8 @@ package com.interviewcoach.ai.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.interviewcoach.common.api.AssessmentDimensionName;
+import com.interviewcoach.common.api.AssessmentQuestionDto;
 import com.interviewcoach.common.api.AssessmentResultDto;
 import com.interviewcoach.common.api.CandidateProfileDraftDto;
 import com.interviewcoach.common.api.DimensionScore;
@@ -59,11 +61,31 @@ public class LocalPlatformAiClient implements PlatformAiClient {
 
     private AiStructuredOutputService.AssessmentQuestionsResult buildAssessmentQuestions(AiPrompt prompt) {
         return new AiStructuredOutputService.AssessmentQuestionsResult(List.of(
-                "请简述你在项目中使用 Spring Boot 处理高并发请求的经验，包括具体的优化手段。",
-                "在数据库设计中，你如何处理多表关联查询的性能问题？请举例说明索引策略的选择。",
-                "请描述一次你在生产环境中排查线上故障的经历，包括定位问题的过程和最终解决方案。",
-                "Redis 在你的项目中扮演了哪些角色？请分别说明缓存策略和数据一致性保证方式。",
-                "如果你要设计一个支持百万级用户的 API 系统，你会如何进行架构分层和容量规划？"
+                new AssessmentQuestionDto(
+                        "请简述你在项目中使用 Spring Boot 处理高并发请求的经验，包括具体的优化手段。",
+                        AssessmentDimensionName.TECHNICAL_DEPTH, "basic",
+                        "考察候选人对 Spring Boot 高并发处理的基本理解和实践经验。",
+                        List.of("能说明线程池配置", "能描述请求处理优化手段")),
+                new AssessmentQuestionDto(
+                        "在数据库设计中，你如何处理多表关联查询的性能问题？请举例说明索引策略的选择。",
+                        AssessmentDimensionName.SYSTEM_THINKING, "basic",
+                        "考察候选人对数据库查询优化的基本掌握。",
+                        List.of("能说明索引类型选择", "能结合具体场景分析查询计划")),
+                new AssessmentQuestionDto(
+                        "请描述一次你在生产环境中排查线上故障的经历，包括定位问题的过程和最终解决方案。",
+                        AssessmentDimensionName.FAILURE_HANDLING, "medium",
+                        "考察候选人的实际问题排查经验和系统性思维。",
+                        List.of("能描述排查过程", "能说明定位工具和手段", "能给出最终解决方案")),
+                new AssessmentQuestionDto(
+                        "Redis 在你的项目中扮演了哪些角色？请分别说明缓存策略和数据一致性保证方式。",
+                        AssessmentDimensionName.TRADEOFF_AWARENESS, "medium",
+                        "考察候选人对中间件选型和权衡的理解。",
+                        List.of("能说明 Redis 使用场景", "能解释缓存策略", "能讨论一致性方案")),
+                new AssessmentQuestionDto(
+                        "如果你要设计一个支持百万级用户的 API 系统，你会如何进行架构分层和容量规划？",
+                        AssessmentDimensionName.BUSINESS_CONTEXT, "deep",
+                        "考察候选人的系统架构设计能力和容量评估能力。",
+                        List.of("能给出合理的架构分层", "能估算容量需求", "能说明扩展策略"))
         ));
     }
 

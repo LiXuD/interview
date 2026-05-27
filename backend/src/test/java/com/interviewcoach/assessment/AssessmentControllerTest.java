@@ -65,7 +65,13 @@ class AssessmentControllerTest {
                 .andExpect(jsonPath("$.status").value("in_progress"))
                 .andExpect(jsonPath("$.questionIndex").value(0))
                 .andExpect(jsonPath("$.totalQuestions").value(5))
-                .andExpect(jsonPath("$.currentQuestion").isString())
+                .andExpect(jsonPath("$.currentQuestion.question").isString())
+                .andExpect(jsonPath("$.currentQuestion.dimension").isString())
+                .andExpect(jsonPath("$.currentQuestion.difficulty").isString())
+                .andExpect(jsonPath("$.currentQuestion.intent").isString())
+                .andExpect(jsonPath("$.currentQuestion.rubric").isArray())
+                .andExpect(jsonPath("$.questions").isArray())
+                .andExpect(jsonPath("$.questions.length()").value(5))
                 .andReturn().getResponse().getContentAsString();
         return objectMapper.readTree(response).get("id").asText();
     }
@@ -109,7 +115,9 @@ class AssessmentControllerTest {
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("completed"))
-                .andExpect(jsonPath("$.currentQuestion").doesNotExist());
+                .andExpect(jsonPath("$.currentQuestion").doesNotExist())
+                .andExpect(jsonPath("$.questions").isArray())
+                .andExpect(jsonPath("$.questions.length()").value(5));
     }
 
     @Test

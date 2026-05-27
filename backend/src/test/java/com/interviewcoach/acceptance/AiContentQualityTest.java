@@ -142,7 +142,7 @@ class AiContentQualityTest {
         String sessionId = objectMapper.readTree(sessionJson).get("id").asText();
 
         // 验证 5 题全部是字符串且不为空
-        String currentQuestion = objectMapper.readTree(sessionJson).get("currentQuestion").asText();
+        String currentQuestion = objectMapper.readTree(sessionJson).get("currentQuestion").get("question").asText();
         assertThat(currentQuestion).isNotBlank();
 
         // 验证题目的多样性：题目长度和内容应有差异（不是重复的同一题）
@@ -308,7 +308,7 @@ class AiContentQualityTest {
                 .andReturn();
 
         String sessionJson = startResult.getResponse().getContentAsString();
-        String currentQ = objectMapper.readTree(sessionJson).get("currentQuestion").asText();
+        String currentQ = objectMapper.readTree(sessionJson).get("currentQuestion").get("question").asText();
 
         // 验证第一题与 AI/RAG 岗位相关
         String qLower = currentQ.toLowerCase();

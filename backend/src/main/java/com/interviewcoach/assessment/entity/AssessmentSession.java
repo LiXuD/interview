@@ -1,5 +1,6 @@
 package com.interviewcoach.assessment.entity;
 
+import com.interviewcoach.common.api.AssessmentQuestionDto;
 import com.interviewcoach.target.entity.InterviewTarget;
 import com.interviewcoach.user.entity.User;
 import jakarta.persistence.*;
@@ -32,11 +33,9 @@ public class AssessmentSession {
     @Column(nullable = false)
     private int totalQuestions = 5;
 
-    @ElementCollection
-    @CollectionTable(name = "assessment_session_questions", joinColumns = @JoinColumn(name = "session_id"))
-    @OrderColumn(name = "sort_order")
-    @Column(name = "question", columnDefinition = "TEXT")
-    private List<String> questions;
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = AssessmentQuestionListConverter.class)
+    private List<AssessmentQuestionDto> questions;
 
     @ElementCollection
     @CollectionTable(name = "assessment_session_answers", joinColumns = @JoinColumn(name = "session_id"))
@@ -77,8 +76,8 @@ public class AssessmentSession {
     public int getTotalQuestions() { return totalQuestions; }
     public void setTotalQuestions(int totalQuestions) { this.totalQuestions = totalQuestions; }
 
-    public List<String> getQuestions() { return questions; }
-    public void setQuestions(List<String> questions) { this.questions = questions; }
+    public List<AssessmentQuestionDto> getQuestions() { return questions; }
+    public void setQuestions(List<AssessmentQuestionDto> questions) { this.questions = questions; }
 
     public List<String> getAnswers() { return answers; }
     public void setAnswers(List<String> answers) { this.answers = answers; }
