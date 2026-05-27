@@ -7,6 +7,7 @@ import com.interviewcoach.coachingmemory.entity.CoachingMemoryItem;
 import com.interviewcoach.coachingmemory.repository.CoachingMemoryRepository;
 import com.interviewcoach.common.api.AssessmentQuestionDto;
 import com.interviewcoach.common.api.AssessmentResultDto;
+import com.interviewcoach.common.api.CoachingMemoryCorrectionRequest;
 import com.interviewcoach.common.api.CoachingMemoryDto;
 import com.interviewcoach.common.api.CoachingMemoryItemDto;
 import com.interviewcoach.common.api.MockInterviewReportDto;
@@ -100,9 +101,55 @@ public class CoachingMemoryService {
         return toDto(memory);
     }
 
+    @Transactional
+    public CoachingMemoryDto correctMemoryItem(UUID memoryId, UUID userId, CoachingMemoryCorrectionRequest request) {
+        CoachingMemory memory = memoryRepository.findByIdAndUserId(memoryId, userId)
+                .orElseThrow(() -> new CoachingMemoryNotFoundException(memoryId));
+        validateCorrectionRequest(request);
+
+        List<CoachingMemoryItem> items = selectItemList(memory, request.field());
+        if (request.itemIndex() < 0 || request.itemIndex() >= items.size()) {
+            throw new IllegalArgumentException("Invalid coaching memory item index");
+        }
+
+        CoachingMemoryItem item = items.get(request.itemIndex());
+        item.setContent(request.content().trim());
+        item.setSource(request.source());
+        item.setConfidence("high");
+        return toDto(memoryRepository.save(memory));
+    }
+
     private InterviewTarget findTarget(UUID targetId, UUID userId) {
         return targetRepository.findByIdAndUserId(targetId, userId)
                 .orElseThrow(() -> new IllegalArgumentException("Target not found: " + targetId));
+    }
+
+    private void validateCorrectionRequest(CoachingMemoryCorrectionRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("Correction request is required");
+        }
+        if (!"corrected".equals(request.source()) && !"rejected".equals(request.source())) {
+            throw new IllegalArgumentException("Correction source must be corrected or rejected");
+        }
+        if (request.content() == null || request.content().isBlank()) {
+            throw new IllegalArgumentException("Correction content is required");
+        }
+    }
+
+    private List<CoachingMemoryItem> selectItemList(CoachingMemory memory, String field) {
+        if (field == null || field.isBlank()) {
+            throw new IllegalArgumentException("Correction field is required");
+        }
+        return switch (field) {
+            case "observedStrengths" -> memory.getObservedStrengths();
+            case "observedWeaknesses" -> memory.getObservedWeaknesses();
+            case "recurringProblems" -> memory.getRecurringProblems();
+            case "verifiedExperience" -> memory.getVerifiedExperience();
+            case "unverifiedClaims" -> memory.getUnverifiedClaims();
+            case "recommendedNextFocus" -> memory.getRecommendedNextFocus();
+            case "avoidRepeating" -> memory.getAvoidRepeating();
+            default -> throw new IllegalArgumentException("Unsupported coaching memory field: " + field);
+        };
     }
 
     private CoachingMemoryDto generateAndSave(User user, InterviewTarget target,

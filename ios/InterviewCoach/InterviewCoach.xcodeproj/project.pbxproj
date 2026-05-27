@@ -20,6 +20,7 @@
 		2A000001000000000000000C /* MockInterviewDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A000001000000000000001C /* MockInterviewDTO.swift */; };
 		2A000001000000000000000D /* ReportDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A000001000000000000001D /* ReportDTO.swift */; };
 		2A000001000000000000000E /* AiProviderDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A000001000000000000001E /* AiProviderDTO.swift */; };
+		2A0000020000000000000001 /* CoachingMemoryDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000020000000000000002 /* CoachingMemoryDTO.swift */; };
 		2A00000100000000000000A1 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B1 /* KeychainHelper.swift */; };
 		2A00000100000000000000A2 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B2 /* APIClient.swift */; };
 		2A00000100000000000000A5 /* AiRuntimeStatusGuard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B5 /* AiRuntimeStatusGuard.swift */; };
@@ -69,6 +70,7 @@
 		2A000001000000000000001D /* ReportDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportDTO.swift; sourceTree = "<group>"; };
 		2A000001000000000000001E /* AiProviderDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AiProviderDTO.swift; sourceTree = "<group>"; };
 		2A000001000000000000001F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		2A0000020000000000000002 /* CoachingMemoryDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoachingMemoryDTO.swift; sourceTree = "<group>"; };
 		2A00000100000000000000B1 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		2A00000100000000000000B2 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		2A00000100000000000000B5 /* AiRuntimeStatusGuard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AiRuntimeStatusGuard.swift; sourceTree = "<group>"; };
@@ -197,6 +199,7 @@
 				2A000001000000000000001C /* MockInterviewDTO.swift */,
 				2A000001000000000000001D /* ReportDTO.swift */,
 				2A000001000000000000001E /* AiProviderDTO.swift */,
+				2A0000020000000000000002 /* CoachingMemoryDTO.swift */,
 			);
 			path = DTO;
 			sourceTree = "<group>";
@@ -434,6 +437,7 @@
 				2A000001000000000000000C /* MockInterviewDTO.swift in Sources */,
 				2A000001000000000000000D /* ReportDTO.swift in Sources */,
 				2A000001000000000000000E /* AiProviderDTO.swift in Sources */,
+				2A0000020000000000000001 /* CoachingMemoryDTO.swift in Sources */,
 				2A00000100000000000000A1 /* KeychainHelper.swift in Sources */,
 				2A00000100000000000000A2 /* APIClient.swift in Sources */,
 				2A00000100000000000000A5 /* AiRuntimeStatusGuard.swift in Sources */,

@@ -858,6 +858,53 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /api/coaching-memories/{id}/corrections:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    patch:
+      tags:
+        - CoachingMemory
+      summary: Correct or reject one coaching memory item
+      operationId: correctCoachingMemoryItem
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CoachingMemoryCorrectionRequest"
+      responses:
+        "200":
+          description: Updated coaching memory.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoachingMemoryDto"
+        "400":
+          description: Invalid correction request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Coaching memory not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1741,3 +1788,31 @@ components:
         confidence:
           type: string
           enum: [high, medium, low]
+
+    CoachingMemoryCorrectionRequest:
+      type: object
+      required:
+        - field
+        - itemIndex
+        - source
+        - content
+      properties:
+        field:
+          type: string
+          enum:
+            - observedStrengths
+            - observedWeaknesses
+            - recurringProblems
+            - verifiedExperience
+            - unverifiedClaims
+            - recommendedNextFocus
+            - avoidRepeating
+        itemIndex:
+          type: integer
+          minimum: 0
+        source:
+          type: string
+          enum: [corrected, rejected]
+        content:
+          type: string
+          minLength: 1

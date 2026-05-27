@@ -512,6 +512,14 @@ Task 22 必须支持用户纠正 AI 判断。纠错后的内容在后续 Prompt 
 - `rejected`：用户否认的经历、短板或判断，禁止再次作为事实使用。
 - `inferred`：AI 推断，只能作为追问验证材料。
 
+后端提供教练记忆 item 级纠错入口：
+
+- `PATCH /api/coaching-memories/{id}/corrections`
+- 请求字段：`field`、`itemIndex`、`source`、`content`
+- `source` 只允许 `corrected` 或 `rejected`
+- 写入后的 item `confidence` 固定为 `high`
+- 接口必须按当前登录用户查询记忆，禁止跨用户纠错
+
 ### 11.5 自适应专项训练
 
 Task 24 的专项训练会话必须根据上一轮回答返回下一步动作：

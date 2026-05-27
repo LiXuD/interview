@@ -1,10 +1,13 @@
 package com.interviewcoach.coachingmemory.controller;
 
 import com.interviewcoach.coachingmemory.service.CoachingMemoryService;
+import com.interviewcoach.common.api.CoachingMemoryCorrectionRequest;
 import com.interviewcoach.common.api.CoachingMemoryDto;
 import com.interviewcoach.common.security.SecurityUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -29,5 +32,11 @@ public class CoachingMemoryController {
     @GetMapping("/{id}")
     public CoachingMemoryDto get(@PathVariable UUID id) {
         return memoryService.getMemory(id, SecurityUtils.currentUser().getId());
+    }
+
+    @PatchMapping("/{id}/corrections")
+    public CoachingMemoryDto correctMemory(@PathVariable UUID id,
+                                           @RequestBody CoachingMemoryCorrectionRequest request) {
+        return memoryService.correctMemoryItem(id, SecurityUtils.currentUser().getId(), request);
     }
 }
