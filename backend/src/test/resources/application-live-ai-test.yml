@@ -1,0 +1,37 @@
+# Live AI 验收测试专用配置
+# 需要同时设置 IC_LIVE_AI_TEST=true 环境变量才会运行
+# 平台 AI 配置从 IC_PLATFORM_AI_* 环境变量读取（参考 backend/.env）
+spring:
+  datasource:
+    url: jdbc:h2:mem:liveaitestdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+
+app:
+  auth:
+    dev-login-enabled: true
+  jwt:
+    secret: dGVzdC1zZWNyZXQta2V5LWZvci11bml0LXRlc3RzLW9ubHktMzJieXRlcw==
+    expiration-ms: 3600000
+  ai:
+    encryption-key: dGVzdC1haS1lbmNyeXB0aW9uLWtleS0zMmJ5dGVzISE=
+    platform:
+      # 验收测试需要真实 AI，必须启用平台 AI
+      enabled: ${IC_PLATFORM_AI_ENABLED:true}
+      base-url: ${IC_PLATFORM_AI_BASE_URL:}
+      api-key: ${IC_PLATFORM_AI_API_KEY:}
+      model: ${IC_PLATFORM_AI_MODEL:}
+      mode: ${IC_PLATFORM_AI_MODE:chatCompletions}
+      # 验收测试不强制要求真实 AI（允许测试非 coaching 任务如 JobBrief）
+      # 需要测试 coaching 任务时，确保 .env 中 IC_REQUIRE_REAL_AI_FOR_COACHING=false
+      require-real-for-coaching: false
+  apple:
+    services-id: com.interviewcoach.app
