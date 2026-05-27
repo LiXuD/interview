@@ -9,6 +9,7 @@ public record AssessmentSessionDto(
         int questionIndex,
         int totalQuestions,
         AssessmentQuestionDto currentQuestion,
-        List<AssessmentQuestionDto> questions
+        List<AssessmentQuestionDto> questions,
+        List<AssessmentQuestionScoreDto> questionScores
 ) {
 }

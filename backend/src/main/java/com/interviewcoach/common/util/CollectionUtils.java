@@ -6,7 +6,7 @@ public final class CollectionUtils {
 
     private CollectionUtils() {}
 
-    public static List<String> copyList(List<String> values) {
+    public static <T> List<T> copyList(List<T> values) {
         return values == null ? List.of() : List.copyOf(values);
     }
 }

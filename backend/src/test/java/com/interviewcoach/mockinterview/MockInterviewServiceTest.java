@@ -19,7 +19,7 @@ class MockInterviewServiceTest {
     @Test
     void finishPromptUsesLatestTwelveMessages() throws Exception {
         MockInterviewService service = new MockInterviewService(
-                null, null, null, null, null, new ObjectMapper());
+                null, null, null, null, null, null, new ObjectMapper());
         InterviewTarget target = new InterviewTarget();
         target.setTitle("Backend Engineer");
         MockInterview interview = new MockInterview();

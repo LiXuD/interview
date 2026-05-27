@@ -792,6 +792,72 @@ paths:
         "204":
           description: Provider deleted.
 
+  /api/coaching-memories/target/{targetId}:
+    parameters:
+      - name: targetId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags:
+        - CoachingMemory
+      summary: Get coaching memories for a target
+      operationId: getCoachingMemories
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of coaching memories.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CoachingMemoryDto"
+        "401":
+          description: Not authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/coaching-memories/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags:
+        - CoachingMemory
+      summary: Get a coaching memory by ID
+      operationId: getCoachingMemory
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Coaching memory details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoachingMemoryDto"
+        "401":
+          description: Not authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Coaching memory not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1562,3 +1628,66 @@ components:
           type: array
           items:
             type: string
+
+    CoachingMemoryDto:
+      type: object
+      required:
+        - id
+        - targetId
+        - sourceType
+        - sourceId
+        - observedStrengths
+        - observedWeaknesses
+        - recurringProblems
+        - verifiedExperience
+        - unverifiedClaims
+        - recommendedNextFocus
+        - avoidRepeating
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        targetId:
+          type: string
+          format: uuid
+        sourceType:
+          type: string
+          enum:
+            - assessment
+            - training
+            - mockInterview
+        sourceId:
+          type: string
+          format: uuid
+        observedStrengths:
+          type: array
+          items:
+            type: string
+        observedWeaknesses:
+          type: array
+          items:
+            type: string
+        recurringProblems:
+          type: array
+          items:
+            type: string
+        verifiedExperience:
+          type: array
+          items:
+            type: string
+        unverifiedClaims:
+          type: array
+          items:
+            type: string
+        recommendedNextFocus:
+          type: array
+          items:
+            type: string
+        avoidRepeating:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time

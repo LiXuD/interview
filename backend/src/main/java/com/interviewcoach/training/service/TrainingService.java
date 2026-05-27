@@ -2,6 +2,7 @@ package com.interviewcoach.training.service;
 
 import com.interviewcoach.ai.service.AiPrompt;
 import com.interviewcoach.ai.service.AiStructuredOutputService;
+import com.interviewcoach.coachingmemory.service.CoachingMemoryService;
 import com.interviewcoach.common.util.CollectionUtils;
 import com.interviewcoach.assessment.entity.AssessmentResult;
 import com.interviewcoach.assessment.repository.AssessmentResultRepository;
@@ -20,6 +21,8 @@ import com.interviewcoach.training.entity.TrainingTask;
 import com.interviewcoach.training.repository.TrainingPlanRepository;
 import com.interviewcoach.training.repository.TrainingTaskRepository;
 import com.interviewcoach.user.entity.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,25 +33,30 @@ import java.util.UUID;
 @Service
 public class TrainingService {
 
+    private static final Logger log = LoggerFactory.getLogger(TrainingService.class);
+
     private final TrainingPlanRepository planRepository;
     private final TrainingTaskRepository taskRepository;
     private final AssessmentResultRepository assessmentResultRepository;
     private final InterviewTargetRepository targetRepository;
     private final CandidateProfileRepository profileRepository;
     private final AiStructuredOutputService aiService;
+    private final CoachingMemoryService coachingMemoryService;
 
     public TrainingService(TrainingPlanRepository planRepository,
                            TrainingTaskRepository taskRepository,
                            AssessmentResultRepository assessmentResultRepository,
                            InterviewTargetRepository targetRepository,
                            CandidateProfileRepository profileRepository,
-                           AiStructuredOutputService aiService) {
+                           AiStructuredOutputService aiService,
+                           CoachingMemoryService coachingMemoryService) {
         this.planRepository = planRepository;
         this.taskRepository = taskRepository;
         this.assessmentResultRepository = assessmentResultRepository;
         this.targetRepository = targetRepository;
         this.profileRepository = profileRepository;
         this.aiService = aiService;
+        this.coachingMemoryService = coachingMemoryService;
     }
 
     @Transactional
@@ -125,6 +133,13 @@ public class TrainingService {
         task.setFeedback(feedback);
         task.setStatus("in_progress");
         taskRepository.save(task);
+
+        try {
+            coachingMemoryService.generateFromTraining(
+                    task.getPlan().getUser(), task.getPlan().getTargetId(), aiResult, task.getTitle());
+        } catch (Exception ex) {
+            log.warn("Failed to generate coaching memory for training task {}", taskId, ex);
+        }
 
         return toFeedbackDto(feedback);
     }

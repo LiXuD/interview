@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewcoach.ai.service.AiPrompt;
 import com.interviewcoach.ai.service.AiStructuredOutputService;
+import com.interviewcoach.coachingmemory.service.CoachingMemoryService;
 import com.interviewcoach.common.util.CollectionUtils;
 import com.interviewcoach.common.api.MockInterviewReportDto;
 import com.interviewcoach.common.api.MockInterviewSessionDto;
@@ -20,6 +21,8 @@ import com.interviewcoach.report.repository.ReportRepository;
 import com.interviewcoach.target.entity.InterviewTarget;
 import com.interviewcoach.target.repository.InterviewTargetRepository;
 import com.interviewcoach.user.entity.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +32,7 @@ import java.util.UUID;
 @Service
 public class MockInterviewService {
 
+    private static final Logger log = LoggerFactory.getLogger(MockInterviewService.class);
     private static final int MAX_CONTEXT_TURNS = 6;
     private static final int MAX_CONTEXT_MESSAGES = MAX_CONTEXT_TURNS * 2;
     private static final String STATUS_IN_PROGRESS = "in_progress";
@@ -42,6 +46,7 @@ public class MockInterviewService {
     private final CandidateProfileRepository profileRepository;
     private final ReportRepository reportRepository;
     private final AiStructuredOutputService aiService;
+    private final CoachingMemoryService coachingMemoryService;
     private final ObjectMapper objectMapper;
 
     public MockInterviewService(MockInterviewRepository interviewRepository,
@@ -49,12 +54,14 @@ public class MockInterviewService {
                                 CandidateProfileRepository profileRepository,
                                 ReportRepository reportRepository,
                                 AiStructuredOutputService aiService,
+                                CoachingMemoryService coachingMemoryService,
                                 ObjectMapper objectMapper) {
         this.interviewRepository = interviewRepository;
         this.targetRepository = targetRepository;
         this.profileRepository = profileRepository;
         this.reportRepository = reportRepository;
         this.aiService = aiService;
+        this.coachingMemoryService = coachingMemoryService;
         this.objectMapper = objectMapper;
     }
 
@@ -124,6 +131,14 @@ public class MockInterviewService {
         interviewRepository.save(interview);
 
         createReport(interview, reportDto);
+
+        try {
+            coachingMemoryService.generateFromMockInterview(
+                    interview.getUser(), interview.getTargetId(), reportDto, interviewId);
+        } catch (Exception ex) {
+            log.warn("Failed to generate coaching memory for mock interview {}", interviewId, ex);
+        }
+
         return reportDto;
     }
 

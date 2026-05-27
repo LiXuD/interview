@@ -94,8 +94,9 @@ class AssessmentControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(answerReq)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value("in_progress"))
-                    .andExpect(jsonPath("$.questionIndex").value(i));
+                    .andExpect(jsonPath("$.questionIndex").value(i - 1))
+                    .andExpect(jsonPath("$.score").isNumber())
+                    .andExpect(jsonPath("$.feedback").isString());
         }
 
         // Finish assessment

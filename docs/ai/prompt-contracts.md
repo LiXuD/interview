@@ -402,11 +402,50 @@ System Prompt 要求：
 - `summary` 非空。
 - 所有数组字段非 null。
 
-## 10. Post-MVP Real AI Adaptive Coaching 计划契约
+## 10. Task: `coachingMemory`
+
+目标：根据会话数据（测评、训练、模拟面试）生成结构化教练记忆，沉淀用户能力画像。
+
+输入来源：
+
+- `InterviewTarget.title`：目标岗位名称。
+- 测评：`AssessmentResultDto`（总分、维度、强项、短板、下一步行动）和题目列表。
+- 训练：`TrainingFeedbackDto`（评分、反馈、问题、改进示范、复习要点）和任务标题。
+- 模拟面试：`MockInterviewReportDto`（总分、维度、总结、强项、短板、改进示范、训练建议）。
+
+System Prompt 要求：
+
+- 角色：AI 技术面试教练。
+- 只基于本次会话数据生成记忆，不得编造未提供的信息。
+- 返回 JSON 仅含记忆字段，不含 targetId、sourceType 等（由后端补充）。
+
+输出 DTO：`CoachingMemoryDto`
+
+```json
+{
+  "observedStrengths": ["能讲清项目背景"],
+  "observedWeaknesses": ["容量估算缺少数字依据"],
+  "recurringProblems": ["回答偏概念，缺少业务指标"],
+  "verifiedExperience": ["用户确认做过支付回调链路优化"],
+  "unverifiedClaims": ["提到高并发优化，但未给出指标"],
+  "recommendedNextFocus": ["容量规划", "故障排查复盘表达"],
+  "avoidRepeating": ["不要继续问泛泛的 Redis 基础概念"]
+}
+```
+
+字段规则：
+
+- 所有字段均为非 null 字符串数组（允许空数组）。
+
+后端校验逻辑（`AiStructuredOutputService.validateCoachingMemory`）：
+
+- 所有 7 个数组字段非 null。
+
+## 11. Post-MVP Real AI Adaptive Coaching 计划契约
 
 Task 18-25 将在现有 AI task 基础上扩展以下契约。实现前必须同步 `docs/api/openapi.yaml`、后端 DTO、iOS DTO 和本文件。
 
-### 10.1 结构化测评题（已实现 Task 20）
+### 11.1 结构化测评题（已实现 Task 20）
 
 `assessmentQuestions` 已升级为固定 5 题结构化输出（见上方 Section 4）：
 
@@ -434,7 +473,7 @@ Task 18-25 将在现有 AI task 基础上扩展以下契约。实现前必须同
 - `communicationClarity`
 - `businessContext`
 
-### 10.2 逐题评分与回答结构诊断
+### 11.2 逐题评分与回答结构诊断
 
 Task 23 的测评结果必须支持逐题诊断：
 
@@ -443,7 +482,7 @@ Task 23 的测评结果必须支持逐题诊断：
 - 诊断回答结构：背景、任务、行动、结果、权衡、复盘。
 - 聚合总分、维度分、主要短板和下一步训练建议。
 
-### 10.3 教练记忆生成
+### 11.3 教练记忆生成
 
 Task 21 的教练记忆必须由后端解析为强类型 DTO。记忆内容只允许包含结构化事实和观察：
 
@@ -461,7 +500,7 @@ Task 21 的教练记忆必须由后端解析为强类型 DTO。记忆内容只�
 }
 ```
 
-### 10.4 用户纠错
+### 11.4 用户纠错
 
 Task 22 必须支持用户纠正 AI 判断。纠错后的内容在后续 Prompt 中优先级高于 AI 推断：
 
@@ -469,7 +508,7 @@ Task 22 必须支持用户纠正 AI 判断。纠错后的内容在后续 Prompt 
 - `rejected`：用户否认的经历、短板或判断，禁止再次作为事实使用。
 - `inferred`：AI 推断，只能作为追问验证材料。
 
-### 10.5 自适应专项训练
+### 11.5 自适应专项训练
 
 Task 24 的专项训练会话必须根据上一轮回答返回下一步动作：
 
@@ -490,7 +529,7 @@ Task 24 的专项训练会话必须根据上一轮回答返回下一步动作：
 - `switch`：换一个相关角度。
 - `stop`：用户明显卡住，先给讲解或结束本轮。
 
-### 10.6 自适应模拟面试增强
+### 11.6 自适应模拟面试增强
 
 Task 25 的模拟面试追问必须：
 
@@ -499,7 +538,7 @@ Task 25 的模拟面试追问必须：
 - 继续遵守最近 6 轮、最多 12 条 message 的上下文限制。
 - 结合教练记忆时只使用必要摘要，不传完整历史。
 
-## 11. 测试要求
+## 12. 测试要求
 
 - 每个 AI task 必须有结构化输出解析测试。
 - 每个 AI task 必须覆盖非法 JSON 和缺失必填字段。

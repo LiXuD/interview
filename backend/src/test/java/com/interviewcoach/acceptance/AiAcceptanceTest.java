@@ -101,6 +101,18 @@ class AiAcceptanceTest {
                 .andExpect(jsonPath("$.weaknesses").isArray())
                 .andExpect(jsonPath("$.nextActions").isArray());
 
+        // 2b. CoachingMemory: verify generated after assessment
+        mockMvc.perform(get("/api/coaching-memories/target/" + targetId)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].sourceType").value("assessment"))
+                .andExpect(jsonPath("$[0].targetId").value(targetId))
+                .andExpect(jsonPath("$[0].observedStrengths").isArray())
+                .andExpect(jsonPath("$[0].observedWeaknesses").isArray())
+                .andExpect(jsonPath("$[0].recommendedNextFocus").isArray());
+
         // 3. TrainingPlan
         MvcResult planResult = mockMvc.perform(post("/api/training-plans/generate")
                         .header("Authorization", "Bearer " + token)
@@ -417,6 +429,7 @@ class AiAcceptanceTest {
             return switch (task) {
                 case "jobBrief" -> mockJobBriefResponse(targetId);
                 case "assessmentQuestions" -> mockAssessmentQuestionsResponse();
+                case "assessmentQuestionScore" -> mockQuestionScoreResponse();
                 case "assessmentResult" -> mockAssessmentResultResponse(
                         prompt.targetId());
                 case "trainingPlan" -> mockTrainingPlanResponse();
@@ -425,6 +438,7 @@ class AiAcceptanceTest {
                 case "mockInterviewQuestion" -> mockInterviewQuestionResponse();
                 case "mockInterviewReport" -> mockInterviewReportResponse(
                         prompt.targetId());
+                case "coachingMemory" -> mockCoachingMemoryResponse();
                 default -> "{}";
             };
         });
@@ -490,6 +504,19 @@ class AiAcceptanceTest {
                       "rubric": ["能分析优缺点", "能说明适用边界", "能对比替代方案"]
                     }
                   ]
+                }
+                """;
+    }
+
+    private String mockQuestionScoreResponse() {
+        return """
+                {
+                  "questionIndex": 0,
+                  "score": 68,
+                  "dimension": "technicalDepth",
+                  "feedback": "回答覆盖了基本概念，但在技术深度方面仍需加强。",
+                  "problems": ["缺少具体的技术指标"],
+                  "improvedExample": "在项目中，通过引入缓存和优化索引，将延迟从 800ms 降至 150ms。"
                 }
                 """;
     }
@@ -561,5 +588,19 @@ class AiAcceptanceTest {
                   "nextTrainingTasks": ["深入学习核心原理", "练习系统设计"]
                 }
                 """.formatted(interviewId);
+    }
+
+    private String mockCoachingMemoryResponse() {
+        return """
+                {
+                  "observedStrengths": ["基础扎实", "项目经验相关"],
+                  "observedWeaknesses": ["系统设计经验有限", "高级特性掌握不足"],
+                  "recurringProblems": ["回答偏概念，缺少量化数据"],
+                  "verifiedExperience": ["有实际项目经验"],
+                  "unverifiedClaims": ["提到高并发优化，但未给出具体指标"],
+                  "recommendedNextFocus": ["系统设计", "高级特性"],
+                  "avoidRepeating": ["不要继续问泛泛的基础概念"]
+                }
+                """;
     }
 }

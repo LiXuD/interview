@@ -63,6 +63,12 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("AI_PROVIDER_NOT_FOUND", ex.getMessage(), generateRequestId()));
     }
 
+    @ExceptionHandler(CoachingMemoryNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleCoachingMemoryNotFound(CoachingMemoryNotFoundException ex) {
+        return ResponseEntity.status(404)
+                .body(new ErrorResponse("COACHING_MEMORY_NOT_FOUND", ex.getMessage(), generateRequestId()));
+    }
+
     @ExceptionHandler(AiProviderCallFailedException.class)
     public ResponseEntity<ErrorResponse> handleAiProviderCallFailed(AiProviderCallFailedException ex) {
         return ResponseEntity.status(502)

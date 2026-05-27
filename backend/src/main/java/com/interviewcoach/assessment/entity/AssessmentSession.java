@@ -1,6 +1,7 @@
 package com.interviewcoach.assessment.entity;
 
 import com.interviewcoach.common.api.AssessmentQuestionDto;
+import com.interviewcoach.common.api.AssessmentQuestionScoreDto;
 import com.interviewcoach.target.entity.InterviewTarget;
 import com.interviewcoach.user.entity.User;
 import jakarta.persistence.*;
@@ -43,6 +44,10 @@ public class AssessmentSession {
     @Column(name = "answer", columnDefinition = "TEXT")
     private List<String> answers;
 
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = QuestionScoreListConverter.class)
+    private List<AssessmentQuestionScoreDto> questionScores;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -81,6 +86,9 @@ public class AssessmentSession {
 
     public List<String> getAnswers() { return answers; }
     public void setAnswers(List<String> answers) { this.answers = answers; }
+
+    public List<AssessmentQuestionScoreDto> getQuestionScores() { return questionScores; }
+    public void setQuestionScores(List<AssessmentQuestionScoreDto> questionScores) { this.questionScores = questionScores; }
 
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }

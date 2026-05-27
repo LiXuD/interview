@@ -4,8 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewcoach.common.api.AssessmentDimensionName;
 import com.interviewcoach.common.api.AssessmentQuestionDto;
+import com.interviewcoach.common.api.AssessmentQuestionScoreDto;
 import com.interviewcoach.common.api.AssessmentResultDto;
 import com.interviewcoach.common.api.CandidateProfileDraftDto;
+import com.interviewcoach.common.api.CoachingMemoryDto;
 import com.interviewcoach.common.api.DimensionScore;
 import com.interviewcoach.common.api.JobBriefDto;
 import com.interviewcoach.common.api.MockInterviewReportDto;
@@ -27,12 +29,14 @@ public class LocalPlatformAiClient implements PlatformAiClient {
             return switch (prompt.task()) {
                 case AiPrompt.TASK_JOB_BRIEF -> objectMapper.writeValueAsString(buildJobBrief(prompt));
                 case AiPrompt.TASK_ASSESSMENT_QUESTIONS -> objectMapper.writeValueAsString(buildAssessmentQuestions(prompt));
+                case AiPrompt.TASK_ASSESSMENT_QUESTION_SCORE -> objectMapper.writeValueAsString(buildQuestionScore(prompt));
                 case AiPrompt.TASK_ASSESSMENT_RESULT -> objectMapper.writeValueAsString(buildAssessmentResult(prompt));
                 case AiPrompt.TASK_TRAINING_PLAN -> objectMapper.writeValueAsString(buildTrainingPlan(prompt));
                 case AiPrompt.TASK_TRAINING_FEEDBACK -> objectMapper.writeValueAsString(buildTrainingFeedback(prompt));
                 case AiPrompt.TASK_MOCK_INTERVIEW_QUESTION -> objectMapper.writeValueAsString(buildMockInterviewQuestion(prompt));
                 case AiPrompt.TASK_MOCK_INTERVIEW_REPORT -> objectMapper.writeValueAsString(buildMockInterviewReport(prompt));
                 case AiPrompt.TASK_CANDIDATE_PROFILE_DRAFT -> objectMapper.writeValueAsString(buildCandidateProfileDraft(prompt));
+                case AiPrompt.TASK_COACHING_MEMORY -> objectMapper.writeValueAsString(buildCoachingMemory(prompt));
                 default -> throw new IllegalStateException("Unknown task: " + prompt.task());
             };
         } catch (JsonProcessingException ex) {
@@ -87,6 +91,28 @@ public class LocalPlatformAiClient implements PlatformAiClient {
                         "考察候选人的系统架构设计能力和容量评估能力。",
                         List.of("能给出合理的架构分层", "能估算容量需求", "能说明扩展策略"))
         ));
+    }
+
+    private AssessmentQuestionScoreDto buildQuestionScore(AiPrompt prompt) {
+        int questionIndex = 0;
+        try {
+            // Extract questionIndex from userPrompt: "题号：N（共 M 题）"
+            for (String line : prompt.userPrompt().split("\n")) {
+                if (line.startsWith("题号：")) {
+                    String numberPart = line.substring("题号：".length()).split("[^0-9]")[0].trim();
+                    questionIndex = Integer.parseInt(numberPart) - 1;
+                    break;
+                }
+            }
+        } catch (NumberFormatException ignored) {}
+        return new AssessmentQuestionScoreDto(
+                questionIndex,
+                68,
+                AssessmentDimensionName.TECHNICAL_DEPTH,
+                "回答覆盖了基本概念，但在技术深度和量化表达方面仍需加强。建议按照'问题→方案→指标'的结构重新组织。",
+                List.of("缺少具体的技术指标", "未说明性能优化的对比数据"),
+                "在项目中，我负责优化订单服务的接口性能。通过引入 Redis 缓存热点数据、优化 SQL 索引和引入异步处理，将 P99 延迟从 800ms 降至 150ms，QPS 从 200 提升至 1200。"
+        );
     }
 
     private AssessmentResultDto buildAssessmentResult(AiPrompt prompt) {
@@ -166,6 +192,23 @@ public class LocalPlatformAiClient implements PlatformAiClient {
                 List.of("后端服务开发", "API 设计与实现"),
                 List.of("3 年后端开发经验"),
                 0
+        );
+    }
+
+    private CoachingMemoryDto buildCoachingMemory(AiPrompt prompt) {
+        return new CoachingMemoryDto(
+                null,
+                prompt.targetId(),
+                "assessment",
+                null,
+                List.of("Java 基础扎实，能结合项目说明使用场景", "问题排查思路清晰"),
+                List.of("系统设计能力需要加强，容量规划方面经验不足", "数据库深度优化经验不足"),
+                List.of("回答偏概念，缺少量化数据"),
+                List.of("有实际项目经验"),
+                List.of("提到高并发优化，但未给出具体指标"),
+                List.of("容量规划", "数据库索引优化"),
+                List.of("不要继续问泛泛的 Redis 基础概念"),
+                null
         );
     }
 }

@@ -4,8 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewcoach.ai.service.AiPrompt;
 import com.interviewcoach.ai.service.AiStructuredOutputService;
+import com.interviewcoach.coachingmemory.service.CoachingMemoryService;
 import com.interviewcoach.common.util.CollectionUtils;
 import com.interviewcoach.common.api.AssessmentQuestionDto;
+import com.interviewcoach.common.api.AssessmentQuestionScoreDto;
 import com.interviewcoach.assessment.entity.AssessmentDimension;
 import com.interviewcoach.assessment.entity.AssessmentResult;
 import com.interviewcoach.assessment.entity.AssessmentSession;
@@ -24,6 +26,8 @@ import com.interviewcoach.report.repository.ReportRepository;
 import com.interviewcoach.target.entity.InterviewTarget;
 import com.interviewcoach.target.repository.InterviewTargetRepository;
 import com.interviewcoach.user.entity.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +38,7 @@ import java.util.UUID;
 @Service
 public class AssessmentService {
 
+    private static final Logger log = LoggerFactory.getLogger(AssessmentService.class);
     private static final String STATUS_IN_PROGRESS = "in_progress";
     private static final String STATUS_COMPLETED = "completed";
 
@@ -43,6 +48,7 @@ public class AssessmentService {
     private final InterviewTargetRepository targetRepository;
     private final CandidateProfileRepository profileRepository;
     private final AiStructuredOutputService aiService;
+    private final CoachingMemoryService coachingMemoryService;
     private final ObjectMapper objectMapper;
 
     public AssessmentService(AssessmentSessionRepository sessionRepository,
@@ -51,6 +57,7 @@ public class AssessmentService {
                              InterviewTargetRepository targetRepository,
                              CandidateProfileRepository profileRepository,
                              AiStructuredOutputService aiService,
+                             CoachingMemoryService coachingMemoryService,
                              ObjectMapper objectMapper) {
         this.sessionRepository = sessionRepository;
         this.resultRepository = resultRepository;
@@ -58,6 +65,7 @@ public class AssessmentService {
         this.targetRepository = targetRepository;
         this.profileRepository = profileRepository;
         this.aiService = aiService;
+        this.coachingMemoryService = coachingMemoryService;
         this.objectMapper = objectMapper;
     }
 
@@ -85,7 +93,7 @@ public class AssessmentService {
     }
 
     @Transactional
-    public AssessmentSessionDto submitAnswer(UUID sessionId, UUID userId, String answer) {
+    public AssessmentQuestionScoreDto submitAnswer(UUID sessionId, UUID userId, String answer) {
         AssessmentSession session = findSession(sessionId, userId);
 
         if (!STATUS_IN_PROGRESS.equals(session.getStatus())) {
@@ -95,11 +103,27 @@ public class AssessmentService {
             throw new IllegalArgumentException("All questions already answered");
         }
 
-        session.getAnswers().add(answer);
-        session.setQuestionIndex(session.getQuestionIndex() + 1);
-        session = sessionRepository.save(session);
+        int currentIndex = session.getQuestionIndex();
+        AssessmentQuestionDto question = session.getQuestions().get(currentIndex);
 
-        return toSessionDto(session);
+        session.getAnswers().add(answer);
+        session.setQuestionIndex(currentIndex + 1);
+
+        // Per-question AI scoring
+        AssessmentQuestionScoreDto score = aiService.generateQuestionScore(
+                buildQuestionScorePrompt(session, question, answer, currentIndex));
+
+        // Store scores
+        List<AssessmentQuestionScoreDto> scores = session.getQuestionScores();
+        if (scores == null) {
+            scores = new ArrayList<>();
+        }
+        scores.add(score);
+        session.setQuestionScores(scores);
+
+        sessionRepository.save(session);
+
+        return score;
     }
 
     @Transactional
@@ -132,6 +156,13 @@ public class AssessmentService {
 
         AssessmentResultDto resultDto = toResultDto(result);
         createReport(session, resultDto);
+
+        try {
+            coachingMemoryService.generateFromAssessment(
+                    session.getUser(), session.getTarget().getId(), resultDto, session.getQuestions(), sessionId);
+        } catch (Exception ex) {
+            log.warn("Failed to generate coaching memory for assessment {}", sessionId, ex);
+        }
 
         return resultDto;
     }
@@ -241,6 +272,53 @@ public class AssessmentService {
         return new AiPrompt(AiPrompt.TASK_ASSESSMENT_RESULT, session.getId().toString(), systemPrompt, userPrompt);
     }
 
+    private AiPrompt buildQuestionScorePrompt(AssessmentSession session, AssessmentQuestionDto question, String answer, int questionIndex) {
+        String systemPrompt = """
+                你是 AI 技术面试教练，对候选人的一道面试回答进行逐题评分。
+                只返回合法 JSON 对象，不返回任何其他文字。
+
+                JSON 结构必须严格如下：
+                {
+                  "questionIndex": %d,
+                  "score": 75,
+                  "dimension": "维度名",
+                  "feedback": "反馈内容",
+                  "problems": ["问题1"],
+                  "improvedExample": "改进后的示范回答"
+                }
+
+                score 范围 0-100。
+                feedback 必须针对该回答的具体内容给出，禁止泛泛而谈。
+                problems 必须指出回答中的具体不足，至少 1 条。
+                improvedExample 必须基于候选人已确认的真实经历改写，禁止编造新项目。
+                """.formatted(questionIndex);
+        String userPrompt = """
+                题号：%d（共 %d 题）
+
+                题目：
+                %s
+
+                维度：%s
+                难度：%s
+                出题意图：%s
+                评分标准：
+                %s
+
+                候选人回答：
+                %s
+                """.formatted(
+                questionIndex + 1,
+                session.getTotalQuestions(),
+                question.question(),
+                question.dimension(),
+                question.difficulty(),
+                question.intent(),
+                String.join("\n", question.rubric().stream().map(r -> "- " + r).toList()),
+                answer
+        );
+        return new AiPrompt(AiPrompt.TASK_ASSESSMENT_QUESTION_SCORE, session.getId().toString(), systemPrompt, userPrompt);
+    }
+
     private void createReport(AssessmentSession session, AssessmentResultDto resultDto) {
         try {
             Report report = new Report();
@@ -269,7 +347,8 @@ public class AssessmentService {
                 session.getQuestionIndex(),
                 session.getTotalQuestions(),
                 currentQuestion,
-                questions
+                questions,
+                CollectionUtils.copyList(session.getQuestionScores())
         );
     }
 

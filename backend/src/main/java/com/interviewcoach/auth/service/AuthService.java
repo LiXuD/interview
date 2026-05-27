@@ -3,6 +3,7 @@ package com.interviewcoach.auth.service;
 import com.interviewcoach.ai.repository.AiProviderRepository;
 import com.interviewcoach.assessment.repository.AssessmentResultRepository;
 import com.interviewcoach.assessment.repository.AssessmentSessionRepository;
+import com.interviewcoach.coachingmemory.repository.CoachingMemoryRepository;
 import com.interviewcoach.common.api.AppleLoginRequest;
 import com.interviewcoach.common.api.LoginRequest;
 import com.interviewcoach.common.api.LoginResponse;
@@ -40,6 +41,7 @@ public class AuthService {
     private final TrainingPlanRepository trainingPlanRepository;
     private final MockInterviewRepository mockInterviewRepository;
     private final AiProviderRepository aiProviderRepository;
+    private final CoachingMemoryRepository coachingMemoryRepository;
 
     public AuthService(UserRepository userRepository, JwtTokenProvider jwtTokenProvider,
                        AppleTokenVerifier appleTokenVerifier,
@@ -51,7 +53,8 @@ public class AuthService {
                        ReportRepository reportRepository,
                        TrainingPlanRepository trainingPlanRepository,
                        MockInterviewRepository mockInterviewRepository,
-                       AiProviderRepository aiProviderRepository) {
+                       AiProviderRepository aiProviderRepository,
+                       CoachingMemoryRepository coachingMemoryRepository) {
         this.userRepository = userRepository;
         this.jwtTokenProvider = jwtTokenProvider;
         this.appleTokenVerifier = appleTokenVerifier;
@@ -64,6 +67,7 @@ public class AuthService {
         this.trainingPlanRepository = trainingPlanRepository;
         this.mockInterviewRepository = mockInterviewRepository;
         this.aiProviderRepository = aiProviderRepository;
+        this.coachingMemoryRepository = coachingMemoryRepository;
     }
 
     @Transactional
@@ -123,6 +127,7 @@ public class AuthService {
         assessmentResultRepository.deleteBySessionUserId(userId);
         assessmentSessionRepository.deleteByUserId(userId);
         reportRepository.deleteByUserId(userId);
+        coachingMemoryRepository.deleteByUserId(userId);
         mockInterviewRepository.deleteByUserId(userId);
         trainingPlanRepository.deleteByUserId(userId);
         aiProviderRepository.deleteByUserId(userId);

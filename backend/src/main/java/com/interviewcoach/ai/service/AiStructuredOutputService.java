@@ -5,12 +5,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewcoach.ai.entity.AiProvider;
 import com.interviewcoach.common.api.AssessmentDimensionName;
 import com.interviewcoach.common.api.AssessmentQuestionDto;
+import com.interviewcoach.common.api.AssessmentQuestionScoreDto;
 import com.interviewcoach.common.api.AssessmentResultDto;
 import com.interviewcoach.common.api.CandidateProfileDraftDto;
 import com.interviewcoach.common.api.DimensionScore;
 import com.interviewcoach.common.api.JobBriefDto;
 import com.interviewcoach.common.api.MockInterviewReportDto;
 import com.interviewcoach.common.api.SkillMapItem;
+import com.interviewcoach.common.api.CoachingMemoryDto;
 import com.interviewcoach.common.api.TrainingFeedbackDto;
 import com.interviewcoach.common.error.AiParseException;
 import com.interviewcoach.common.error.AiProviderCallFailedException;
@@ -31,11 +33,13 @@ public class AiStructuredOutputService {
     private static final Set<String> VALID_USER_LEVEL = Set.of("unknown", "weak", "basic", "solid", "strong");
     private static final Set<String> REAL_AI_REQUIRED_TASKS = Set.of(
             AiPrompt.TASK_ASSESSMENT_QUESTIONS,
+            AiPrompt.TASK_ASSESSMENT_QUESTION_SCORE,
             AiPrompt.TASK_ASSESSMENT_RESULT,
             AiPrompt.TASK_TRAINING_PLAN,
             AiPrompt.TASK_TRAINING_FEEDBACK,
             AiPrompt.TASK_MOCK_INTERVIEW_QUESTION,
-            AiPrompt.TASK_MOCK_INTERVIEW_REPORT
+            AiPrompt.TASK_MOCK_INTERVIEW_REPORT,
+            AiPrompt.TASK_COACHING_MEMORY
     );
 
     private final PlatformAiClient platformAiClient;
@@ -110,6 +114,26 @@ public class AiStructuredOutputService {
     public List<AssessmentQuestionDto> generateAssessmentQuestions(AiPrompt prompt) {
         AssessmentQuestionsResult result = generateAndValidate(prompt, AssessmentQuestionsResult.class, (r, p) -> validateQuestions(r.questions()));
         return result.questions();
+    }
+
+    public AssessmentQuestionScoreDto generateQuestionScore(AiPrompt prompt) {
+        return generateAndValidate(prompt, AssessmentQuestionScoreDto.class, (dto, p) -> validateQuestionScore(dto));
+    }
+
+    private void validateQuestionScore(AssessmentQuestionScoreDto dto) {
+        if (dto == null) {
+            throw new IllegalArgumentException("AssessmentQuestionScore is null");
+        }
+        if (dto.score() < 0 || dto.score() > 100) {
+            throw new IllegalArgumentException("question score out of range");
+        }
+        if (dto.questionIndex() < 0 || dto.questionIndex() > 4) {
+            throw new IllegalArgumentException("questionIndex out of range");
+        }
+        requireText(dto.dimension(), "dimension");
+        requireText(dto.feedback(), "feedback");
+        requireList(dto.problems(), "problems");
+        requireText(dto.improvedExample(), "improvedExample");
     }
 
     public AssessmentResultDto generateAssessmentResult(AiPrompt prompt) {
@@ -320,5 +344,22 @@ public class AiStructuredOutputService {
         requireList(dto.skills(), "skills");
         requireList(dto.projects(), "projects");
         requireList(dto.experience(), "experience");
+    }
+
+    public CoachingMemoryDto generateCoachingMemory(AiPrompt prompt) {
+        return generateAndValidate(prompt, CoachingMemoryDto.class, (dto, p) -> validateCoachingMemory(dto));
+    }
+
+    private void validateCoachingMemory(CoachingMemoryDto dto) {
+        if (dto == null) {
+            throw new IllegalArgumentException("CoachingMemory is null");
+        }
+        requireList(dto.observedStrengths(), "observedStrengths");
+        requireList(dto.observedWeaknesses(), "observedWeaknesses");
+        requireList(dto.recurringProblems(), "recurringProblems");
+        requireList(dto.verifiedExperience(), "verifiedExperience");
+        requireList(dto.unverifiedClaims(), "unverifiedClaims");
+        requireList(dto.recommendedNextFocus(), "recommendedNextFocus");
+        requireList(dto.avoidRepeating(), "avoidRepeating");
     }
 }
