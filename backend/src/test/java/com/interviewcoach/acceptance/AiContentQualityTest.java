@@ -1,6 +1,7 @@
 package com.interviewcoach.acceptance;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.interviewcoach.ai.service.PlatformAiProperties;
 import com.interviewcoach.common.api.*;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,10 +51,17 @@ class AiContentQualityTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private PlatformAiProperties platformAiProperties;
+
     @BeforeAll
     void checkLiveAiAvailable() {
         assumeTrue(LIVE_AI_ENABLED,
                 "跳过真实 AI 验收测试：需设置 IC_LIVE_AI_TEST=true 启用");
+        assumeTrue(platformAiProperties.isEnabled(),
+                "跳过真实 AI 验收测试：平台 AI 未启用（IC_PLATFORM_AI_ENABLED=true）");
+        assumeTrue(platformAiProperties.isComplete(),
+                "跳过真实 AI 验收测试：平台 AI 配置不完整（需要 IC_PLATFORM_AI_BASE_URL、IC_PLATFORM_AI_API_KEY、IC_PLATFORM_AI_MODEL）");
     }
 
     // ==================== 场景 1: Java 后端/支付系统 ====================

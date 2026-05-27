@@ -24,14 +24,13 @@ app:
   ai:
     encryption-key: dGVzdC1haS1lbmNyeXB0aW9uLWtleS0zMmJ5dGVzISE=
     platform:
-      # 验收测试需要真实 AI，必须启用平台 AI
+      # 验收测试必须使用真实 AI，禁止回退到 stub
       enabled: ${IC_PLATFORM_AI_ENABLED:true}
       base-url: ${IC_PLATFORM_AI_BASE_URL:}
       api-key: ${IC_PLATFORM_AI_API_KEY:}
       model: ${IC_PLATFORM_AI_MODEL:}
       mode: ${IC_PLATFORM_AI_MODE:chatCompletions}
-      # 验收测试不强制要求真实 AI（允许测试非 coaching 任务如 JobBrief）
-      # 需要测试 coaching 任务时，确保 .env 中 IC_REQUIRE_REAL_AI_FOR_COACHING=false
-      require-real-for-coaching: false
+      # 验收测试要求核心教练路径使用真实 AI
+      require-real-for-coaching: ${IC_REQUIRE_REAL_AI_FOR_COACHING:true}
   apple:
     services-id: com.interviewcoach.app

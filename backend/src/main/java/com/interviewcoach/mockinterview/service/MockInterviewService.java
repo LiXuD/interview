@@ -108,11 +108,23 @@ public class MockInterviewService {
         MockInterviewReportDto aiResult = aiService.generateMockInterviewReport(
                 buildFinishPrompt(target, interview));
 
+        // 用后端实体 ID 回填 mockInterviewId，防止 AI 返回错误 ID
+        MockInterviewReportDto reportDto = new MockInterviewReportDto(
+                interviewId.toString(),
+                aiResult.overallScore(),
+                aiResult.dimensionScores(),
+                aiResult.summary(),
+                aiResult.strengths(),
+                aiResult.weaknesses(),
+                aiResult.improvedAnswers(),
+                aiResult.nextTrainingTasks()
+        );
+
         interview.setStatus(STATUS_COMPLETED);
         interviewRepository.save(interview);
 
-        createReport(interview, aiResult);
-        return aiResult;
+        createReport(interview, reportDto);
+        return reportDto;
     }
 
     @Transactional(readOnly = true)
