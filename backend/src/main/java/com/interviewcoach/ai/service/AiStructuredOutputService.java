@@ -73,10 +73,10 @@ public class AiStructuredOutputService {
     }
 
     public JobBriefDto generateJobBrief(AiPrompt prompt) {
-        return generateAndValidate(prompt, JobBriefDto.class, (dto, p) -> validateJobBrief(dto, p.targetId()));
+        return generateAndValidate(prompt, JobBriefDto.class, (dto, p) -> validateJobBrief(dto));
     }
 
-    private void validateJobBrief(JobBriefDto dto, String expectedTargetId) {
+    private void validateJobBrief(JobBriefDto dto) {
         if (dto == null) {
             throw new IllegalArgumentException("JobBrief is null");
         }
@@ -111,7 +111,7 @@ public class AiStructuredOutputService {
     }
 
     public AssessmentResultDto generateAssessmentResult(AiPrompt prompt) {
-        return generateAndValidate(prompt, AssessmentResultDto.class, (dto, p) -> validateAssessmentResult(dto, p.targetId()));
+        return generateAndValidate(prompt, AssessmentResultDto.class, (dto, p) -> validateAssessmentResult(dto));
     }
 
     private void validateQuestions(List<String> questions) {
@@ -123,7 +123,7 @@ public class AiStructuredOutputService {
         }
     }
 
-    private void validateAssessmentResult(AssessmentResultDto dto, String expectedAssessmentId) {
+    private void validateAssessmentResult(AssessmentResultDto dto) {
         if (dto == null) {
             throw new IllegalArgumentException("AssessmentResult is null");
         }
@@ -221,10 +221,10 @@ public class AiStructuredOutputService {
     }
 
     public TrainingFeedbackDto generateTrainingFeedback(AiPrompt prompt) {
-        return generateAndValidate(prompt, TrainingFeedbackDto.class, this::validateTrainingFeedback);
+        return generateAndValidate(prompt, TrainingFeedbackDto.class, (dto, p) -> validateTrainingFeedback(dto));
     }
 
-    private void validateTrainingFeedback(TrainingFeedbackDto dto, AiPrompt prompt) {
+    private void validateTrainingFeedback(TrainingFeedbackDto dto) {
         if (dto == null) {
             throw new IllegalArgumentException("TrainingFeedback is null");
         }
@@ -253,10 +253,10 @@ public class AiStructuredOutputService {
     }
 
     public MockInterviewReportDto generateMockInterviewReport(AiPrompt prompt) {
-        return generateAndValidate(prompt, MockInterviewReportDto.class, (dto, p) -> validateMockInterviewReport(dto, p.targetId()));
+        return generateAndValidate(prompt, MockInterviewReportDto.class, (dto, p) -> validateMockInterviewReport(dto));
     }
 
-    private void validateMockInterviewReport(MockInterviewReportDto dto, String expectedMockInterviewId) {
+    private void validateMockInterviewReport(MockInterviewReportDto dto) {
         if (dto == null) {
             throw new IllegalArgumentException("MockInterviewReport is null");
         }
