@@ -32,44 +32,37 @@ public class CoachingMemory {
     @ElementCollection
     @CollectionTable(name = "coaching_memory_strengths", joinColumns = @JoinColumn(name = "memory_id"))
     @OrderColumn(name = "sort_order")
-    @Column(name = "item_value", columnDefinition = "TEXT")
-    private List<String> observedStrengths;
+    private List<CoachingMemoryItem> observedStrengths;
 
     @ElementCollection
     @CollectionTable(name = "coaching_memory_weaknesses", joinColumns = @JoinColumn(name = "memory_id"))
     @OrderColumn(name = "sort_order")
-    @Column(name = "item_value", columnDefinition = "TEXT")
-    private List<String> observedWeaknesses;
+    private List<CoachingMemoryItem> observedWeaknesses;
 
     @ElementCollection
     @CollectionTable(name = "coaching_memory_recurring", joinColumns = @JoinColumn(name = "memory_id"))
     @OrderColumn(name = "sort_order")
-    @Column(name = "item_value", columnDefinition = "TEXT")
-    private List<String> recurringProblems;
+    private List<CoachingMemoryItem> recurringProblems;
 
     @ElementCollection
     @CollectionTable(name = "coaching_memory_verified", joinColumns = @JoinColumn(name = "memory_id"))
     @OrderColumn(name = "sort_order")
-    @Column(name = "item_value", columnDefinition = "TEXT")
-    private List<String> verifiedExperience;
+    private List<CoachingMemoryItem> verifiedExperience;
 
     @ElementCollection
     @CollectionTable(name = "coaching_memory_unverified", joinColumns = @JoinColumn(name = "memory_id"))
     @OrderColumn(name = "sort_order")
-    @Column(name = "item_value", columnDefinition = "TEXT")
-    private List<String> unverifiedClaims;
+    private List<CoachingMemoryItem> unverifiedClaims;
 
     @ElementCollection
     @CollectionTable(name = "coaching_memory_next_focus", joinColumns = @JoinColumn(name = "memory_id"))
     @OrderColumn(name = "sort_order")
-    @Column(name = "item_value", columnDefinition = "TEXT")
-    private List<String> recommendedNextFocus;
+    private List<CoachingMemoryItem> recommendedNextFocus;
 
     @ElementCollection
     @CollectionTable(name = "coaching_memory_avoid", joinColumns = @JoinColumn(name = "memory_id"))
     @OrderColumn(name = "sort_order")
-    @Column(name = "item_value", columnDefinition = "TEXT")
-    private List<String> avoidRepeating;
+    private List<CoachingMemoryItem> avoidRepeating;
 
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
@@ -93,26 +86,26 @@ public class CoachingMemory {
     public UUID getSourceId() { return sourceId; }
     public void setSourceId(UUID sourceId) { this.sourceId = sourceId; }
 
-    public List<String> getObservedStrengths() { return observedStrengths; }
-    public void setObservedStrengths(List<String> observedStrengths) { this.observedStrengths = observedStrengths; }
+    public List<CoachingMemoryItem> getObservedStrengths() { return observedStrengths; }
+    public void setObservedStrengths(List<CoachingMemoryItem> observedStrengths) { this.observedStrengths = observedStrengths; }
 
-    public List<String> getObservedWeaknesses() { return observedWeaknesses; }
-    public void setObservedWeaknesses(List<String> observedWeaknesses) { this.observedWeaknesses = observedWeaknesses; }
+    public List<CoachingMemoryItem> getObservedWeaknesses() { return observedWeaknesses; }
+    public void setObservedWeaknesses(List<CoachingMemoryItem> observedWeaknesses) { this.observedWeaknesses = observedWeaknesses; }
 
-    public List<String> getRecurringProblems() { return recurringProblems; }
-    public void setRecurringProblems(List<String> recurringProblems) { this.recurringProblems = recurringProblems; }
+    public List<CoachingMemoryItem> getRecurringProblems() { return recurringProblems; }
+    public void setRecurringProblems(List<CoachingMemoryItem> recurringProblems) { this.recurringProblems = recurringProblems; }
 
-    public List<String> getVerifiedExperience() { return verifiedExperience; }
-    public void setVerifiedExperience(List<String> verifiedExperience) { this.verifiedExperience = verifiedExperience; }
+    public List<CoachingMemoryItem> getVerifiedExperience() { return verifiedExperience; }
+    public void setVerifiedExperience(List<CoachingMemoryItem> verifiedExperience) { this.verifiedExperience = verifiedExperience; }
 
-    public List<String> getUnverifiedClaims() { return unverifiedClaims; }
-    public void setUnverifiedClaims(List<String> unverifiedClaims) { this.unverifiedClaims = unverifiedClaims; }
+    public List<CoachingMemoryItem> getUnverifiedClaims() { return unverifiedClaims; }
+    public void setUnverifiedClaims(List<CoachingMemoryItem> unverifiedClaims) { this.unverifiedClaims = unverifiedClaims; }
 
-    public List<String> getRecommendedNextFocus() { return recommendedNextFocus; }
-    public void setRecommendedNextFocus(List<String> recommendedNextFocus) { this.recommendedNextFocus = recommendedNextFocus; }
+    public List<CoachingMemoryItem> getRecommendedNextFocus() { return recommendedNextFocus; }
+    public void setRecommendedNextFocus(List<CoachingMemoryItem> recommendedNextFocus) { this.recommendedNextFocus = recommendedNextFocus; }
 
-    public List<String> getAvoidRepeating() { return avoidRepeating; }
-    public void setAvoidRepeating(List<String> avoidRepeating) { this.avoidRepeating = avoidRepeating; }
+    public List<CoachingMemoryItem> getAvoidRepeating() { return avoidRepeating; }
+    public void setAvoidRepeating(List<CoachingMemoryItem> avoidRepeating) { this.avoidRepeating = avoidRepeating; }
 
     public Instant getCreatedAt() { return createdAt; }
 }

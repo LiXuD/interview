@@ -369,6 +369,42 @@ class AiStructuredOutputServiceTest {
         assertTrue(ex.getMessage().contains("mockInterviewQuestion"));
     }
 
+    // --- coachingMemory ---
+
+    @Test
+    void coachingMemoryRejectsInvalidSource() {
+        PlatformAiClient client = prompt -> """
+                {
+                  "observedStrengths": [{"content": "strong", "source": "guessed", "confidence": "high"}],
+                  "observedWeaknesses": [],
+                  "recurringProblems": [],
+                  "verifiedExperience": [],
+                  "unverifiedClaims": [],
+                  "recommendedNextFocus": [],
+                  "avoidRepeating": []
+                }
+                """;
+        assertThrows(AiParseException.class, () -> serviceWith(client).generateCoachingMemory(
+                new AiPrompt("coachingMemory", "target-1", "system", "user")));
+    }
+
+    @Test
+    void coachingMemoryRejectsLegacyStringItems() {
+        PlatformAiClient client = prompt -> """
+                {
+                  "observedStrengths": ["legacy string"],
+                  "observedWeaknesses": [],
+                  "recurringProblems": [],
+                  "verifiedExperience": [],
+                  "unverifiedClaims": [],
+                  "recommendedNextFocus": [],
+                  "avoidRepeating": []
+                }
+                """;
+        assertThrows(AiParseException.class, () -> serviceWith(client).generateCoachingMemory(
+                new AiPrompt("coachingMemory", "target-1", "system", "user")));
+    }
+
     // --- cross-cutting: retry on first failure ---
 
     @Test

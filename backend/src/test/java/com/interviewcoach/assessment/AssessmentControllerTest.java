@@ -94,9 +94,13 @@ class AssessmentControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(answerReq)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.questionIndex").value(i - 1))
-                    .andExpect(jsonPath("$.score").isNumber())
-                    .andExpect(jsonPath("$.feedback").isString());
+                    .andExpect(jsonPath("$.status").value("in_progress"))
+                    .andExpect(jsonPath("$.questionIndex").value(i))
+                    .andExpect(jsonPath("$.questions.length()").value(5))
+                    .andExpect(jsonPath("$.questionScores.length()").value(i))
+                    .andExpect(jsonPath("$.questionScores[" + (i - 1) + "].questionIndex").value(i - 1))
+                    .andExpect(jsonPath("$.questionScores[" + (i - 1) + "].score").isNumber())
+                    .andExpect(jsonPath("$.questionScores[" + (i - 1) + "].feedback").isString());
         }
 
         // Finish assessment
@@ -118,7 +122,32 @@ class AssessmentControllerTest {
                 .andExpect(jsonPath("$.status").value("completed"))
                 .andExpect(jsonPath("$.currentQuestion").doesNotExist())
                 .andExpect(jsonPath("$.questions").isArray())
-                .andExpect(jsonPath("$.questions.length()").value(5));
+                .andExpect(jsonPath("$.questions.length()").value(5))
+                .andExpect(jsonPath("$.questionScores.length()").value(5));
+    }
+
+    @Test
+    void submitAnswerNormalizesQuestionScoreToCurrentQuestion() throws Exception {
+        String token = loginAndGetToken("assess_score_normalize");
+        String targetId = createTarget(token, "Score Normalize Test");
+        confirmProfile(token, targetId);
+        String sessionId = startAssessment(token, targetId);
+
+        mockMvc.perform(post("/api/assessments/" + sessionId + "/answers")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new AssessmentAnswerRequest("A1"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.questionScores[0].questionIndex").value(0))
+                .andExpect(jsonPath("$.questionScores[0].dimension").value("technicalDepth"));
+
+        mockMvc.perform(post("/api/assessments/" + sessionId + "/answers")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new AssessmentAnswerRequest("A2"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.questionScores[1].questionIndex").value(1))
+                .andExpect(jsonPath("$.questionScores[1].dimension").value("systemThinking"));
     }
 
     @Test

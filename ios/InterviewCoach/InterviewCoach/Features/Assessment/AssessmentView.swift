@@ -74,7 +74,7 @@ struct AssessmentView: View {
 
             if let question = session.currentQuestion {
                 Section("第 \(session.questionIndex + 1) 题") {
-                    Text(question)
+                    Text(question.question)
                         .font(.body)
                 }
 

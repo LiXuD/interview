@@ -13,6 +13,7 @@ import com.interviewcoach.common.api.JobBriefDto;
 import com.interviewcoach.common.api.MockInterviewReportDto;
 import com.interviewcoach.common.api.SkillMapItem;
 import com.interviewcoach.common.api.CoachingMemoryDto;
+import com.interviewcoach.common.api.CoachingMemoryItemDto;
 import com.interviewcoach.common.api.TrainingFeedbackDto;
 import com.interviewcoach.common.error.AiParseException;
 import com.interviewcoach.common.error.AiProviderCallFailedException;
@@ -31,6 +32,9 @@ public class AiStructuredOutputService {
 
     private static final Set<String> VALID_IMPORTANCE = Set.of("required", "important", "bonus");
     private static final Set<String> VALID_USER_LEVEL = Set.of("unknown", "weak", "basic", "solid", "strong");
+    private static final Set<String> VALID_MEMORY_SOURCES = Set.of(
+            "confirmed", "observed", "corrected", "inferred", "rejected");
+    private static final Set<String> VALID_MEMORY_CONFIDENCE = Set.of("high", "medium", "low");
     private static final Set<String> REAL_AI_REQUIRED_TASKS = Set.of(
             AiPrompt.TASK_ASSESSMENT_QUESTIONS,
             AiPrompt.TASK_ASSESSMENT_QUESTION_SCORE,
@@ -354,12 +358,28 @@ public class AiStructuredOutputService {
         if (dto == null) {
             throw new IllegalArgumentException("CoachingMemory is null");
         }
-        requireList(dto.observedStrengths(), "observedStrengths");
-        requireList(dto.observedWeaknesses(), "observedWeaknesses");
-        requireList(dto.recurringProblems(), "recurringProblems");
-        requireList(dto.verifiedExperience(), "verifiedExperience");
-        requireList(dto.unverifiedClaims(), "unverifiedClaims");
-        requireList(dto.recommendedNextFocus(), "recommendedNextFocus");
-        requireList(dto.avoidRepeating(), "avoidRepeating");
+        requireMemoryItems(dto.observedStrengths(), "observedStrengths");
+        requireMemoryItems(dto.observedWeaknesses(), "observedWeaknesses");
+        requireMemoryItems(dto.recurringProblems(), "recurringProblems");
+        requireMemoryItems(dto.verifiedExperience(), "verifiedExperience");
+        requireMemoryItems(dto.unverifiedClaims(), "unverifiedClaims");
+        requireMemoryItems(dto.recommendedNextFocus(), "recommendedNextFocus");
+        requireMemoryItems(dto.avoidRepeating(), "avoidRepeating");
+    }
+
+    private void requireMemoryItems(List<CoachingMemoryItemDto> items, String field) {
+        requireList(items, field);
+        for (CoachingMemoryItemDto item : items) {
+            if (item == null) {
+                throw new IllegalArgumentException(field + " contains null item");
+            }
+            requireText(item.content(), field + ".content");
+            if (!VALID_MEMORY_SOURCES.contains(item.source())) {
+                throw new IllegalArgumentException("invalid memory source: " + item.source());
+            }
+            if (!VALID_MEMORY_CONFIDENCE.contains(item.confidence())) {
+                throw new IllegalArgumentException("invalid memory confidence: " + item.confidence());
+            }
+        }
     }
 }

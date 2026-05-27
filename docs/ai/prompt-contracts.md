@@ -423,23 +423,27 @@ System Prompt 要求：
 
 ```json
 {
-  "observedStrengths": ["能讲清项目背景"],
-  "observedWeaknesses": ["容量估算缺少数字依据"],
-  "recurringProblems": ["回答偏概念，缺少业务指标"],
-  "verifiedExperience": ["用户确认做过支付回调链路优化"],
-  "unverifiedClaims": ["提到高并发优化，但未给出指标"],
-  "recommendedNextFocus": ["容量规划", "故障排查复盘表达"],
-  "avoidRepeating": ["不要继续问泛泛的 Redis 基础概念"]
+  "observedStrengths": [{"content": "能讲清项目背景", "source": "observed", "confidence": "high"}],
+  "observedWeaknesses": [{"content": "容量估算缺少数字依据", "source": "observed", "confidence": "medium"}],
+  "recurringProblems": [{"content": "回答偏概念，缺少业务指标", "source": "observed", "confidence": "high"}],
+  "verifiedExperience": [{"content": "用户确认做过支付回调链路优化", "source": "confirmed", "confidence": "high"}],
+  "unverifiedClaims": [{"content": "提到高并发优化，但未给出指标", "source": "inferred", "confidence": "low"}],
+  "recommendedNextFocus": [{"content": "容量规划", "source": "observed", "confidence": "high"}],
+  "avoidRepeating": [{"content": "不要继续问泛泛的 Redis 基础概念", "source": "observed", "confidence": "medium"}]
 }
 ```
 
 字段规则：
 
-- 所有字段均为非 null 字符串数组（允许空数组）。
+- 所有字段均为非 null 对象数组（允许空数组）。
+- 每个记忆对象必须包含 `content`、`source`、`confidence`。
+- `source` 只能为 `confirmed`、`observed`、`corrected`、`inferred`、`rejected`。
+- `confidence` 只能为 `high`、`medium`、`low`。
 
 后端校验逻辑（`AiStructuredOutputService.validateCoachingMemory`）：
 
 - 所有 7 个数组字段非 null。
+- 每个记忆对象的 `content` 非空，`source` 和 `confidence` 在允许枚举中。
 
 ## 11. Post-MVP Real AI Adaptive Coaching 计划契约
 
@@ -490,13 +494,13 @@ Task 21 的教练记忆必须由后端解析为强类型 DTO。记忆内容只�
 {
   "targetId": "uuid-string",
   "sourceType": "assessment",
-  "observedStrengths": ["能讲清项目背景"],
-  "observedWeaknesses": ["容量估算缺少数字依据"],
-  "recurringProblems": ["回答偏概念，缺少业务指标"],
-  "verifiedExperience": ["用户确认做过支付回调链路优化"],
-  "unverifiedClaims": ["提到高并发优化，但未给出指标"],
-  "recommendedNextFocus": ["容量规划", "故障排查复盘表达"],
-  "avoidRepeating": ["不要继续问泛泛的 Redis 基础概念"]
+  "observedStrengths": [{"content": "能讲清项目背景", "source": "observed", "confidence": "high"}],
+  "observedWeaknesses": [{"content": "容量估算缺少数字依据", "source": "observed", "confidence": "medium"}],
+  "recurringProblems": [{"content": "回答偏概念，缺少业务指标", "source": "observed", "confidence": "high"}],
+  "verifiedExperience": [{"content": "用户确认做过支付回调链路优化", "source": "confirmed", "confidence": "high"}],
+  "unverifiedClaims": [{"content": "提到高并发优化，但未给出指标", "source": "inferred", "confidence": "low"}],
+  "recommendedNextFocus": [{"content": "容量规划", "source": "observed", "confidence": "high"}],
+  "avoidRepeating": [{"content": "不要继续问泛泛的 Redis 基础概念", "source": "observed", "confidence": "medium"}]
 }
 ```
 

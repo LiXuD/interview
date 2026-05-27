@@ -2,7 +2,6 @@ package com.interviewcoach.assessment.controller;
 
 import com.interviewcoach.assessment.service.AssessmentService;
 import com.interviewcoach.common.api.AssessmentAnswerRequest;
-import com.interviewcoach.common.api.AssessmentQuestionScoreDto;
 import com.interviewcoach.common.api.AssessmentResultDto;
 import com.interviewcoach.common.api.AssessmentSessionDto;
 import com.interviewcoach.common.api.AssessmentStartRequest;
@@ -29,8 +28,8 @@ public class AssessmentController {
     }
 
     @PostMapping("/{id}/answers")
-    public AssessmentQuestionScoreDto submitAnswer(@PathVariable UUID id,
-                                                   @RequestBody AssessmentAnswerRequest request) {
+    public AssessmentSessionDto submitAnswer(@PathVariable UUID id,
+                                             @RequestBody AssessmentAnswerRequest request) {
         return assessmentService.submitAnswer(id, SecurityUtils.currentUser().getId(), request.answer());
     }
 

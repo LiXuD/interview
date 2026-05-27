@@ -93,7 +93,7 @@ public class AssessmentService {
     }
 
     @Transactional
-    public AssessmentQuestionScoreDto submitAnswer(UUID sessionId, UUID userId, String answer) {
+    public AssessmentSessionDto submitAnswer(UUID sessionId, UUID userId, String answer) {
         AssessmentSession session = findSession(sessionId, userId);
 
         if (!STATUS_IN_PROGRESS.equals(session.getStatus())) {
@@ -110,8 +110,16 @@ public class AssessmentService {
         session.setQuestionIndex(currentIndex + 1);
 
         // Per-question AI scoring
-        AssessmentQuestionScoreDto score = aiService.generateQuestionScore(
+        AssessmentQuestionScoreDto aiScore = aiService.generateQuestionScore(
                 buildQuestionScorePrompt(session, question, answer, currentIndex));
+        AssessmentQuestionScoreDto score = new AssessmentQuestionScoreDto(
+                currentIndex,
+                aiScore.score(),
+                question.dimension(),
+                aiScore.feedback(),
+                CollectionUtils.copyList(aiScore.problems()),
+                aiScore.improvedExample()
+        );
 
         // Store scores
         List<AssessmentQuestionScoreDto> scores = session.getQuestionScores();
@@ -123,7 +131,7 @@ public class AssessmentService {
 
         sessionRepository.save(session);
 
-        return score;
+        return toSessionDto(session);
     }
 
     @Transactional

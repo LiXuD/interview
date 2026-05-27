@@ -110,6 +110,9 @@ class AiAcceptanceTest {
                 .andExpect(jsonPath("$[0].sourceType").value("assessment"))
                 .andExpect(jsonPath("$[0].targetId").value(targetId))
                 .andExpect(jsonPath("$[0].observedStrengths").isArray())
+                .andExpect(jsonPath("$[0].observedStrengths[0].content").isString())
+                .andExpect(jsonPath("$[0].observedStrengths[0].source").value("observed"))
+                .andExpect(jsonPath("$[0].observedStrengths[0].confidence").value("high"))
                 .andExpect(jsonPath("$[0].observedWeaknesses").isArray())
                 .andExpect(jsonPath("$[0].recommendedNextFocus").isArray());
 
@@ -593,13 +596,30 @@ class AiAcceptanceTest {
     private String mockCoachingMemoryResponse() {
         return """
                 {
-                  "observedStrengths": ["基础扎实", "项目经验相关"],
-                  "observedWeaknesses": ["系统设计经验有限", "高级特性掌握不足"],
-                  "recurringProblems": ["回答偏概念，缺少量化数据"],
-                  "verifiedExperience": ["有实际项目经验"],
-                  "unverifiedClaims": ["提到高并发优化，但未给出具体指标"],
-                  "recommendedNextFocus": ["系统设计", "高级特性"],
-                  "avoidRepeating": ["不要继续问泛泛的基础概念"]
+                  "observedStrengths": [
+                    {"content": "基础扎实", "source": "observed", "confidence": "high"},
+                    {"content": "项目经验相关", "source": "observed", "confidence": "medium"}
+                  ],
+                  "observedWeaknesses": [
+                    {"content": "系统设计经验有限", "source": "observed", "confidence": "medium"},
+                    {"content": "高级特性掌握不足", "source": "observed", "confidence": "medium"}
+                  ],
+                  "recurringProblems": [
+                    {"content": "回答偏概念，缺少量化数据", "source": "observed", "confidence": "high"}
+                  ],
+                  "verifiedExperience": [
+                    {"content": "有实际项目经验", "source": "confirmed", "confidence": "medium"}
+                  ],
+                  "unverifiedClaims": [
+                    {"content": "提到高并发优化，但未给出具体指标", "source": "inferred", "confidence": "low"}
+                  ],
+                  "recommendedNextFocus": [
+                    {"content": "系统设计", "source": "observed", "confidence": "high"},
+                    {"content": "高级特性", "source": "observed", "confidence": "medium"}
+                  ],
+                  "avoidRepeating": [
+                    {"content": "不要继续问泛泛的基础概念", "source": "observed", "confidence": "medium"}
+                  ]
                 }
                 """;
     }

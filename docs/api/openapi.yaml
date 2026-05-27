@@ -1227,6 +1227,7 @@ components:
         - questionIndex
         - totalQuestions
         - questions
+        - questionScores
       properties:
         id:
           type: string
@@ -1247,6 +1248,39 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AssessmentQuestionDto"
+        questionScores:
+          type: array
+          items:
+            $ref: "#/components/schemas/AssessmentQuestionScoreDto"
+
+    AssessmentQuestionScoreDto:
+      type: object
+      required:
+        - questionIndex
+        - score
+        - dimension
+        - feedback
+        - problems
+        - improvedExample
+      properties:
+        questionIndex:
+          type: integer
+          minimum: 0
+          maximum: 4
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        dimension:
+          type: string
+        feedback:
+          type: string
+        problems:
+          type: array
+          items:
+            type: string
+        improvedExample:
+          type: string
 
     AssessmentAnswerRequest:
       type: object
@@ -1663,31 +1697,47 @@ components:
         observedStrengths:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/CoachingMemoryItemDto"
         observedWeaknesses:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/CoachingMemoryItemDto"
         recurringProblems:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/CoachingMemoryItemDto"
         verifiedExperience:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/CoachingMemoryItemDto"
         unverifiedClaims:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/CoachingMemoryItemDto"
         recommendedNextFocus:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/CoachingMemoryItemDto"
         avoidRepeating:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/CoachingMemoryItemDto"
         createdAt:
           type: string
           format: date-time
+
+    CoachingMemoryItemDto:
+      type: object
+      required:
+        - content
+        - source
+        - confidence
+      properties:
+        content:
+          type: string
+        source:
+          type: string
+          enum: [confirmed, observed, corrected, inferred, rejected]
+        confidence:
+          type: string
+          enum: [high, medium, low]

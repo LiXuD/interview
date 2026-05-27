@@ -8,6 +8,7 @@ import com.interviewcoach.common.api.AssessmentQuestionScoreDto;
 import com.interviewcoach.common.api.AssessmentResultDto;
 import com.interviewcoach.common.api.CandidateProfileDraftDto;
 import com.interviewcoach.common.api.CoachingMemoryDto;
+import com.interviewcoach.common.api.CoachingMemoryItemDto;
 import com.interviewcoach.common.api.DimensionScore;
 import com.interviewcoach.common.api.JobBriefDto;
 import com.interviewcoach.common.api.MockInterviewReportDto;
@@ -201,14 +202,24 @@ public class LocalPlatformAiClient implements PlatformAiClient {
                 prompt.targetId(),
                 "assessment",
                 null,
-                List.of("Java 基础扎实，能结合项目说明使用场景", "问题排查思路清晰"),
-                List.of("系统设计能力需要加强，容量规划方面经验不足", "数据库深度优化经验不足"),
-                List.of("回答偏概念，缺少量化数据"),
-                List.of("有实际项目经验"),
-                List.of("提到高并发优化，但未给出具体指标"),
-                List.of("容量规划", "数据库索引优化"),
-                List.of("不要继续问泛泛的 Redis 基础概念"),
+                List.of(
+                        memoryItem("Java 基础扎实，能结合项目说明使用场景", "observed", "high"),
+                        memoryItem("问题排查思路清晰", "observed", "high")),
+                List.of(
+                        memoryItem("系统设计能力需要加强，容量规划方面经验不足", "observed", "medium"),
+                        memoryItem("数据库深度优化经验不足", "observed", "medium")),
+                List.of(memoryItem("回答偏概念，缺少量化数据", "observed", "high")),
+                List.of(memoryItem("有实际项目经验", "confirmed", "medium")),
+                List.of(memoryItem("提到高并发优化，但未给出具体指标", "inferred", "low")),
+                List.of(
+                        memoryItem("容量规划", "observed", "high"),
+                        memoryItem("数据库索引优化", "observed", "medium")),
+                List.of(memoryItem("不要继续问泛泛的 Redis 基础概念", "observed", "medium")),
                 null
         );
+    }
+
+    private CoachingMemoryItemDto memoryItem(String content, String source, String confidence) {
+        return new CoachingMemoryItemDto(content, source, confidence);
     }
 }
