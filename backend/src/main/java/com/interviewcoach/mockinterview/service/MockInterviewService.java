@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewcoach.ai.service.AiPrompt;
 import com.interviewcoach.ai.service.AiStructuredOutputService;
+import com.interviewcoach.common.util.CollectionUtils;
 import com.interviewcoach.common.api.MockInterviewReportDto;
 import com.interviewcoach.common.api.MockInterviewSessionDto;
 import com.interviewcoach.common.error.MockInterviewNotFoundException;
@@ -187,7 +188,7 @@ public class MockInterviewService {
                 profile.getSkills(),
                 profile.getProjects()
         );
-        return new AiPrompt("mockInterviewQuestion", target.getId().toString(), systemPrompt, userPrompt);
+        return new AiPrompt(AiPrompt.TASK_MOCK_INTERVIEW_QUESTION, target.getId().toString(), systemPrompt, userPrompt);
     }
 
     private AiPrompt buildAnswerPrompt(InterviewTarget target, List<MockInterviewMessage> contextMessages) {
@@ -208,7 +209,7 @@ public class MockInterviewService {
                 对话记录：
                 %s
                 """.formatted(target.getTitle(), formatConversation(contextMessages));
-        return new AiPrompt("mockInterviewQuestion", target.getId().toString(), systemPrompt, userPrompt);
+        return new AiPrompt(AiPrompt.TASK_MOCK_INTERVIEW_QUESTION, target.getId().toString(), systemPrompt, userPrompt);
     }
 
     private AiPrompt buildFinishPrompt(InterviewTarget target, MockInterview interview) {
@@ -252,7 +253,7 @@ public class MockInterviewService {
                 面试对话：
                 %s
                 """.formatted(interview.getId().toString(), target.getTitle(), formatConversation(reportMessages));
-        return new AiPrompt("mockInterviewReport", interview.getId().toString(), systemPrompt, userPrompt);
+        return new AiPrompt(AiPrompt.TASK_MOCK_INTERVIEW_REPORT, interview.getId().toString(), systemPrompt, userPrompt);
     }
 
     private void createReport(MockInterview interview, MockInterviewReportDto reportDto) {

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewcoach.ai.service.AiPrompt;
 import com.interviewcoach.ai.service.AiStructuredOutputService;
+import com.interviewcoach.common.util.CollectionUtils;
 import com.interviewcoach.assessment.entity.AssessmentDimension;
 import com.interviewcoach.assessment.entity.AssessmentResult;
 import com.interviewcoach.assessment.entity.AssessmentSession;
@@ -31,6 +32,9 @@ import java.util.UUID;
 
 @Service
 public class AssessmentService {
+
+    private static final String STATUS_IN_PROGRESS = "in_progress";
+    private static final String STATUS_COMPLETED = "completed";
 
     private final AssessmentSessionRepository sessionRepository;
     private final AssessmentResultRepository resultRepository;
@@ -71,7 +75,7 @@ public class AssessmentService {
         session.setTarget(target);
         session.setQuestions(questions);
         session.setAnswers(new ArrayList<>());
-        session.setStatus("in_progress");
+        session.setStatus(STATUS_IN_PROGRESS);
         session.setQuestionIndex(0);
         session.setTotalQuestions(questions.size());
         session = sessionRepository.save(session);
@@ -83,7 +87,7 @@ public class AssessmentService {
     public AssessmentSessionDto submitAnswer(UUID sessionId, UUID userId, String answer) {
         AssessmentSession session = findSession(sessionId, userId);
 
-        if (!"in_progress".equals(session.getStatus())) {
+        if (!STATUS_IN_PROGRESS.equals(session.getStatus())) {
             throw new IllegalArgumentException("Assessment is not in progress");
         }
         if (session.getAnswers().size() >= session.getTotalQuestions()) {
@@ -101,7 +105,7 @@ public class AssessmentService {
     public AssessmentResultDto finishAssessment(UUID sessionId, UUID userId) {
         AssessmentSession session = findSession(sessionId, userId);
 
-        if (!"in_progress".equals(session.getStatus())) {
+        if (!STATUS_IN_PROGRESS.equals(session.getStatus())) {
             throw new IllegalArgumentException("Assessment is not in progress");
         }
         if (session.getAnswers().size() < session.getTotalQuestions()) {
@@ -122,7 +126,7 @@ public class AssessmentService {
         result.setNextActions(aiResult.nextActions());
         result = resultRepository.save(result);
 
-        session.setStatus("completed");
+        session.setStatus(STATUS_COMPLETED);
         sessionRepository.save(session);
 
         AssessmentResultDto resultDto = toResultDto(result);
@@ -171,7 +175,7 @@ public class AssessmentService {
                 profile.getSkills(),
                 profile.getProjects()
         );
-        return new AiPrompt("assessmentQuestions", target.getId().toString(), systemPrompt, userPrompt);
+        return new AiPrompt(AiPrompt.TASK_ASSESSMENT_QUESTIONS, target.getId().toString(), systemPrompt, userPrompt);
     }
 
     private AiPrompt buildResultPrompt(AssessmentSession session) {
@@ -208,7 +212,7 @@ public class AssessmentService {
                 题目与回答：
                 %s
                 """.formatted(session.getId().toString(), qaBuilder);
-        return new AiPrompt("assessmentResult", session.getId().toString(), systemPrompt, userPrompt);
+        return new AiPrompt(AiPrompt.TASK_ASSESSMENT_RESULT, session.getId().toString(), systemPrompt, userPrompt);
     }
 
     private void createReport(AssessmentSession session, AssessmentResultDto resultDto) {
@@ -226,7 +230,7 @@ public class AssessmentService {
 
     private AssessmentSessionDto toSessionDto(AssessmentSession session) {
         String currentQuestion = null;
-        if ("in_progress".equals(session.getStatus())
+        if (STATUS_IN_PROGRESS.equals(session.getStatus())
                 && session.getQuestionIndex() < session.getQuestions().size()) {
             currentQuestion = session.getQuestions().get(session.getQuestionIndex());
         }
@@ -247,13 +251,10 @@ public class AssessmentService {
                 result.getDimensions().stream()
                         .map(d -> new DimensionScore(d.getName(), d.getScore(), d.getReason()))
                         .toList(),
-                copy(result.getStrengths()),
-                copy(result.getWeaknesses()),
-                copy(result.getNextActions())
+                CollectionUtils.copyList(result.getStrengths()),
+                CollectionUtils.copyList(result.getWeaknesses()),
+                CollectionUtils.copyList(result.getNextActions())
         );
     }
 
-    private List<String> copy(List<String> values) {
-        return values == null ? List.of() : List.copyOf(values);
-    }
 }

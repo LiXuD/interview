@@ -2,6 +2,7 @@ package com.interviewcoach.jobbrief.service;
 
 import com.interviewcoach.ai.service.AiPrompt;
 import com.interviewcoach.ai.service.AiStructuredOutputService;
+import com.interviewcoach.common.util.CollectionUtils;
 import com.interviewcoach.common.api.JobBriefDto;
 import com.interviewcoach.common.api.JobBriefGenerateRequest;
 import com.interviewcoach.common.api.SkillMapItem;
@@ -114,7 +115,7 @@ public class JobBriefService {
                 profile.getProjects(),
                 profile.getExperience()
         );
-        return new AiPrompt("jobBrief", target.getId().toString(), systemPrompt, userPrompt);
+        return new AiPrompt(AiPrompt.TASK_JOB_BRIEF, target.getId().toString(), systemPrompt, userPrompt);
     }
 
     private void applyDto(JobBrief brief, JobBriefDto dto, UUID targetId, UUID userId) {
@@ -140,17 +141,14 @@ public class JobBriefService {
                 brief.getSkillMap().stream()
                         .map(item -> new SkillMapItem(item.getName(), item.getImportance(), item.getUserLevel(), item.getGap()))
                         .toList(),
-                copy(brief.getMustHaveSkills()),
-                copy(brief.getNiceToHaveSkills()),
-                copy(brief.getBusinessContext()),
-                copy(brief.getInterviewTopics()),
-                copy(brief.getCandidateMatch()),
-                copy(brief.getRiskAreas()),
+                CollectionUtils.copyList(brief.getMustHaveSkills()),
+                CollectionUtils.copyList(brief.getNiceToHaveSkills()),
+                CollectionUtils.copyList(brief.getBusinessContext()),
+                CollectionUtils.copyList(brief.getInterviewTopics()),
+                CollectionUtils.copyList(brief.getCandidateMatch()),
+                CollectionUtils.copyList(brief.getRiskAreas()),
                 brief.getConfidence()
         );
     }
 
-    private List<String> copy(List<String> values) {
-        return values == null ? List.of() : List.copyOf(values);
-    }
 }

@@ -23,14 +23,14 @@ public class LocalPlatformAiClient implements PlatformAiClient {
     public String generateJson(AiPrompt prompt) {
         try {
             return switch (prompt.task()) {
-                case "jobBrief" -> objectMapper.writeValueAsString(buildJobBrief(prompt));
-                case "assessmentQuestions" -> objectMapper.writeValueAsString(buildAssessmentQuestions(prompt));
-                case "assessmentResult" -> objectMapper.writeValueAsString(buildAssessmentResult(prompt));
-                case "trainingPlan" -> objectMapper.writeValueAsString(buildTrainingPlan(prompt));
-                case "trainingFeedback" -> objectMapper.writeValueAsString(buildTrainingFeedback(prompt));
-                case "mockInterviewQuestion" -> objectMapper.writeValueAsString(buildMockInterviewQuestion(prompt));
-                case "mockInterviewReport" -> objectMapper.writeValueAsString(buildMockInterviewReport(prompt));
-                case "candidateProfileDraft" -> objectMapper.writeValueAsString(buildCandidateProfileDraft(prompt));
+                case AiPrompt.TASK_JOB_BRIEF -> objectMapper.writeValueAsString(buildJobBrief(prompt));
+                case AiPrompt.TASK_ASSESSMENT_QUESTIONS -> objectMapper.writeValueAsString(buildAssessmentQuestions(prompt));
+                case AiPrompt.TASK_ASSESSMENT_RESULT -> objectMapper.writeValueAsString(buildAssessmentResult(prompt));
+                case AiPrompt.TASK_TRAINING_PLAN -> objectMapper.writeValueAsString(buildTrainingPlan(prompt));
+                case AiPrompt.TASK_TRAINING_FEEDBACK -> objectMapper.writeValueAsString(buildTrainingFeedback(prompt));
+                case AiPrompt.TASK_MOCK_INTERVIEW_QUESTION -> objectMapper.writeValueAsString(buildMockInterviewQuestion(prompt));
+                case AiPrompt.TASK_MOCK_INTERVIEW_REPORT -> objectMapper.writeValueAsString(buildMockInterviewReport(prompt));
+                case AiPrompt.TASK_CANDIDATE_PROFILE_DRAFT -> objectMapper.writeValueAsString(buildCandidateProfileDraft(prompt));
                 default -> throw new IllegalStateException("Unknown task: " + prompt.task());
             };
         } catch (JsonProcessingException ex) {

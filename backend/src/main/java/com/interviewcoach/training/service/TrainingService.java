@@ -2,6 +2,7 @@ package com.interviewcoach.training.service;
 
 import com.interviewcoach.ai.service.AiPrompt;
 import com.interviewcoach.ai.service.AiStructuredOutputService;
+import com.interviewcoach.common.util.CollectionUtils;
 import com.interviewcoach.assessment.entity.AssessmentResult;
 import com.interviewcoach.assessment.repository.AssessmentResultRepository;
 import com.interviewcoach.common.api.TrainingFeedbackDto;
@@ -164,7 +165,7 @@ public class TrainingService {
         userPrompt.append("测评短板：\n%s\n\n建议行动：\n%s\n".formatted(
                 String.join("\n", result.getWeaknesses()),
                 String.join("\n", result.getNextActions())));
-        return new AiPrompt("trainingPlan", target.getId().toString(), systemPrompt, userPrompt.toString());
+        return new AiPrompt(AiPrompt.TASK_TRAINING_PLAN, target.getId().toString(), systemPrompt, userPrompt.toString());
     }
 
     private AiPrompt buildFeedbackPrompt(InterviewTarget target, TrainingTask task, String answer) {
@@ -207,7 +208,7 @@ public class TrainingService {
                 task.getDescription(),
                 answer
         );
-        return new AiPrompt("trainingFeedback", task.getId().toString(), systemPrompt, userPrompt);
+        return new AiPrompt(AiPrompt.TASK_TRAINING_FEEDBACK, task.getId().toString(), systemPrompt, userPrompt);
     }
 
     private TrainingPlanDto toPlanDto(TrainingPlan plan) {
@@ -239,14 +240,11 @@ public class TrainingService {
                 feedback.getTask().getId().toString(),
                 feedback.getScore(),
                 feedback.getFeedback(),
-                copy(feedback.getProblems()),
+                CollectionUtils.copyList(feedback.getProblems()),
                 feedback.getRewrittenAnswer(),
                 feedback.getFollowUpQuestion(),
-                copy(feedback.getRecommendedReviewPoints())
+                CollectionUtils.copyList(feedback.getRecommendedReviewPoints())
         );
     }
 
-    private List<String> copy(List<String> values) {
-        return values == null ? List.of() : List.copyOf(values);
-    }
 }

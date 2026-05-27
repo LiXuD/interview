@@ -42,7 +42,7 @@ public class CandidateProfileService {
 
         String userPrompt = buildDraftSummaryPrompt(resumeText, projectRawText);
         AiPrompt prompt = new AiPrompt(
-                "candidateProfileDraft",
+                AiPrompt.TASK_CANDIDATE_PROFILE_DRAFT,
                 null,
                 "你是简历摘要助手。根据候选人提供的简历或项目经历原文，生成结构化摘要。"
                 + "只返回 JSON，不返回 Markdown 或解释文字。"

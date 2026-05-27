@@ -28,12 +28,12 @@ public class AiStructuredOutputService {
     private static final Set<String> VALID_IMPORTANCE = Set.of("required", "important", "bonus");
     private static final Set<String> VALID_USER_LEVEL = Set.of("unknown", "weak", "basic", "solid", "strong");
     private static final Set<String> REAL_AI_REQUIRED_TASKS = Set.of(
-            "assessmentQuestions",
-            "assessmentResult",
-            "trainingPlan",
-            "trainingFeedback",
-            "mockInterviewQuestion",
-            "mockInterviewReport"
+            AiPrompt.TASK_ASSESSMENT_QUESTIONS,
+            AiPrompt.TASK_ASSESSMENT_RESULT,
+            AiPrompt.TASK_TRAINING_PLAN,
+            AiPrompt.TASK_TRAINING_FEEDBACK,
+            AiPrompt.TASK_MOCK_INTERVIEW_QUESTION,
+            AiPrompt.TASK_MOCK_INTERVIEW_REPORT
     );
 
     private final PlatformAiClient platformAiClient;
