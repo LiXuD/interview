@@ -1,6 +1,6 @@
 # Interview Coach Code Wiki
 
-生成日期：2026-05-25
+生成日期：2026-05-28
 
 本文档是项目代码级导航，用于帮助后续开发、Code Review 和问题定位。它描述当前仓库中的实际代码结构，不替代以下主约束与契约文档：
 
@@ -107,6 +107,7 @@ backend/src/main/java/com/interviewcoach/
 ├── assessment/     # 5 题测评
 ├── training/       # 1 天训练计划与训练反馈
 ├── mockinterview/  # 文字模拟面试
+├── coachingmemory/ # 教练记忆、用户纠错
 └── report/         # 统一报告
 ```
 
@@ -131,10 +132,11 @@ backend/src/main/java/com/interviewcoach/
 - Target：`InterviewTargetCreateRequest`、`InterviewTargetUpdateRequest`、`InterviewTargetDto`
 - Profile：`CandidateProfileDraftRequest`、`CandidateProfileDraftDto`、`CandidateProfileConfirmRequest`、`CandidateProfileDto`
 - JobBrief：`JobBriefGenerateRequest`、`JobBriefDto`、`SkillMapItem`
-- Assessment：`AssessmentStartRequest`、`AssessmentAnswerRequest`、`AssessmentSessionDto`、`AssessmentResultDto`、`DimensionScore`
-- Training：`TrainingPlanGenerateRequest`、`TrainingPlanDto`、`TrainingTaskDto`、`TrainingTaskAnswerRequest`、`TrainingFeedbackDto`
+- Assessment：`AssessmentStartRequest`、`AssessmentAnswerRequest`、`AssessmentSessionDto`、`AssessmentQuestionScoreDto`、`AnswerStructureDto`、`AssessmentResultDto`、`DimensionScore`
+- Training：`TrainingPlanGenerateRequest`、`TrainingPlanDto`、`TrainingTaskDto`、`TrainingTaskAnswerRequest`、`TrainingFeedbackDto`、`AdaptiveTrainingSessionDto`、`AdaptiveTrainingRoundDto`、`AdaptiveTrainingTurnDto`、`AdaptiveTrainingAnswerRequest`
 - MockInterview：`MockInterviewStartRequest`、`MockInterviewAnswerRequest`、`MockInterviewSessionDto`、`MockInterviewReportDto`
 - Report：`ReportDto`
+- CoachingMemory：`CoachingMemoryDto`、`CoachingMemoryItemDto`
 - AI Provider：`AiProviderCreateRequest`、`AiProviderDto`、`AiProviderTestRequest`、`AiProviderTestResponse`
 
 ### 4.2 common/security
@@ -268,18 +270,20 @@ iOS 不解析 AI 原始字符串，后端也不把 AI 原始字符串作为业�
 
 ### 4.8 assessment
 
-测评模块负责 5 题测评和 assessment report。
+测评模块负责 5 题测评、逐题诊断和 assessment report。
 
 主要文件：
 
-- `AssessmentSession`：保存问题列表、回答列表、状态、当前题号。
+- `AssessmentSession`：保存问题列表、回答列表、逐题评分、状态、当前题号。
 - `AssessmentResult`：保存总分、维度分、优势、短板、下一步。
+- `AssessmentQuestionScoreDto`：逐题评分，含 feedback/problems/improvedExample/answerStructure/followUpRisks/contentHighlights/contentGaps。
+- `AnswerStructureDto`：STAR+ 回答结构诊断（background/task/action/result/tradeoff/review），每字段格式为 "状态: 简短评语"。
 - `AssessmentController`：
   - `POST /api/assessments/start`
   - `POST /api/assessments/{id}/answers`
   - `POST /api/assessments/{id}/finish`
   - `GET /api/assessments/{id}`
-- `AssessmentService`：生成 5 题、收集答案、完成评分、创建 `Report(type=assessment)`。
+- `AssessmentService`：生成 5 题、逐题评分含结构诊断、完成评分（含 questionScores 聚合）、创建 `Report(type=assessment)`。
 
 状态流：
 
@@ -290,32 +294,40 @@ startAssessment
 
 submitAnswer x5
   -> answers.add(answer)
+  -> AI 逐题评分 + answerStructure + followUpRisks + contentHighlights/Gaps
+  -> questionScores.add(score)
   -> questionIndex += 1
 
 finishAssessment
   -> require answers.size == totalQuestions
-  -> generateAssessmentResult
+  -> generateAssessmentResult（聚合 questionScores）
   -> AssessmentResult
   -> AssessmentSession(status=completed)
   -> Report(type=assessment, content=json)
+  -> CoachingMemory（含逐题诊断数据）
 ```
 
 ### 4.9 training
 
-训练模块基于测评短板生成 1 天训练任务，并为单个任务生成反馈。
+训练模块基于测评短板生成 1 天训练任务、为单个任务生成反馈，并支持围绕短板的自适应多轮训练。
 
 主要文件：
 
 - `TrainingPlan`：训练计划实体。
 - `TrainingTask`：训练任务实体。
 - `TrainingFeedback`：训练反馈实体。
+- `TrainingSession`：自适应训练会话实体，含 roundIndex、minRounds、maxRounds、lastAction、summary。
+- `TrainingSessionRound`：自适应训练轮次实体，含 question、answer、action、score、feedback、problems。
 - `TrainingPlanController`：
   - `POST /api/training-plans/generate`
   - `GET /api/training-plans/{targetId}`
 - `TrainingTaskController`：
-  - `POST /api/training-tasks/{id}/answer`
+  - `POST /api/training-tasks/{id}/answer`（单次反馈）
+  - `POST /api/training-tasks/{id}/adaptive-sessions/start`（开始自适应训练）
   - `PATCH /api/training-tasks/{id}/complete`
-- `TrainingService`：生成任务、答题反馈、标记完成。
+- `TrainingSessionController`：
+  - `POST /api/training-sessions/{id}/answers`（提交自适应训练回答）
+- `TrainingService`：生成任务、单次答题反馈、自适应训练会话管理、标记完成。
 
 生命周期：
 
@@ -325,10 +337,20 @@ generateTrainingPlan
   -> 生成 2-4 个训练任务
   -> TrainingPlan + TrainingTask[]
 
-answerTrainingTask
+answerTrainingTask（单次模式）
   -> generateTrainingFeedback
   -> TrainingFeedback
   -> 不创建 Report
+
+startAdaptiveSession（自适应模式）
+  -> 基于 TrainingTask 的短板
+  -> TrainingSession(status=in_progress, roundIndex=0)
+
+submitAdaptiveAnswer x2-4
+  -> AI 根据上一轮回答返回 action（continue/pass/switch/stop）
+  -> TrainingSessionRound 记录本轮问答
+  -> roundIndex += 1
+  -> action=stop 或达到 maxRounds 时结束
 
 completeTrainingTask
   -> TrainingTask(status=completed)
@@ -347,7 +369,7 @@ completeTrainingTask
   - `POST /api/mock-interviews/{id}/answer`
   - `POST /api/mock-interviews/{id}/finish`
   - `GET /api/mock-interviews/{id}`
-- `MockInterviewService`：生成首问、追问、结束报告。
+- `MockInterviewService`：生成首问、追问（注入教练记忆摘要）、结束报告。
 
 Prompt 上下文限制：
 
@@ -377,7 +399,26 @@ finishInterview
   -> Report(type=mockInterview, content=json)
 ```
 
-### 4.11 report
+### 4.11 coachingmemory
+
+教练记忆模块沉淀用户在测评、训练、模拟面试中的结构化能力画像。
+
+主要文件：
+
+- `CoachingMemory`：记忆实体，含 targetId、userId、sourceType、各分类记忆项。
+- `CoachingMemoryItemDto`：单条记忆，含 content、source（confirmed/observed/corrected/inferred/rejected）、confidence（high/medium/low）。
+- `CoachingMemoryController`：
+  - `GET /api/coaching-memories?targetId=...`
+  - `PATCH /api/coaching-memories/{id}/corrections`
+- `CoachingMemoryService`：从 assessment/mockinterview 结果生成记忆、应用用户纠错。
+
+记忆来源约束：
+
+- `confirmed` / `observed` / `corrected`：可作为后续 Prompt 事实。
+- `inferred`：只能用于追问验证。
+- `rejected`：禁止再次作为事实使用。
+
+### 4.12 report
 
 统一报告模块承载测评报告和模拟面试报告。
 
@@ -398,7 +439,7 @@ finishInterview
 
 ## 5. API 地图
 
-当前 OpenAPI 包含 29 个路径：
+当前 OpenAPI 包含 30+ 个路径：
 
 | 模块 | 路径 |
 | --- | --- |
@@ -425,6 +466,8 @@ finishInterview
 | Training | `POST /api/training-plans/generate` |
 | Training | `GET /api/training-plans/{targetId}` |
 | Training | `POST /api/training-tasks/{id}/answer` |
+| Training | `POST /api/training-tasks/{id}/adaptive-sessions/start` |
+| Training | `POST /api/training-sessions/{id}/answers` |
 | Training | `PATCH /api/training-tasks/{id}/complete` |
 | MockInterview | `POST /api/mock-interviews/start` |
 | MockInterview | `POST /api/mock-interviews/{id}/answer` |
@@ -432,9 +475,13 @@ finishInterview
 | MockInterview | `GET /api/mock-interviews/{id}` |
 | Report | `GET /api/reports?targetId=...` |
 | Report | `GET /api/reports/{id}` |
+| CoachingMemory | `GET /api/coaching-memories?targetId=...` |
+| CoachingMemory | `PATCH /api/coaching-memories/{id}/corrections` |
 | AI Provider | `POST /api/ai-providers` |
 | AI Provider | `GET /api/ai-providers` |
+| AI Provider | `GET /api/ai-providers/status` |
 | AI Provider | `POST /api/ai-providers/test` |
+| AI Provider | `POST /api/ai-providers/models` |
 | AI Provider | `PATCH /api/ai-providers/{id}/default` |
 | AI Provider | `DELETE /api/ai-providers/{id}` |
 
@@ -531,6 +578,7 @@ SwiftData 本地模型：
 
 - `TargetLocal`
 - `CandidateProfileLocal`
+- `CoachingMemoryArchiveLocal`：本机教练记忆归档，删除账号时默认保留
 
 用途：
 
@@ -638,7 +686,9 @@ SwiftData 本地模型：
 
 - 生成 1 天训练计划。
 - 展示训练任务列表。
-- 单个任务答题。
+- 单个任务答题（一次性反馈）。
+- 自适应训练：点击"开始 2-4 轮自适应训练"进入多轮训练模式，AI 根据回答决定 continue/pass/switch/stop。
+- 自适应训练展示每轮问题、回答、评分、反馈和改进建议。
 - 展示训练反馈、优化答案、追问、建议复习点。
 - 标记任务完成。
 
@@ -739,7 +789,9 @@ AssessmentView
 TrainingPlanView
   -> POST /api/training-plans/generate
   -> TrainingTaskView
-  -> POST /api/training-tasks/{id}/answer
+  -> 单次模式：POST /api/training-tasks/{id}/answer
+  -> 自适应模式：POST /api/training-tasks/{id}/adaptive-sessions/start
+     -> POST /api/training-sessions/{id}/answers x2-4
   -> PATCH /api/training-tasks/{id}/complete
 
 MockInterviewView
@@ -765,6 +817,7 @@ SettingsView
   -> delete mock interviews
   -> delete training plans
   -> delete AI providers
+  -> delete coaching memories
   -> delete job briefs
   -> delete candidate profiles
   -> delete targets
@@ -772,6 +825,7 @@ SettingsView
   -> iOS logout()
   -> Keychain token deleted
   -> SwiftData local target/profile deleted
+  -> CoachingMemoryArchiveLocal 默认保留（用户可选删除）
   -> LoginView
 ```
 
@@ -788,10 +842,13 @@ User
   │     │     └── AssessmentResult
   │     ├── TrainingPlan
   │     │     └── TrainingTask
-  │     │           └── TrainingFeedback
+  │     │           ├── TrainingFeedback
+  │     │           └── TrainingSession
+  │     │                 └── TrainingSessionRound
   │     ├── MockInterview
   │     │     └── MockInterviewMessage
-  │     └── Report
+  │     ├── Report
+  │     └── CoachingMemory
   └── AiProvider
 ```
 
@@ -800,6 +857,7 @@ User
 - `AssessmentSession.finish` 创建 `Report(type=assessment)`。
 - `MockInterview.finish` 创建 `Report(type=mockInterview)`。
 - `TrainingTask.answer` 只创建或返回 `TrainingFeedback`，不创建 `Report`。
+- `TrainingTask.startAdaptiveSession` 创建 `TrainingSession`，自适应训练结束时也不创建 Report。
 - 简历原文不建实体，不入库。
 - API Key 只保存加密值，不返回给 iOS。
 
@@ -870,6 +928,7 @@ backend/src/test/java/com/interviewcoach/
 - Assessment：start/answer/finish、报告创建。
 - Training：计划生成、任务答题、完成。
 - MockInterview：start/answer/finish、报告创建、上下文限制。
+- CoachingMemory：生成、查询、用户纠错。
 - AI Provider：CRUD、默认 Provider、连接测试、跨用户隔离、API Key 不泄露。
 - Health：后端可用性。
 
