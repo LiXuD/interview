@@ -201,18 +201,10 @@ public class CoachingMemoryService {
                 qaBuilder.append("  Q%d [%s] %d 分:\n".formatted(
                         s.questionIndex() + 1, s.dimension(), s.score()));
                 qaBuilder.append("    反馈: %s\n".formatted(s.feedback()));
-                if (s.problems() != null && !s.problems().isEmpty()) {
-                    qaBuilder.append("    问题: %s\n".formatted(String.join("；", s.problems())));
-                }
-                if (s.followUpRisks() != null && !s.followUpRisks().isEmpty()) {
-                    qaBuilder.append("    追问风险: %s\n".formatted(String.join("；", s.followUpRisks())));
-                }
-                if (s.contentHighlights() != null && !s.contentHighlights().isEmpty()) {
-                    qaBuilder.append("    内容亮点: %s\n".formatted(String.join("；", s.contentHighlights())));
-                }
-                if (s.contentGaps() != null && !s.contentGaps().isEmpty()) {
-                    qaBuilder.append("    内容短板: %s\n".formatted(String.join("；", s.contentGaps())));
-                }
+                appendListIfPresent(qaBuilder, "问题", s.problems());
+                appendListIfPresent(qaBuilder, "追问风险", s.followUpRisks());
+                appendListIfPresent(qaBuilder, "内容亮点", s.contentHighlights());
+                appendListIfPresent(qaBuilder, "内容短板", s.contentGaps());
                 if (s.answerStructure() != null) {
                     qaBuilder.append("    回答结构: 背景=%s, 任务=%s, 行动=%s, 结果=%s, 权衡=%s, 复盘=%s\n".formatted(
                             s.answerStructure().background(),
@@ -306,6 +298,12 @@ public class CoachingMemoryService {
         );
 
         return new AiPrompt(AiPrompt.TASK_COACHING_MEMORY, target.getId().toString(), systemPrompt, userPrompt);
+    }
+
+    private void appendListIfPresent(StringBuilder sb, String label, List<String> items) {
+        if (items != null && !items.isEmpty()) {
+            sb.append("    %s: %s\n".formatted(label, String.join("；", items)));
+        }
     }
 
     private CoachingMemoryDto toDto(CoachingMemory memory) {

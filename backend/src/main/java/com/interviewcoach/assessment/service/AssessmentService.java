@@ -166,13 +166,14 @@ public class AssessmentService {
         session.setStatus(STATUS_COMPLETED);
         sessionRepository.save(session);
 
-        AssessmentResultDto resultDto = toResultDto(result);
+        List<AssessmentQuestionScoreDto> scoresCopy = CollectionUtils.copyList(session.getQuestionScores());
+        AssessmentResultDto resultDto = toResultDto(result, scoresCopy);
         createReport(session, resultDto);
 
         try {
             coachingMemoryService.generateFromAssessment(
                     session.getUser(), session.getTarget().getId(), resultDto, session.getQuestions(),
-                    CollectionUtils.copyList(session.getQuestionScores()), sessionId);
+                    scoresCopy, sessionId);
         } catch (Exception ex) {
             log.warn("Failed to generate coaching memory for assessment {}", sessionId, ex);
         }
@@ -383,7 +384,7 @@ public class AssessmentService {
         );
     }
 
-    private AssessmentResultDto toResultDto(AssessmentResult result) {
+    private AssessmentResultDto toResultDto(AssessmentResult result, List<AssessmentQuestionScoreDto> questionScores) {
         return new AssessmentResultDto(
                 result.getSession().getId().toString(),
                 result.getTotalScore(),
@@ -393,7 +394,7 @@ public class AssessmentService {
                 CollectionUtils.copyList(result.getStrengths()),
                 CollectionUtils.copyList(result.getWeaknesses()),
                 CollectionUtils.copyList(result.getNextActions()),
-                CollectionUtils.copyList(result.getSession().getQuestionScores())
+                questionScores
         );
     }
 

@@ -96,16 +96,16 @@ struct ReportDetailView: View {
                     Text(qs.feedback)
                         .font(.caption)
 
-                    if let highlights = qs.contentHighlights, !highlights.isEmpty {
-                        bulletMini(title: "亮点", items: highlights, color: .green)
+                    if !qs.contentHighlights.isEmpty {
+                        bulletMini(title: "亮点", items: qs.contentHighlights, color: .green)
                     }
 
                     if !qs.problems.isEmpty {
                         bulletMini(title: "不足", items: qs.problems, color: .orange)
                     }
 
-                    if let risks = qs.followUpRisks, !risks.isEmpty {
-                        bulletMini(title: "追问风险", items: risks, color: .orange)
+                    if !qs.followUpRisks.isEmpty {
+                        bulletMini(title: "追问风险", items: qs.followUpRisks, color: .orange)
                     }
 
                     if let structure = qs.answerStructure {

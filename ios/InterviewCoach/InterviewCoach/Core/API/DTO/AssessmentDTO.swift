@@ -40,9 +40,9 @@ struct AssessmentQuestionScoreDTO: Decodable, Equatable {
   let problems: [String]
   let improvedExample: String
   let answerStructure: AnswerStructureDTO?
-  let followUpRisks: [String]?
-  let contentHighlights: [String]?
-  let contentGaps: [String]?
+  let followUpRisks: [String]
+  let contentHighlights: [String]
+  let contentGaps: [String]
 }
 
 struct AssessmentAnswerRequestDTO: Encodable {

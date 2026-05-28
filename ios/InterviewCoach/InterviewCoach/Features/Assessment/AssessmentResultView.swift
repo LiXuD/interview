@@ -100,12 +100,12 @@ struct AssessmentResultView: View {
             Text(qs.feedback)
                 .font(.body)
 
-            if let highlights = qs.contentHighlights, !highlights.isEmpty {
+            if !qs.contentHighlights.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("亮点")
                         .font(.caption.bold())
                         .foregroundStyle(.green)
-                    ForEach(highlights, id: \.self) { item in
+                    ForEach(qs.contentHighlights, id: \.self) { item in
                         HStack(alignment: .top, spacing: 6) {
                             Circle().fill(.green).frame(width: 5, height: 5).padding(.top, 5)
                             Text(item).font(.caption)
@@ -128,12 +128,12 @@ struct AssessmentResultView: View {
                 }
             }
 
-            if let gaps = qs.contentGaps, !gaps.isEmpty {
+            if !qs.contentGaps.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("内容缺失")
                         .font(.caption.bold())
                         .foregroundStyle(.red)
-                    ForEach(gaps, id: \.self) { item in
+                    ForEach(qs.contentGaps, id: \.self) { item in
                         HStack(alignment: .top, spacing: 6) {
                             Circle().fill(.red).frame(width: 5, height: 5).padding(.top, 5)
                             Text(item).font(.caption)
@@ -142,12 +142,12 @@ struct AssessmentResultView: View {
                 }
             }
 
-            if let risks = qs.followUpRisks, !risks.isEmpty {
+            if !qs.followUpRisks.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("追问风险")
                         .font(.caption.bold())
                         .foregroundStyle(.orange)
-                    ForEach(risks, id: \.self) { item in
+                    ForEach(qs.followUpRisks, id: \.self) { item in
                         HStack(alignment: .top, spacing: 6) {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .font(.caption2)
