@@ -2,6 +2,8 @@ package com.interviewcoach.training.entity;
 
 import jakarta.persistence.*;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -27,6 +29,9 @@ public class TrainingTask {
 
     @OneToOne(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
     private TrainingFeedback feedback;
+
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TrainingSession> adaptiveSessions = new ArrayList<>();
 
     private Instant completedAt;
 
@@ -62,6 +67,9 @@ public class TrainingTask {
 
     public TrainingFeedback getFeedback() { return feedback; }
     public void setFeedback(TrainingFeedback feedback) { this.feedback = feedback; }
+
+    public List<TrainingSession> getAdaptiveSessions() { return adaptiveSessions; }
+    public void setAdaptiveSessions(List<TrainingSession> adaptiveSessions) { this.adaptiveSessions = adaptiveSessions; }
 
     public Instant getCompletedAt() { return completedAt; }
     public void setCompletedAt(Instant completedAt) { this.completedAt = completedAt; }

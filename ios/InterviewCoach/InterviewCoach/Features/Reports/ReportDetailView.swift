@@ -184,6 +184,9 @@ struct ReportDetailView: View {
         if !c.improvedAnswers.isEmpty {
             bulletSection(title: "改进建议", items: c.improvedAnswers, color: .purple)
         }
+        if !c.likelyFollowUpPoints.isEmpty {
+            bulletSection(title: "高概率追问点", items: c.likelyFollowUpPoints, color: .purple)
+        }
         if !c.nextTrainingTasks.isEmpty {
             bulletSection(title: "后续训练", items: c.nextTrainingTasks, color: .blue)
         }

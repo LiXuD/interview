@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewcoach.ai.entity.AiProvider;
 import com.interviewcoach.common.api.AnswerStructureDto;
+import com.interviewcoach.common.api.AdaptiveTrainingTurnDto;
 import com.interviewcoach.common.api.AssessmentDimensionName;
 import com.interviewcoach.common.api.AssessmentQuestionDto;
 import com.interviewcoach.common.api.AssessmentQuestionScoreDto;
@@ -37,12 +38,14 @@ public class AiStructuredOutputService {
             "confirmed", "observed", "corrected", "inferred", "rejected");
     private static final Set<String> VALID_MEMORY_CONFIDENCE = Set.of("high", "medium", "low");
     private static final Set<String> VALID_STRUCTURE_STATUS = Set.of("present", "partial", "missing");
+    private static final Set<String> VALID_ADAPTIVE_TRAINING_ACTIONS = Set.of("continue", "pass", "switch", "stop");
     private static final Set<String> REAL_AI_REQUIRED_TASKS = Set.of(
             AiPrompt.TASK_ASSESSMENT_QUESTIONS,
             AiPrompt.TASK_ASSESSMENT_QUESTION_SCORE,
             AiPrompt.TASK_ASSESSMENT_RESULT,
             AiPrompt.TASK_TRAINING_PLAN,
             AiPrompt.TASK_TRAINING_FEEDBACK,
+            AiPrompt.TASK_ADAPTIVE_TRAINING_TURN,
             AiPrompt.TASK_MOCK_INTERVIEW_QUESTION,
             AiPrompt.TASK_MOCK_INTERVIEW_REPORT,
             AiPrompt.TASK_COACHING_MEMORY
@@ -311,6 +314,10 @@ public class AiStructuredOutputService {
         return generateAndValidate(prompt, TrainingFeedbackDto.class, (dto, p) -> validateTrainingFeedback(dto));
     }
 
+    public AdaptiveTrainingTurnDto generateAdaptiveTrainingTurn(AiPrompt prompt) {
+        return generateAndValidate(prompt, AdaptiveTrainingTurnDto.class, (dto, p) -> validateAdaptiveTrainingTurn(dto));
+    }
+
     private void validateTrainingFeedback(TrainingFeedbackDto dto) {
         if (dto == null) {
             throw new IllegalArgumentException("TrainingFeedback is null");
@@ -323,6 +330,27 @@ public class AiStructuredOutputService {
         requireText(dto.followUpQuestion(), "followUpQuestion");
         requireList(dto.problems(), "problems");
         requireList(dto.recommendedReviewPoints(), "recommendedReviewPoints");
+    }
+
+    private void validateAdaptiveTrainingTurn(AdaptiveTrainingTurnDto dto) {
+        if (dto == null) {
+            throw new IllegalArgumentException("AdaptiveTrainingTurn is null");
+        }
+        if (!VALID_ADAPTIVE_TRAINING_ACTIONS.contains(dto.action())) {
+            throw new IllegalArgumentException("invalid adaptive training action");
+        }
+        if (dto.score() < 0 || dto.score() > 100) {
+            throw new IllegalArgumentException("score out of range");
+        }
+        requireText(dto.feedback(), "feedback");
+        requireList(dto.problems(), "problems");
+        requireList(dto.recommendedReviewPoints(), "recommendedReviewPoints");
+        if ("continue".equals(dto.action()) || "switch".equals(dto.action())) {
+            requireText(dto.nextQuestion(), "nextQuestion");
+        }
+        if ("pass".equals(dto.action()) || "stop".equals(dto.action())) {
+            requireText(dto.summary(), "summary");
+        }
     }
 
     public record MockInterviewQuestionResult(String question) {}
@@ -355,6 +383,7 @@ public class AiStructuredOutputService {
         requireList(dto.strengths(), "strengths");
         requireList(dto.weaknesses(), "weaknesses");
         requireList(dto.improvedAnswers(), "improvedAnswers");
+        requireList(dto.likelyFollowUpPoints(), "likelyFollowUpPoints");
         requireList(dto.nextTrainingTasks(), "nextTrainingTasks");
         for (DimensionScore dim : dto.dimensionScores()) {
             requireText(dim.name(), "dimension.name");

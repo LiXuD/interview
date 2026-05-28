@@ -1,9 +1,12 @@
 import SwiftUI
+import SwiftData
 
 struct SettingsView: View {
     @ObservedObject var authService: AuthService
+    @Environment(\.modelContext) private var modelContext
     @State private var showDeleteConfirmation = false
     @State private var isDeleting = false
+    @State private var deleteLocalCoachingMemoryArchive = false
 
     var body: some View {
         List {
@@ -26,6 +29,8 @@ struct SettingsView: View {
             }
 
             Section {
+                Toggle("同时删除本机教练记忆文件", isOn: $deleteLocalCoachingMemoryArchive)
+
                 Button(role: .destructive) {
                     showDeleteConfirmation = true
                 } label: {
@@ -33,7 +38,7 @@ struct SettingsView: View {
                 }
                 .disabled(authService.isLoading)
             } footer: {
-                Text("删除账号将清除服务端所有数据，包括目标岗位、画像、测评记录、训练计划、模拟面试和报告。此操作不可撤销。")
+                Text("删除账号将清除服务端所有数据，包括目标岗位、画像、测评记录、训练计划、模拟面试和报告。本机教练记忆文件默认保留，只有打开上方选项才会同时删除。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -52,6 +57,9 @@ struct SettingsView: View {
                 isDeleting = true
                 Task {
                     await authService.deleteAccount()
+                    if deleteLocalCoachingMemoryArchive && !authService.isAuthenticated {
+                        CoachingMemoryArchiveLocal.deleteAll(in: modelContext)
+                    }
                     isDeleting = false
                 }
             }

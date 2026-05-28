@@ -1,5 +1,6 @@
 package com.interviewcoach.training.controller;
 
+import com.interviewcoach.common.api.AdaptiveTrainingSessionDto;
 import com.interviewcoach.common.api.TrainingFeedbackDto;
 import com.interviewcoach.common.api.TrainingTaskAnswerRequest;
 import com.interviewcoach.common.api.TrainingTaskDto;
@@ -23,6 +24,11 @@ public class TrainingTaskController {
     public TrainingFeedbackDto submitAnswer(@PathVariable UUID id,
                                             @RequestBody TrainingTaskAnswerRequest request) {
         return trainingService.submitAnswer(id, SecurityUtils.currentUser().getId(), request.answer());
+    }
+
+    @PostMapping("/{id}/adaptive-sessions/start")
+    public AdaptiveTrainingSessionDto startAdaptiveSession(@PathVariable UUID id) {
+        return trainingService.startAdaptiveSession(id, SecurityUtils.currentUser().getId());
     }
 
     @PatchMapping("/{id}/complete")

@@ -27,6 +27,7 @@
 		2A00000100000000000000A3 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B3 /* AuthService.swift */; };
 		2A00000100000000000000A4 /* DevLoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000B4 /* DevLoginView.swift */; };
 		2A00000100000000000000D1 /* TargetLocal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C1 /* TargetLocal.swift */; };
+		2A0000030000000000000001 /* CoachingMemoryArchiveLocal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000030000000000000002 /* CoachingMemoryArchiveLocal.swift */; };
 		2A00000100000000000000D2 /* TargetListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C2 /* TargetListView.swift */; };
 		2A00000100000000000000D3 /* TargetCreateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C3 /* TargetCreateView.swift */; };
 		2A00000100000000000000D4 /* TargetDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A00000100000000000000C4 /* TargetDetailView.swift */; };
@@ -77,6 +78,7 @@
 		2A00000100000000000000B3 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		2A00000100000000000000B4 /* DevLoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevLoginView.swift; sourceTree = "<group>"; };
 		2A00000100000000000000C1 /* TargetLocal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetLocal.swift; sourceTree = "<group>"; };
+		2A0000030000000000000002 /* CoachingMemoryArchiveLocal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoachingMemoryArchiveLocal.swift; sourceTree = "<group>"; };
 		2A00000100000000000000C2 /* TargetListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetListView.swift; sourceTree = "<group>"; };
 		2A00000100000000000000C3 /* TargetCreateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetCreateView.swift; sourceTree = "<group>"; };
 		2A00000100000000000000C4 /* TargetDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetDetailView.swift; sourceTree = "<group>"; };
@@ -259,6 +261,7 @@
 			children = (
 				2A00000100000000000000C1 /* TargetLocal.swift */,
 				2A00000100000000000000C6 /* CandidateProfileLocal.swift */,
+				2A0000030000000000000002 /* CoachingMemoryArchiveLocal.swift */,
 			);
 			path = LocalModels;
 			sourceTree = "<group>";
@@ -444,6 +447,7 @@
 				2A00000100000000000000A3 /* AuthService.swift in Sources */,
 				2A00000100000000000000A4 /* DevLoginView.swift in Sources */,
 				2A00000100000000000000D1 /* TargetLocal.swift in Sources */,
+				2A0000030000000000000001 /* CoachingMemoryArchiveLocal.swift in Sources */,
 				2A00000100000000000000D2 /* TargetListView.swift in Sources */,
 				2A00000100000000000000D3 /* TargetCreateView.swift in Sources */,
 				2A00000100000000000000D4 /* TargetDetailView.swift in Sources */,

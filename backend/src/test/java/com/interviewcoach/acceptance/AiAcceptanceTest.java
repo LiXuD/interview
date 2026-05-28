@@ -599,6 +599,7 @@ class AiAcceptanceTest {
                   "strengths": ["基础扎实", "表达清晰"],
                   "weaknesses": ["技术深度不足", "缺少量化指标"],
                   "improvedAnswers": ["改进示范1"],
+                  "likelyFollowUpPoints": ["项目指标的量化依据", "技术方案取舍"],
                   "nextTrainingTasks": ["深入学习核心原理", "练习系统设计"]
                 }
                 """.formatted(interviewId);

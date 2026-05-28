@@ -16,6 +16,7 @@ struct MockInterviewReportContent: Decodable {
     let strengths: [String]
     let weaknesses: [String]
     let improvedAnswers: [String]
+    let likelyFollowUpPoints: [String]
     let nextTrainingTasks: [String]
 }
 

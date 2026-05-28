@@ -7,7 +7,9 @@ struct TrainingTaskView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var feedback: TrainingFeedbackDTO?
+    @State private var adaptiveSession: AdaptiveTrainingSessionDTO?
     @State private var answerText = ""
+    @State private var adaptiveAnswerText = ""
     @State private var currentTask: TrainingTaskDTO
     @State private var isLoading = false
     @State private var errorMessage: String?
@@ -37,7 +39,19 @@ struct TrainingTaskView: View {
 
                 if let feedback {
                     feedbackSection(feedback)
+                } else if let adaptiveSession {
+                    adaptiveTrainingSection(adaptiveSession)
                 } else if currentTask.status == "pending" {
+                    Section("自适应训练") {
+                        Button {
+                            Task { await startAdaptiveTraining() }
+                        } label: {
+                            Label("开始 2-4 轮自适应训练", systemImage: "sparkles")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .disabled(isLoading)
+                    }
+
                     Section("你的回答") {
                         TextEditor(text: $answerText)
                             .frame(minHeight: 120)
@@ -136,6 +150,64 @@ struct TrainingTaskView: View {
         }
     }
 
+    private func adaptiveTrainingSection(_ session: AdaptiveTrainingSessionDTO) -> some View {
+        Group {
+            Section("自适应训练") {
+                LabeledContent("轮次", value: "\(session.roundIndex)/\(session.maxRounds)")
+                LabeledContent("动作", value: actionTitle(session.lastAction))
+                if session.status == "completed" {
+                    Label("训练已完成", systemImage: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                }
+            }
+
+            ForEach(session.rounds) { round in
+                Section("第 \(round.roundIndex) 轮") {
+                    Text(round.question)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Text(round.answer)
+                    Text(round.feedback)
+                        .foregroundStyle(.secondary)
+                    if !round.problems.isEmpty {
+                        ForEach(round.problems, id: \.self) { problem in
+                            Label(problem, systemImage: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.orange)
+                        }
+                    }
+                }
+            }
+
+            if session.status == "completed" {
+                Section("总结") {
+                    Text(session.summary ?? "本次训练已完成。")
+                }
+            } else {
+                if let question = session.currentQuestion {
+                    Section("教练追问") {
+                        Text(question)
+                            .italic()
+                    }
+                }
+
+                Section("你的回答") {
+                    TextEditor(text: $adaptiveAnswerText)
+                        .frame(minHeight: 120)
+                }
+
+                Section {
+                    Button {
+                        Task { await submitAdaptiveAnswer() }
+                    } label: {
+                        Label("提交本轮回答", systemImage: "arrow.right.circle.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .disabled(adaptiveAnswerText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading)
+                }
+            }
+        }
+    }
+
     @MainActor
     private func submitAnswer() async {
         isLoading = true
@@ -164,6 +236,63 @@ struct TrainingTaskView: View {
     }
 
     @MainActor
+    private func startAdaptiveTraining() async {
+        isLoading = true
+        errorMessage = nil
+        do {
+            try await AiRuntimeStatusGuard.requireCoreAiAvailable()
+            adaptiveSession = try await APIClient.shared.request(
+                "POST",
+                path: "/api/training-tasks/\(task.id)/adaptive-sessions/start"
+            )
+            currentTask = TrainingTaskDTO(
+                id: currentTask.id,
+                title: currentTask.title,
+                description: currentTask.description,
+                status: "in_progress",
+                feedback: nil,
+                completedAt: nil
+            )
+            onUpdate(currentTask)
+        } catch {
+            errorMessage = "开始失败: \(error.localizedDescription)"
+        }
+        isLoading = false
+    }
+
+    @MainActor
+    private func submitAdaptiveAnswer() async {
+        guard let adaptiveSession else { return }
+        isLoading = true
+        errorMessage = nil
+        do {
+            try await AiRuntimeStatusGuard.requireCoreAiAvailable()
+            let trimmed = adaptiveAnswerText.trimmingCharacters(in: .whitespacesAndNewlines)
+            let updated: AdaptiveTrainingSessionDTO = try await APIClient.shared.request(
+                "POST",
+                path: "/api/training-sessions/\(adaptiveSession.id)/answers",
+                body: AdaptiveTrainingAnswerRequestDTO(answer: trimmed)
+            )
+            self.adaptiveSession = updated
+            adaptiveAnswerText = ""
+            if updated.status == "completed" {
+                currentTask = TrainingTaskDTO(
+                    id: currentTask.id,
+                    title: currentTask.title,
+                    description: currentTask.description,
+                    status: "completed",
+                    feedback: updated.summary,
+                    completedAt: Date().ISO8601Format()
+                )
+                onUpdate(currentTask)
+            }
+        } catch {
+            errorMessage = "提交失败: \(error.localizedDescription)"
+        }
+        isLoading = false
+    }
+
+    @MainActor
     private func completeTask() async {
         isLoading = true
         errorMessage = nil
@@ -183,5 +312,15 @@ struct TrainingTaskView: View {
         if score >= 80 { return .green }
         if score >= 60 { return .orange }
         return .red
+    }
+
+    private func actionTitle(_ action: String?) -> String {
+        switch action {
+        case "continue": return "继续追问"
+        case "pass": return "已达标"
+        case "switch": return "换角度"
+        case "stop": return "先讲解"
+        default: return "准备中"
+        }
     }
 }

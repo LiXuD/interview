@@ -33,3 +33,31 @@ struct TrainingFeedbackDTO: Decodable, Equatable {
   let followUpQuestion: String
   let recommendedReviewPoints: [String]
 }
+
+struct AdaptiveTrainingAnswerRequestDTO: Encodable {
+  let answer: String
+}
+
+struct AdaptiveTrainingRoundDTO: Decodable, Equatable, Identifiable {
+  var id: Int { roundIndex }
+  let roundIndex: Int
+  let question: String
+  let answer: String
+  let action: String
+  let score: Int
+  let feedback: String
+  let problems: [String]
+}
+
+struct AdaptiveTrainingSessionDTO: Decodable, Equatable {
+  let id: String
+  let taskId: String
+  let status: String
+  let roundIndex: Int
+  let minRounds: Int
+  let maxRounds: Int
+  let currentQuestion: String?
+  let lastAction: String?
+  let summary: String?
+  let rounds: [AdaptiveTrainingRoundDTO]
+}

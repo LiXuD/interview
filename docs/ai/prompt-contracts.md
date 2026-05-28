@@ -382,6 +382,7 @@ System Prompt 要求：
   "strengths": ["项目经验丰富"],
   "weaknesses": ["系统设计需要加强"],
   "improvedAnswers": ["改进后的回答示范"],
+  "likelyFollowUpPoints": ["真实面试中最可能继续追问的点"],
   "nextTrainingTasks": ["系统设计容量规划"]
 }
 ```
@@ -392,7 +393,7 @@ System Prompt 要求：
 - `overallScore` 0 到 100。
 - `dimensionScores` 非空数组，每项 `name` 和 `reason` 非空，`score` 0 到 100。
 - `summary` 非空。
-- `strengths`、`weaknesses`、`improvedAnswers`、`nextTrainingTasks` 均为非 null 数组。
+- `strengths`、`weaknesses`、`improvedAnswers`、`likelyFollowUpPoints`、`nextTrainingTasks` 均为非 null 数组。
 
 后端校验逻辑（`AiStructuredOutputService.validateMockInterviewReport`）：
 

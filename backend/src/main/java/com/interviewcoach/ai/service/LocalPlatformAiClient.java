@@ -2,6 +2,7 @@ package com.interviewcoach.ai.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.interviewcoach.common.api.AdaptiveTrainingTurnDto;
 import com.interviewcoach.common.api.AnswerStructureDto;
 import com.interviewcoach.common.api.AssessmentDimensionName;
 import com.interviewcoach.common.api.AssessmentQuestionDto;
@@ -35,6 +36,7 @@ public class LocalPlatformAiClient implements PlatformAiClient {
                 case AiPrompt.TASK_ASSESSMENT_RESULT -> objectMapper.writeValueAsString(buildAssessmentResult(prompt));
                 case AiPrompt.TASK_TRAINING_PLAN -> objectMapper.writeValueAsString(buildTrainingPlan(prompt));
                 case AiPrompt.TASK_TRAINING_FEEDBACK -> objectMapper.writeValueAsString(buildTrainingFeedback(prompt));
+                case AiPrompt.TASK_ADAPTIVE_TRAINING_TURN -> objectMapper.writeValueAsString(buildAdaptiveTrainingTurn(prompt));
                 case AiPrompt.TASK_MOCK_INTERVIEW_QUESTION -> objectMapper.writeValueAsString(buildMockInterviewQuestion(prompt));
                 case AiPrompt.TASK_MOCK_INTERVIEW_REPORT -> objectMapper.writeValueAsString(buildMockInterviewReport(prompt));
                 case AiPrompt.TASK_CANDIDATE_PROFILE_DRAFT -> objectMapper.writeValueAsString(buildCandidateProfileDraft(prompt));
@@ -175,6 +177,29 @@ public class LocalPlatformAiClient implements PlatformAiClient {
         );
     }
 
+    private AdaptiveTrainingTurnDto buildAdaptiveTrainingTurn(AiPrompt prompt) {
+        if (prompt.userPrompt().contains("已完成回答轮数：1")) {
+            return new AdaptiveTrainingTurnDto(
+                    "pass",
+                    82,
+                    "第二轮回答已经能补充关键技术细节，当前短板基本达标。",
+                    List.of("还可以继续补充量化指标"),
+                    "",
+                    "本次自适应训练完成了 2 轮追问，候选人已经能围绕短板给出更具体的技术表达。",
+                    List.of("复盘指标表达", "准备权衡说明")
+            );
+        }
+        return new AdaptiveTrainingTurnDto(
+                "continue",
+                68,
+                "回答覆盖了基本方向，但还需要追问具体指标和权衡。",
+                List.of("缺少量化指标", "权衡说明不足"),
+                "请继续补充这个方案上线后的关键指标、风险权衡和复盘结论。",
+                "",
+                List.of("容量评估", "技术权衡")
+        );
+    }
+
     private AiStructuredOutputService.MockInterviewQuestionResult buildMockInterviewQuestion(AiPrompt prompt) {
         return new AiStructuredOutputService.MockInterviewQuestionResult(
                 "请介绍一下你在项目中使用 Spring Boot 的经验，特别是如何处理高并发场景？"
@@ -195,6 +220,7 @@ public class LocalPlatformAiClient implements PlatformAiClient {
                 List.of("项目经验丰富，有实际排查线上问题的能力", "Java 和 Spring Boot 基础扎实"),
                 List.of("系统设计回答缺少容量估算的具体数字", "部分回答过于冗长，需要练习精简表达"),
                 List.of("在项目中，我负责设计订单系统架构。采用微服务拆分，订单服务独立部署，通过消息队列异步处理库存扣减，P99 延迟控制在 200ms 以内。"),
+                List.of("系统设计容量估算依据", "线上问题排查中的取舍与复盘"),
                 List.of("系统设计容量规划", "STAR 法则面试表达", "分布式一致性原理复习")
         );
     }

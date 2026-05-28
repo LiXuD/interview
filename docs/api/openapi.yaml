@@ -506,6 +506,54 @@ paths:
               schema:
                 $ref: "#/components/schemas/TrainingFeedbackDto"
 
+  /api/training-tasks/{id}/adaptive-sessions/start:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags:
+        - Training
+      summary: Start adaptive training session for a training task
+      operationId: startAdaptiveTrainingSession
+      responses:
+        "200":
+          description: Adaptive training session started.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdaptiveTrainingSessionDto"
+
+  /api/training-sessions/{id}/answers:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags:
+        - Training
+      summary: Submit one adaptive training round answer
+      operationId: answerAdaptiveTrainingSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdaptiveTrainingAnswerRequest"
+      responses:
+        "200":
+          description: Adaptive training session updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdaptiveTrainingSessionDto"
+
   /api/training-tasks/{id}/complete:
     parameters:
       - name: id
@@ -1529,6 +1577,91 @@ components:
           items:
             type: string
 
+    AdaptiveTrainingAnswerRequest:
+      type: object
+      required:
+        - answer
+      properties:
+        answer:
+          type: string
+
+    AdaptiveTrainingRoundDto:
+      type: object
+      required:
+        - roundIndex
+        - question
+        - answer
+        - action
+        - score
+        - feedback
+        - problems
+      properties:
+        roundIndex:
+          type: integer
+          minimum: 1
+        question:
+          type: string
+        answer:
+          type: string
+        action:
+          type: string
+          enum: [continue, pass, switch, stop]
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        feedback:
+          type: string
+        problems:
+          type: array
+          items:
+            type: string
+
+    AdaptiveTrainingSessionDto:
+      type: object
+      required:
+        - id
+        - taskId
+        - status
+        - roundIndex
+        - minRounds
+        - maxRounds
+        - lastAction
+        - rounds
+      properties:
+        id:
+          type: string
+          format: uuid
+        taskId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [in_progress, completed]
+        roundIndex:
+          type: integer
+          minimum: 0
+          maximum: 4
+        minRounds:
+          type: integer
+          minimum: 2
+          maximum: 2
+        maxRounds:
+          type: integer
+          minimum: 4
+          maximum: 4
+        currentQuestion:
+          type: string
+        lastAction:
+          type: string
+          enum: [continue, pass, switch, stop]
+        summary:
+          type: string
+        rounds:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdaptiveTrainingRoundDto"
+
     # -- MockInterview --
     MockInterviewStartRequest:
       type: object
@@ -1579,6 +1712,7 @@ components:
         - strengths
         - weaknesses
         - improvedAnswers
+        - likelyFollowUpPoints
         - nextTrainingTasks
       properties:
         mockInterviewId:
@@ -1603,6 +1737,10 @@ components:
           items:
             type: string
         improvedAnswers:
+          type: array
+          items:
+            type: string
+        likelyFollowUpPoints:
           type: array
           items:
             type: string

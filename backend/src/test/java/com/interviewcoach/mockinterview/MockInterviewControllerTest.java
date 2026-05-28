@@ -114,6 +114,7 @@ class MockInterviewControllerTest {
                 .andExpect(jsonPath("$.strengths").isArray())
                 .andExpect(jsonPath("$.weaknesses").isArray())
                 .andExpect(jsonPath("$.improvedAnswers").isArray())
+                .andExpect(jsonPath("$.likelyFollowUpPoints").isArray())
                 .andExpect(jsonPath("$.nextTrainingTasks").isArray());
 
         // Get session — should be completed

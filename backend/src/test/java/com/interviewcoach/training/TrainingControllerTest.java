@@ -156,6 +156,58 @@ class TrainingControllerTest {
     }
 
     @Test
+    void adaptiveTrainingSessionRunsTwoRoundsAndCompletesTask() throws Exception {
+        String token = loginAndGetToken("train_adaptive_user");
+        String targetId = createTarget(token, "Adaptive Training Target");
+        confirmProfile(token, targetId);
+        completeAssessment(token, targetId);
+        String taskId = generatePlanAndGetFirstTaskId(token, targetId);
+
+        String sessionResponse = mockMvc.perform(post("/api/training-tasks/" + taskId + "/adaptive-sessions/start")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.taskId").value(taskId))
+                .andExpect(jsonPath("$.status").value("in_progress"))
+                .andExpect(jsonPath("$.roundIndex").value(0))
+                .andExpect(jsonPath("$.minRounds").value(2))
+                .andExpect(jsonPath("$.maxRounds").value(4))
+                .andExpect(jsonPath("$.currentQuestion").isString())
+                .andExpect(jsonPath("$.rounds.length()").value(0))
+                .andReturn().getResponse().getContentAsString();
+        String sessionId = objectMapper.readTree(sessionResponse).get("id").asText();
+
+        mockMvc.perform(post("/api/training-sessions/" + sessionId + "/answers")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TrainingTaskAnswerRequest("第一轮回答"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("in_progress"))
+                .andExpect(jsonPath("$.roundIndex").value(1))
+                .andExpect(jsonPath("$.lastAction").value("continue"))
+                .andExpect(jsonPath("$.currentQuestion").isString())
+                .andExpect(jsonPath("$.rounds.length()").value(1))
+                .andExpect(jsonPath("$.rounds[0].answer").value("第一轮回答"))
+                .andExpect(jsonPath("$.rounds[0].feedback").isString());
+
+        mockMvc.perform(post("/api/training-sessions/" + sessionId + "/answers")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TrainingTaskAnswerRequest("第二轮回答"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("completed"))
+                .andExpect(jsonPath("$.roundIndex").value(2))
+                .andExpect(jsonPath("$.lastAction").value("pass"))
+                .andExpect(jsonPath("$.currentQuestion").doesNotExist())
+                .andExpect(jsonPath("$.summary").isString())
+                .andExpect(jsonPath("$.rounds.length()").value(2));
+
+        mockMvc.perform(get("/api/training-plans/" + targetId)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tasks[0].status").value("completed"));
+    }
+
+    @Test
     void trainingRequiresAuthentication() throws Exception {
         mockMvc.perform(post("/api/training-plans/generate")
                         .contentType(MediaType.APPLICATION_JSON)

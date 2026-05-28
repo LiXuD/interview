@@ -9,6 +9,6 @@ struct InterviewCoachApp: App {
     WindowGroup {
       AppRootView(authService: authService)
     }
-    .modelContainer(for: [TargetLocal.self, CandidateProfileLocal.self])
+    .modelContainer(for: [TargetLocal.self, CandidateProfileLocal.self, CoachingMemoryArchiveLocal.self])
   }
 }

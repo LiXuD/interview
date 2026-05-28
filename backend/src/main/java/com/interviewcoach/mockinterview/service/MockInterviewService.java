@@ -4,7 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewcoach.ai.service.AiPrompt;
 import com.interviewcoach.ai.service.AiStructuredOutputService;
+import com.interviewcoach.assessment.entity.AssessmentResult;
+import com.interviewcoach.assessment.repository.AssessmentResultRepository;
 import com.interviewcoach.coachingmemory.service.CoachingMemoryService;
+import com.interviewcoach.common.api.CoachingMemoryDto;
+import com.interviewcoach.common.api.CoachingMemoryItemDto;
 import com.interviewcoach.common.util.CollectionUtils;
 import com.interviewcoach.common.api.MockInterviewReportDto;
 import com.interviewcoach.common.api.MockInterviewSessionDto;
@@ -44,6 +48,7 @@ public class MockInterviewService {
     private final MockInterviewRepository interviewRepository;
     private final InterviewTargetRepository targetRepository;
     private final CandidateProfileRepository profileRepository;
+    private final AssessmentResultRepository assessmentResultRepository;
     private final ReportRepository reportRepository;
     private final AiStructuredOutputService aiService;
     private final CoachingMemoryService coachingMemoryService;
@@ -52,6 +57,7 @@ public class MockInterviewService {
     public MockInterviewService(MockInterviewRepository interviewRepository,
                                 InterviewTargetRepository targetRepository,
                                 CandidateProfileRepository profileRepository,
+                                AssessmentResultRepository assessmentResultRepository,
                                 ReportRepository reportRepository,
                                 AiStructuredOutputService aiService,
                                 CoachingMemoryService coachingMemoryService,
@@ -59,6 +65,7 @@ public class MockInterviewService {
         this.interviewRepository = interviewRepository;
         this.targetRepository = targetRepository;
         this.profileRepository = profileRepository;
+        this.assessmentResultRepository = assessmentResultRepository;
         this.reportRepository = reportRepository;
         this.aiService = aiService;
         this.coachingMemoryService = coachingMemoryService;
@@ -73,7 +80,7 @@ public class MockInterviewService {
                 .orElseThrow(() -> new ProfileNotFoundException(targetId));
 
         String firstQuestion = aiService.generateMockInterviewQuestion(
-                buildStartPrompt(target, profile));
+                buildStartPrompt(target, profile, buildCoachingContext(targetId, user.getId())));
 
         MockInterview interview = new MockInterview();
         interview.setUser(user);
@@ -97,7 +104,7 @@ public class MockInterviewService {
 
         List<MockInterviewMessage> contextMessages = getContextMessages(interview);
         String nextQuestion = aiService.generateMockInterviewQuestion(
-                buildAnswerPrompt(target, contextMessages));
+                buildAnswerPrompt(target, contextMessages, buildCoachingContext(targetId, userId)));
         addMessage(interview, ROLE_ASSISTANT, nextQuestion);
 
         interview = interviewRepository.save(interview);
@@ -124,6 +131,7 @@ public class MockInterviewService {
                 aiResult.strengths(),
                 aiResult.weaknesses(),
                 aiResult.improvedAnswers(),
+                aiResult.likelyFollowUpPoints(),
                 aiResult.nextTrainingTasks()
         );
 
@@ -182,7 +190,78 @@ public class MockInterviewService {
         return sb.toString();
     }
 
-    private AiPrompt buildStartPrompt(InterviewTarget target, CandidateProfile profile) {
+    private String buildCoachingContext(UUID targetId, UUID userId) {
+        StringBuilder context = new StringBuilder();
+        if (assessmentResultRepository != null) {
+            List<AssessmentResult> results = assessmentResultRepository
+                    .findBySessionTargetIdAndSessionUserIdOrderByCreatedAtDesc(targetId, userId);
+            if (!results.isEmpty()) {
+                AssessmentResult latest = results.get(0);
+                appendItems(context, "最近测评短板", latest.getWeaknesses(), 5);
+                appendItems(context, "最近建议行动", latest.getNextActions(), 5);
+            }
+        }
+
+        if (coachingMemoryService != null) {
+            List<CoachingMemoryDto> memories = coachingMemoryService.getMemories(targetId, userId);
+            if (!memories.isEmpty()) {
+                context.append("可用教练记忆（confirmed/corrected/observed 可作为上下文，inferred 只可追问验证，rejected 禁止当事实）：\n");
+                memories.stream().limit(3).forEach(memory -> {
+                    appendMemoryItems(context, "已验证经历", memory.verifiedExperience(), 3);
+                    appendMemoryItems(context, "持续短板", memory.observedWeaknesses(), 3);
+                    appendMemoryItems(context, "下一步重点", memory.recommendedNextFocus(), 3);
+                    appendInferredItems(context, memory.unverifiedClaims(), 3);
+                    appendRejectedItems(context, memory.avoidRepeating(), 3);
+                });
+            }
+        }
+
+        if (context.isEmpty()) {
+            return "暂无历史短板或可用教练记忆。";
+        }
+        return context.toString();
+    }
+
+    private void appendItems(StringBuilder context, String label, List<String> items, int limit) {
+        List<String> safeItems = CollectionUtils.copyList(items);
+        if (safeItems.isEmpty()) {
+            return;
+        }
+        context.append(label).append("：\n");
+        safeItems.stream().limit(limit).forEach(item -> context.append("- ").append(item).append("\n"));
+    }
+
+    private void appendMemoryItems(StringBuilder context, String label, List<CoachingMemoryItemDto> items, int limit) {
+        List<String> safeItems = CollectionUtils.copyList(items).stream()
+                .filter(item -> "confirmed".equals(item.source())
+                        || "corrected".equals(item.source())
+                        || "observed".equals(item.source()))
+                .map(item -> "%s（source=%s, confidence=%s）".formatted(
+                        item.content(), item.source(), item.confidence()))
+                .limit(limit)
+                .toList();
+        appendItems(context, label, safeItems, limit);
+    }
+
+    private void appendInferredItems(StringBuilder context, List<CoachingMemoryItemDto> items, int limit) {
+        List<String> inferred = CollectionUtils.copyList(items).stream()
+                .filter(item -> "inferred".equals(item.source()))
+                .map(CoachingMemoryItemDto::content)
+                .limit(limit)
+                .toList();
+        appendItems(context, "只能追问验证的 inferred 记忆", inferred, limit);
+    }
+
+    private void appendRejectedItems(StringBuilder context, List<CoachingMemoryItemDto> items, int limit) {
+        List<String> rejected = CollectionUtils.copyList(items).stream()
+                .filter(item -> "rejected".equals(item.source()))
+                .map(CoachingMemoryItemDto::content)
+                .limit(limit)
+                .toList();
+        appendItems(context, "禁止当事实使用的 rejected 记忆", rejected, limit);
+    }
+
+    private AiPrompt buildStartPrompt(InterviewTarget target, CandidateProfile profile, String coachingContext) {
         String systemPrompt = """
                 你是 AI 技术面试官，进行技术模拟面试。
                 只返回合法 JSON 对象，不返回任何其他文字。
@@ -191,7 +270,9 @@ public class MockInterviewService {
                 {"question": "面试问题内容（不能为空）"}
 
                 每次只问一个问题，问题应围绕岗位 JD 核心技能和候选人已确认经历。
+                开场问题必须结合最近测评短板或可用教练记忆，不要问泛泛的自我介绍。
                 不得编造候选人未提供的项目或技术细节。
+                rejected 记忆不得当事实使用；inferred 记忆只能通过追问验证。
                 """;
         String userPrompt = """
                 目标岗位：
@@ -208,17 +289,21 @@ public class MockInterviewService {
 
                 候选人项目经历：
                 %s
+
+                最近短板与教练记忆：
+                %s
                 """.formatted(
                 target.getTitle(),
                 target.getJd(),
                 profile.getSummary(),
                 profile.getSkills(),
-                profile.getProjects()
+                profile.getProjects(),
+                coachingContext
         );
         return new AiPrompt(AiPrompt.TASK_MOCK_INTERVIEW_QUESTION, target.getId().toString(), systemPrompt, userPrompt);
     }
 
-    private AiPrompt buildAnswerPrompt(InterviewTarget target, List<MockInterviewMessage> contextMessages) {
+    private AiPrompt buildAnswerPrompt(InterviewTarget target, List<MockInterviewMessage> contextMessages, String coachingContext) {
         String systemPrompt = """
                 你是 AI 技术面试官，进行技术模拟面试。
                 只返回合法 JSON 对象，不返回任何其他文字。
@@ -227,15 +312,20 @@ public class MockInterviewService {
                 {"question": "追问内容（不能为空）"}
 
                 必须基于候选人上一条回答进行追问，追问应挖掘技术深度或暴露逻辑漏洞。
+                追问必须引用上一条回答中的具体内容，并可选择追深、换维度、要求举例、要求量化结果或要求解释权衡。
+                可结合最近短板和可用教练记忆决定追问方向，但不得把 inferred 当事实，不得重复 rejected 内容。
                 每次只问一个问题，保持专业和对话性。
                 """;
         String userPrompt = """
                 目标岗位：
                 %s
 
+                最近短板与教练记忆：
+                %s
+
                 对话记录：
                 %s
-                """.formatted(target.getTitle(), formatConversation(contextMessages));
+                """.formatted(target.getTitle(), coachingContext, formatConversation(contextMessages));
         return new AiPrompt(AiPrompt.TASK_MOCK_INTERVIEW_QUESTION, target.getId().toString(), systemPrompt, userPrompt);
     }
 
@@ -258,6 +348,7 @@ public class MockInterviewService {
                   "strengths": ["优势1"],
                   "weaknesses": ["短板1"],
                   "improvedAnswers": ["改进回答1"],
+                  "likelyFollowUpPoints": ["真实面试中最可能继续追问的点1"],
                   "nextTrainingTasks": ["训练主题1"]
                 }
 
@@ -267,6 +358,7 @@ public class MockInterviewService {
                 summary 必须基于实际对话表现，不得泛泛而谈。
                 strengths 和 weaknesses 必须基于实际回答中的具体表现。
                 improvedAnswers 应是关键回答的改进示范。
+                likelyFollowUpPoints 必须列出真实面试中最可能被继续追问的具体点。
                 nextTrainingTasks 应列出具体的后续训练主题。
                 输出必须围绕面试教练复盘，不涉及招聘投递、题库社区、订阅付费或语音面试。
                 """;

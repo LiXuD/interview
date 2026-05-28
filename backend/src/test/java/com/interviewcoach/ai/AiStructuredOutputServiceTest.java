@@ -34,6 +34,7 @@ class AiStructuredOutputServiceTest {
                   "strengths": [],
                   "weaknesses": [],
                   "improvedAnswers": [],
+                  "likelyFollowUpPoints": [],
                   "nextTrainingTasks": []
                 }
                 """;
@@ -64,6 +65,7 @@ class AiStructuredOutputServiceTest {
                   "strengths": [],
                   "weaknesses": [],
                   "improvedAnswers": [],
+                  "likelyFollowUpPoints": [],
                   "nextTrainingTasks": []
                 }
                 """;

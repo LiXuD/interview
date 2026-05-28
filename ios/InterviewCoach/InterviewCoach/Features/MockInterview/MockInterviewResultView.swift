@@ -65,6 +65,15 @@ struct MockInterviewResultView: View {
                 }
             }
 
+            if !report.likelyFollowUpPoints.isEmpty {
+                Section("高概率追问点") {
+                    ForEach(report.likelyFollowUpPoints, id: \.self) { item in
+                        Label(item, systemImage: "questionmark.circle.fill")
+                            .foregroundStyle(.purple)
+                    }
+                }
+            }
+
             if !report.nextTrainingTasks.isEmpty {
                 Section("建议训练") {
                     ForEach(report.nextTrainingTasks, id: \.self) { item in
