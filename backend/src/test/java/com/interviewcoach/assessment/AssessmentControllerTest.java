@@ -1,7 +1,9 @@
 package com.interviewcoach.assessment;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.interviewcoach.assessment.repository.AssessmentSessionRepository;
 import com.interviewcoach.common.api.AssessmentAnswerRequest;
+import com.interviewcoach.common.api.AssessmentQuestionScoreDto;
 import com.interviewcoach.common.api.InterviewTargetCreateRequest;
 import com.interviewcoach.common.api.LoginRequest;
 import org.junit.jupiter.api.Test;
@@ -11,6 +13,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.List;
+import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -25,6 +30,9 @@ class AssessmentControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private AssessmentSessionRepository sessionRepository;
 
     private String loginAndGetToken(String username) throws Exception {
         var request = new LoginRequest(username);
@@ -148,6 +156,51 @@ class AssessmentControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.questionScores[1].questionIndex").value(1))
                 .andExpect(jsonPath("$.questionScores[1].dimension").value("systemThinking"));
+    }
+
+    @Test
+    void getAssessmentNormalizesLegacyQuestionScoreFields() throws Exception {
+        String token = loginAndGetToken("assess_legacy_score");
+        String targetId = createTarget(token, "Legacy Score Test");
+        confirmProfile(token, targetId);
+        String sessionId = startAssessment(token, targetId);
+
+        mockMvc.perform(post("/api/assessments/" + sessionId + "/answers")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new AssessmentAnswerRequest("A1"))))
+                .andExpect(status().isOk());
+
+        var session = sessionRepository.findById(UUID.fromString(sessionId)).orElseThrow();
+        session.setQuestionScores(List.of(new AssessmentQuestionScoreDto(
+                0,
+                64,
+                "technicalDepth",
+                "legacy feedback",
+                List.of("legacy problem"),
+                "legacy example",
+                null,
+                null,
+                null,
+                null
+        )));
+        sessionRepository.saveAndFlush(session);
+
+        mockMvc.perform(get("/api/assessments/" + sessionId)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.questionScores[0].answerStructure.background").isString())
+                .andExpect(jsonPath("$.questionScores[0].answerStructure.task").isString())
+                .andExpect(jsonPath("$.questionScores[0].answerStructure.action").isString())
+                .andExpect(jsonPath("$.questionScores[0].answerStructure.result").isString())
+                .andExpect(jsonPath("$.questionScores[0].answerStructure.tradeoff").isString())
+                .andExpect(jsonPath("$.questionScores[0].answerStructure.review").isString())
+                .andExpect(jsonPath("$.questionScores[0].followUpRisks").isArray())
+                .andExpect(jsonPath("$.questionScores[0].followUpRisks.length()").value(0))
+                .andExpect(jsonPath("$.questionScores[0].contentHighlights").isArray())
+                .andExpect(jsonPath("$.questionScores[0].contentHighlights.length()").value(0))
+                .andExpect(jsonPath("$.questionScores[0].contentGaps").isArray())
+                .andExpect(jsonPath("$.questionScores[0].contentGaps.length()").value(0));
     }
 
     @Test

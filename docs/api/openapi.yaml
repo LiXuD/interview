@@ -1332,6 +1332,10 @@ components:
         - feedback
         - problems
         - improvedExample
+        - answerStructure
+        - followUpRisks
+        - contentHighlights
+        - contentGaps
       properties:
         questionIndex:
           type: integer

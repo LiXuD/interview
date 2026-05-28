@@ -3,6 +3,7 @@ package com.interviewcoach.ai.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewcoach.ai.entity.AiProvider;
+import com.interviewcoach.common.api.AnswerStructureDto;
 import com.interviewcoach.common.api.AssessmentDimensionName;
 import com.interviewcoach.common.api.AssessmentQuestionDto;
 import com.interviewcoach.common.api.AssessmentQuestionScoreDto;
@@ -35,6 +36,7 @@ public class AiStructuredOutputService {
     private static final Set<String> VALID_MEMORY_SOURCES = Set.of(
             "confirmed", "observed", "corrected", "inferred", "rejected");
     private static final Set<String> VALID_MEMORY_CONFIDENCE = Set.of("high", "medium", "low");
+    private static final Set<String> VALID_STRUCTURE_STATUS = Set.of("present", "partial", "missing");
     private static final Set<String> REAL_AI_REQUIRED_TASKS = Set.of(
             AiPrompt.TASK_ASSESSMENT_QUESTIONS,
             AiPrompt.TASK_ASSESSMENT_QUESTION_SCORE,
@@ -136,18 +138,35 @@ public class AiStructuredOutputService {
         }
         requireText(dto.dimension(), "dimension");
         requireText(dto.feedback(), "feedback");
-        requireList(dto.problems(), "problems");
+        requireNonEmptyTextList(dto.problems(), "problems");
         requireText(dto.improvedExample(), "improvedExample");
-        requireList(dto.followUpRisks(), "followUpRisks");
-        requireList(dto.contentHighlights(), "contentHighlights");
-        requireList(dto.contentGaps(), "contentGaps");
-        if (dto.answerStructure() != null) {
-            requireText(dto.answerStructure().background(), "answerStructure.background");
-            requireText(dto.answerStructure().task(), "answerStructure.task");
-            requireText(dto.answerStructure().action(), "answerStructure.action");
-            requireText(dto.answerStructure().result(), "answerStructure.result");
-            requireText(dto.answerStructure().tradeoff(), "answerStructure.tradeoff");
-            requireText(dto.answerStructure().review(), "answerStructure.review");
+        validateAnswerStructure(dto.answerStructure());
+        requireNonEmptyTextList(dto.followUpRisks(), "followUpRisks");
+        requireNonEmptyTextList(dto.contentHighlights(), "contentHighlights");
+        requireNonEmptyTextList(dto.contentGaps(), "contentGaps");
+    }
+
+    private void validateAnswerStructure(AnswerStructureDto answerStructure) {
+        if (answerStructure == null) {
+            throw new IllegalArgumentException("answerStructure is required");
+        }
+        requireStructureStatus(answerStructure.background(), "answerStructure.background");
+        requireStructureStatus(answerStructure.task(), "answerStructure.task");
+        requireStructureStatus(answerStructure.action(), "answerStructure.action");
+        requireStructureStatus(answerStructure.result(), "answerStructure.result");
+        requireStructureStatus(answerStructure.tradeoff(), "answerStructure.tradeoff");
+        requireStructureStatus(answerStructure.review(), "answerStructure.review");
+    }
+
+    private void requireStructureStatus(String value, String field) {
+        requireText(value, field);
+        int separatorIndex = value.indexOf(':');
+        if (separatorIndex <= 0) {
+            throw new IllegalArgumentException(field + " must start with status");
+        }
+        String status = value.substring(0, separatorIndex).trim();
+        if (!VALID_STRUCTURE_STATUS.contains(status)) {
+            throw new IllegalArgumentException(field + " has invalid status");
         }
     }
 
@@ -257,6 +276,16 @@ public class AiStructuredOutputService {
     private void requireList(List<?> value, String field) {
         if (value == null) {
             throw new IllegalArgumentException(field + " is required");
+        }
+    }
+
+    private void requireNonEmptyTextList(List<String> value, String field) {
+        requireList(value, field);
+        if (value.isEmpty()) {
+            throw new IllegalArgumentException(field + " must not be empty");
+        }
+        for (String item : value) {
+            requireText(item, field + " item");
         }
     }
 

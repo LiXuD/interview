@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewcoach.ai.service.AiPrompt;
 import com.interviewcoach.ai.service.AiStructuredOutputService;
 import com.interviewcoach.coachingmemory.service.CoachingMemoryService;
+import com.interviewcoach.common.api.AnswerStructureDto;
 import com.interviewcoach.common.util.CollectionUtils;
 import com.interviewcoach.common.api.AssessmentQuestionDto;
 import com.interviewcoach.common.api.AssessmentQuestionScoreDto;
@@ -41,6 +42,14 @@ public class AssessmentService {
     private static final Logger log = LoggerFactory.getLogger(AssessmentService.class);
     private static final String STATUS_IN_PROGRESS = "in_progress";
     private static final String STATUS_COMPLETED = "completed";
+    private static final AnswerStructureDto LEGACY_QUESTION_SCORE_STRUCTURE = new AnswerStructureDto(
+            "missing: 历史记录未保存背景诊断",
+            "missing: 历史记录未保存任务诊断",
+            "missing: 历史记录未保存行动诊断",
+            "missing: 历史记录未保存结果诊断",
+            "missing: 历史记录未保存权衡诊断",
+            "missing: 历史记录未保存复盘诊断"
+    );
 
     private final AssessmentSessionRepository sessionRepository;
     private final AssessmentResultRepository resultRepository;
@@ -163,10 +172,12 @@ public class AssessmentService {
         result.setNextActions(aiResult.nextActions());
         result = resultRepository.save(result);
 
+        List<AssessmentQuestionScoreDto> scoresCopy = normalizeQuestionScores(session.getQuestionScores());
+
         session.setStatus(STATUS_COMPLETED);
+        session.setQuestionScores(scoresCopy);
         sessionRepository.save(session);
 
-        List<AssessmentQuestionScoreDto> scoresCopy = CollectionUtils.copyList(session.getQuestionScores());
         AssessmentResultDto resultDto = toResultDto(result, scoresCopy);
         createReport(session, resultDto);
 
@@ -380,7 +391,7 @@ public class AssessmentService {
                 session.getTotalQuestions(),
                 currentQuestion,
                 questions,
-                CollectionUtils.copyList(session.getQuestionScores())
+                normalizeQuestionScores(session.getQuestionScores())
         );
     }
 
@@ -394,8 +405,37 @@ public class AssessmentService {
                 CollectionUtils.copyList(result.getStrengths()),
                 CollectionUtils.copyList(result.getWeaknesses()),
                 CollectionUtils.copyList(result.getNextActions()),
-                questionScores
+                normalizeQuestionScores(questionScores)
         );
+    }
+
+    private List<AssessmentQuestionScoreDto> normalizeQuestionScores(List<AssessmentQuestionScoreDto> questionScores) {
+        if (questionScores == null) {
+            return List.of();
+        }
+        return questionScores.stream()
+                .filter(score -> score != null)
+                .map(this::normalizeQuestionScore)
+                .toList();
+    }
+
+    private AssessmentQuestionScoreDto normalizeQuestionScore(AssessmentQuestionScoreDto score) {
+        return new AssessmentQuestionScoreDto(
+                score.questionIndex(),
+                score.score(),
+                emptyIfNull(score.dimension()),
+                emptyIfNull(score.feedback()),
+                CollectionUtils.copyList(score.problems()),
+                emptyIfNull(score.improvedExample()),
+                score.answerStructure() == null ? LEGACY_QUESTION_SCORE_STRUCTURE : score.answerStructure(),
+                CollectionUtils.copyList(score.followUpRisks()),
+                CollectionUtils.copyList(score.contentHighlights()),
+                CollectionUtils.copyList(score.contentGaps())
+        );
+    }
+
+    private String emptyIfNull(String value) {
+        return value == null ? "" : value;
     }
 
 }

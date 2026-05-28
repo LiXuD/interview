@@ -223,6 +223,54 @@ class AiStructuredOutputServiceTest {
         assertTrue(ex.getMessage().contains("assessmentQuestions"));
     }
 
+    // --- assessmentQuestionScore ---
+
+    @Test
+    void questionScoreRejectsMissingAnswerStructure() {
+        PlatformAiClient client = prompt -> """
+                {
+                  "questionIndex": 0,
+                  "score": 70,
+                  "dimension": "technicalDepth",
+                  "feedback": "反馈",
+                  "problems": ["缺少指标"],
+                  "improvedExample": "改进示例",
+                  "followUpRisks": ["追问指标"],
+                  "contentHighlights": ["结构清晰"],
+                  "contentGaps": ["缺少权衡"]
+                }
+                """;
+        assertThrows(AiParseException.class, () -> serviceWith(client).generateQuestionScore(
+                new AiPrompt(AiPrompt.TASK_ASSESSMENT_QUESTION_SCORE, "assessment-1", "system", "user")));
+    }
+
+    @Test
+    void questionScoreRejectsEmptyFollowUpRisks() {
+        PlatformAiClient client = prompt -> """
+                {
+                  "questionIndex": 0,
+                  "score": 70,
+                  "dimension": "technicalDepth",
+                  "feedback": "反馈",
+                  "problems": ["缺少指标"],
+                  "improvedExample": "改进示例",
+                  "answerStructure": {
+                    "background": "present: 背景清楚",
+                    "task": "partial: 任务不够具体",
+                    "action": "present: 行动明确",
+                    "result": "missing: 缺少结果",
+                    "tradeoff": "missing: 缺少权衡",
+                    "review": "missing: 缺少复盘"
+                  },
+                  "followUpRisks": [],
+                  "contentHighlights": ["结构清晰"],
+                  "contentGaps": ["缺少权衡"]
+                }
+                """;
+        assertThrows(AiParseException.class, () -> serviceWith(client).generateQuestionScore(
+                new AiPrompt(AiPrompt.TASK_ASSESSMENT_QUESTION_SCORE, "assessment-1", "system", "user")));
+    }
+
     // --- assessmentResult ---
 
     @Test

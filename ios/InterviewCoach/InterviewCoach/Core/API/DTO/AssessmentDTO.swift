@@ -43,6 +43,33 @@ struct AssessmentQuestionScoreDTO: Decodable, Equatable {
   let followUpRisks: [String]
   let contentHighlights: [String]
   let contentGaps: [String]
+
+  private enum CodingKeys: String, CodingKey {
+    case questionIndex
+    case score
+    case dimension
+    case feedback
+    case problems
+    case improvedExample
+    case answerStructure
+    case followUpRisks
+    case contentHighlights
+    case contentGaps
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    questionIndex = try container.decode(Int.self, forKey: .questionIndex)
+    score = try container.decode(Int.self, forKey: .score)
+    dimension = try container.decode(String.self, forKey: .dimension)
+    feedback = try container.decode(String.self, forKey: .feedback)
+    problems = try container.decodeIfPresent([String].self, forKey: .problems) ?? []
+    improvedExample = try container.decode(String.self, forKey: .improvedExample)
+    answerStructure = try container.decodeIfPresent(AnswerStructureDTO.self, forKey: .answerStructure)
+    followUpRisks = try container.decodeIfPresent([String].self, forKey: .followUpRisks) ?? []
+    contentHighlights = try container.decodeIfPresent([String].self, forKey: .contentHighlights) ?? []
+    contentGaps = try container.decodeIfPresent([String].self, forKey: .contentGaps) ?? []
+  }
 }
 
 struct AssessmentAnswerRequestDTO: Encodable {
