@@ -1300,6 +1300,29 @@ components:
           items:
             $ref: "#/components/schemas/AssessmentQuestionScoreDto"
 
+    AnswerStructureDto:
+      type: object
+      required:
+        - background
+        - task
+        - action
+        - result
+        - tradeoff
+        - review
+      properties:
+        background:
+          type: string
+        task:
+          type: string
+        action:
+          type: string
+        result:
+          type: string
+        tradeoff:
+          type: string
+        review:
+          type: string
+
     AssessmentQuestionScoreDto:
       type: object
       required:
@@ -1328,6 +1351,20 @@ components:
             type: string
         improvedExample:
           type: string
+        answerStructure:
+          $ref: "#/components/schemas/AnswerStructureDto"
+        followUpRisks:
+          type: array
+          items:
+            type: string
+        contentHighlights:
+          type: array
+          items:
+            type: string
+        contentGaps:
+          type: array
+          items:
+            type: string
 
     AssessmentAnswerRequest:
       type: object
@@ -1386,6 +1423,10 @@ components:
           type: array
           items:
             type: string
+        questionScores:
+          type: array
+          items:
+            $ref: "#/components/schemas/AssessmentQuestionScoreDto"
 
     # -- Training --
     TrainingPlanGenerateRequest:

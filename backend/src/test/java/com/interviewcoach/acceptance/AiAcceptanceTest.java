@@ -519,7 +519,18 @@ class AiAcceptanceTest {
                   "dimension": "technicalDepth",
                   "feedback": "回答覆盖了基本概念，但在技术深度方面仍需加强。",
                   "problems": ["缺少具体的技术指标"],
-                  "improvedExample": "在项目中，通过引入缓存和优化索引，将延迟从 800ms 降至 150ms。"
+                  "improvedExample": "在项目中，通过引入缓存和优化索引，将延迟从 800ms 降至 150ms。",
+                  "answerStructure": {
+                    "background": "present: 说明了项目背景",
+                    "task": "partial: 任务描述较笼统",
+                    "action": "present: 详细说明了优化方案",
+                    "result": "missing: 未给出具体数据",
+                    "tradeoff": "missing: 未讨论权衡",
+                    "review": "missing: 未进行复盘"
+                  },
+                  "followUpRisks": ["面试官可能追问具体指标"],
+                  "contentHighlights": ["技术方案合理"],
+                  "contentGaps": ["缺少量化数据"]
                 }
                 """;
     }

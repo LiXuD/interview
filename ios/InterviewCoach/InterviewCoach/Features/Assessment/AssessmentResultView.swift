@@ -40,6 +40,18 @@ struct AssessmentResultView: View {
                 }
             }
 
+            if let questionScores = result.questionScores, !questionScores.isEmpty {
+                Section("逐题诊断") {
+                    ForEach(questionScores, id: \.questionIndex) { qs in
+                        DisclosureGroup {
+                            perQuestionDetail(qs)
+                        } label: {
+                            questionScoreHeader(qs)
+                        }
+                    }
+                }
+            }
+
             if !result.strengths.isEmpty {
                 Section("优势") {
                     ForEach(result.strengths, id: \.self) { item in
@@ -66,6 +78,121 @@ struct AssessmentResultView: View {
                     }
                 }
             }
+        }
+    }
+
+    // MARK: - Per-question diagnosis
+
+    private func questionScoreHeader(_ qs: AssessmentQuestionScoreDTO) -> some View {
+        HStack {
+            Text("第 \(qs.questionIndex + 1) 题")
+                .font(.subheadline.bold())
+            Spacer()
+            Text("\(qs.score) 分")
+                .font(.subheadline.bold())
+                .foregroundStyle(scoreColor(qs.score))
+        }
+    }
+
+    @ViewBuilder
+    private func perQuestionDetail(_ qs: AssessmentQuestionScoreDTO) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(qs.feedback)
+                .font(.body)
+
+            if let highlights = qs.contentHighlights, !highlights.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("亮点")
+                        .font(.caption.bold())
+                        .foregroundStyle(.green)
+                    ForEach(highlights, id: \.self) { item in
+                        HStack(alignment: .top, spacing: 6) {
+                            Circle().fill(.green).frame(width: 5, height: 5).padding(.top, 5)
+                            Text(item).font(.caption)
+                        }
+                    }
+                }
+            }
+
+            if !qs.problems.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("不足")
+                        .font(.caption.bold())
+                        .foregroundStyle(.orange)
+                    ForEach(qs.problems, id: \.self) { item in
+                        HStack(alignment: .top, spacing: 6) {
+                            Circle().fill(.orange).frame(width: 5, height: 5).padding(.top, 5)
+                            Text(item).font(.caption)
+                        }
+                    }
+                }
+            }
+
+            if let gaps = qs.contentGaps, !gaps.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("内容缺失")
+                        .font(.caption.bold())
+                        .foregroundStyle(.red)
+                    ForEach(gaps, id: \.self) { item in
+                        HStack(alignment: .top, spacing: 6) {
+                            Circle().fill(.red).frame(width: 5, height: 5).padding(.top, 5)
+                            Text(item).font(.caption)
+                        }
+                    }
+                }
+            }
+
+            if let risks = qs.followUpRisks, !risks.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("追问风险")
+                        .font(.caption.bold())
+                        .foregroundStyle(.orange)
+                    ForEach(risks, id: \.self) { item in
+                        HStack(alignment: .top, spacing: 6) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.caption2)
+                                .foregroundStyle(.orange)
+                            Text(item).font(.caption)
+                        }
+                    }
+                }
+            }
+
+            if let structure = qs.answerStructure {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("回答结构诊断")
+                        .font(.caption.bold())
+                    structureRow("背景", value: structure.background)
+                    structureRow("任务", value: structure.task)
+                    structureRow("行动", value: structure.action)
+                    structureRow("结果", value: structure.result)
+                    structureRow("权衡", value: structure.tradeoff)
+                    structureRow("复盘", value: structure.review)
+                }
+            }
+
+            if !qs.improvedExample.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("改进示范")
+                        .font(.caption.bold())
+                        .foregroundStyle(.blue)
+                    Text(qs.improvedExample)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func structureRow(_ label: String, value: String) -> some View {
+        HStack(alignment: .top, spacing: 4) {
+            Text(label)
+                .font(.caption2.bold())
+                .frame(width: 28, alignment: .leading)
+            Text(value)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
         }
     }
 

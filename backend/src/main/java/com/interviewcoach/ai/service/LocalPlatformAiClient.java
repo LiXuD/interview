@@ -2,6 +2,7 @@ package com.interviewcoach.ai.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.interviewcoach.common.api.AnswerStructureDto;
 import com.interviewcoach.common.api.AssessmentDimensionName;
 import com.interviewcoach.common.api.AssessmentQuestionDto;
 import com.interviewcoach.common.api.AssessmentQuestionScoreDto;
@@ -112,7 +113,18 @@ public class LocalPlatformAiClient implements PlatformAiClient {
                 AssessmentDimensionName.TECHNICAL_DEPTH,
                 "回答覆盖了基本概念，但在技术深度和量化表达方面仍需加强。建议按照'问题→方案→指标'的结构重新组织。",
                 List.of("缺少具体的技术指标", "未说明性能优化的对比数据"),
-                "在项目中，我负责优化订单服务的接口性能。通过引入 Redis 缓存热点数据、优化 SQL 索引和引入异步处理，将 P99 延迟从 800ms 降至 150ms，QPS 从 200 提升至 1200。"
+                "在项目中，我负责优化订单服务的接口性能。通过引入 Redis 缓存热点数据、优化 SQL 索引和引入异步处理，将 P99 延迟从 800ms 降至 150ms，QPS 从 200 提升至 1200。",
+                new AnswerStructureDto(
+                        "present: 明确说明了项目背景和技术场景",
+                        "partial: 任务描述较笼统",
+                        "present: 详细说明了缓存和索引优化方案",
+                        "missing: 未给出优化前后的具体数据对比",
+                        "missing: 未讨论技术选型的权衡",
+                        "missing: 未进行复盘反思"
+                ),
+                List.of("面试官可能追问具体的性能数据对比", "面试官可能追问 Redis 缓存穿透如何处理"),
+                List.of("技术方案选择合理", "排查思路清晰"),
+                List.of("缺少量化指标", "未说明技术权衡")
         );
     }
 
@@ -129,7 +141,8 @@ public class LocalPlatformAiClient implements PlatformAiClient {
                 ),
                 List.of("具备实际项目经验，问题排查思路清晰", "Java 和 Spring Boot 基础扎实"),
                 List.of("系统设计能力需要加强，特别是容量规划和扩展性方面", "数据库深度优化经验不足"),
-                List.of("重点复习系统设计中的容量评估方法", "练习数据库查询优化案例", "准备分布式一致性相关面试题")
+                List.of("重点复习系统设计中的容量评估方法", "练习数据库查询优化案例", "准备分布式一致性相关面试题"),
+                List.of()
         );
     }
 

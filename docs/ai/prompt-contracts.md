@@ -479,12 +479,38 @@ Task 18-25 将在现有 AI task 基础上扩展以下契约。实现前必须同
 
 ### 11.2 逐题评分与回答结构诊断
 
-Task 23 的测评结果必须支持逐题诊断：
+Task 23 的测评结果必须支持逐题诊断。`assessmentQuestionScore` 任务的 AI 输出 JSON 结构：
 
-- 每题独立评分。
-- 每题输出亮点、短板、改进示范和真实面试追问风险。
-- 诊断回答结构：背景、任务、行动、结果、权衡、复盘。
-- 聚合总分、维度分、主要短板和下一步训练建议。
+```json
+{
+  "questionIndex": 0,
+  "score": 75,
+  "dimension": "technicalDepth",
+  "feedback": "回答覆盖了基本概念，但在技术深度和量化表达方面仍需加强。",
+  "problems": ["缺少具体的技术指标", "未说明性能优化的对比数据"],
+  "improvedExample": "在项目中，我负责优化订单服务的接口性能。通过引入 Redis 缓存热点数据、优化 SQL 索引，将 P99 延迟从 800ms 降至 150ms。",
+  "answerStructure": {
+    "background": "present: 明确说明了项目背景和技术场景",
+    "task": "partial: 任务描述较笼统",
+    "action": "present: 详细说明了缓存和索引优化方案",
+    "result": "missing: 未给出优化前后的具体数据对比",
+    "tradeoff": "missing: 未讨论技术选型的权衡",
+    "review": "missing: 未进行复盘反思"
+  },
+  "followUpRisks": ["面试官可能追问具体的性能数据对比", "面试官可能追问 Redis 缓存穿透如何处理"],
+  "contentHighlights": ["技术方案选择合理", "排查思路清晰"],
+  "contentGaps": ["缺少量化指标", "未说明技术权衡"]
+}
+```
+
+字段约束：
+
+- `answerStructure` 诊断 STAR+ 结构（背景 background、任务 task、行动 action、结果 result、权衡 tradeoff、复盘 review）。
+- 每个 `answerStructure` 字段格式为 `"状态: 简短评语"`，状态只能是 `present`、`partial` 或 `missing`。
+- `followUpRisks` 至少 1 条，列出真实面试官可能追问的薄弱点。
+- `contentHighlights` 和 `contentGaps` 为非空列表。
+- `improvedExample` 必须基于候选人已确认的真实经历改写，禁止编造新项目。
+- 聚合总分、维度分、主要短板和下一步训练建议由 `assessmentResult` 任务在汇总所有逐题诊断后输出。
 
 ### 11.3 教练记忆生成
 

@@ -6,6 +6,7 @@ struct AssessmentReportContent: Decodable {
     let strengths: [String]
     let weaknesses: [String]
     let nextActions: [String]
+    let questionScores: [AssessmentQuestionScoreDTO]?
 }
 
 struct MockInterviewReportContent: Decodable {

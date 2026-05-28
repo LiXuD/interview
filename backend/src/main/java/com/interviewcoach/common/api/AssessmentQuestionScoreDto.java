@@ -8,6 +8,10 @@ public record AssessmentQuestionScoreDto(
         String dimension,
         String feedback,
         List<String> problems,
-        String improvedExample
+        String improvedExample,
+        AnswerStructureDto answerStructure,
+        List<String> followUpRisks,
+        List<String> contentHighlights,
+        List<String> contentGaps
 ) {
 }

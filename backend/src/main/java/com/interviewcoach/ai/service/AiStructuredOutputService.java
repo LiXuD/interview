@@ -138,6 +138,17 @@ public class AiStructuredOutputService {
         requireText(dto.feedback(), "feedback");
         requireList(dto.problems(), "problems");
         requireText(dto.improvedExample(), "improvedExample");
+        requireList(dto.followUpRisks(), "followUpRisks");
+        requireList(dto.contentHighlights(), "contentHighlights");
+        requireList(dto.contentGaps(), "contentGaps");
+        if (dto.answerStructure() != null) {
+            requireText(dto.answerStructure().background(), "answerStructure.background");
+            requireText(dto.answerStructure().task(), "answerStructure.task");
+            requireText(dto.answerStructure().action(), "answerStructure.action");
+            requireText(dto.answerStructure().result(), "answerStructure.result");
+            requireText(dto.answerStructure().tradeoff(), "answerStructure.tradeoff");
+            requireText(dto.answerStructure().review(), "answerStructure.review");
+        }
     }
 
     public AssessmentResultDto generateAssessmentResult(AiPrompt prompt) {

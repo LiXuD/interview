@@ -62,6 +62,10 @@ struct ReportDetailView: View {
             dimensionSection(c.dimensions)
         }
 
+        if let questionScores = c.questionScores, !questionScores.isEmpty {
+            perQuestionDiagnosisSection(questionScores)
+        }
+
         if !c.strengths.isEmpty {
             bulletSection(title: "优势", items: c.strengths, color: .green)
         }
@@ -70,6 +74,84 @@ struct ReportDetailView: View {
         }
         if !c.nextActions.isEmpty {
             bulletSection(title: "下一步行动", items: c.nextActions, color: .blue)
+        }
+    }
+
+    private func perQuestionDiagnosisSection(_ questionScores: [AssessmentQuestionScoreDTO]) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("逐题诊断")
+                .font(.subheadline.bold())
+
+            ForEach(questionScores, id: \.questionIndex) { qs in
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("第 \(qs.questionIndex + 1) 题 · \(qs.dimension)")
+                            .font(.subheadline.bold())
+                        Spacer()
+                        Text("\(qs.score) 分")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(scoreColor(qs.score))
+                    }
+
+                    Text(qs.feedback)
+                        .font(.caption)
+
+                    if let highlights = qs.contentHighlights, !highlights.isEmpty {
+                        bulletMini(title: "亮点", items: highlights, color: .green)
+                    }
+
+                    if !qs.problems.isEmpty {
+                        bulletMini(title: "不足", items: qs.problems, color: .orange)
+                    }
+
+                    if let risks = qs.followUpRisks, !risks.isEmpty {
+                        bulletMini(title: "追问风险", items: risks, color: .orange)
+                    }
+
+                    if let structure = qs.answerStructure {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("回答结构").font(.caption2.bold())
+                            structureMiniRow("背景", value: structure.background)
+                            structureMiniRow("任务", value: structure.task)
+                            structureMiniRow("行动", value: structure.action)
+                            structureMiniRow("结果", value: structure.result)
+                            structureMiniRow("权衡", value: structure.tradeoff)
+                            structureMiniRow("复盘", value: structure.review)
+                        }
+                    }
+
+                    if !qs.improvedExample.isEmpty {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("改进示范").font(.caption2.bold()).foregroundStyle(.blue)
+                            Text(qs.improvedExample)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .padding(10)
+                .background(Color(.secondarySystemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+        }
+    }
+
+    private func bulletMini(title: String, items: [String], color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title).font(.caption2.bold()).foregroundStyle(color)
+            ForEach(items, id: \.self) { item in
+                HStack(alignment: .top, spacing: 4) {
+                    Circle().fill(color).frame(width: 4, height: 4).padding(.top, 4)
+                    Text(item).font(.caption2)
+                }
+            }
+        }
+    }
+
+    private func structureMiniRow(_ label: String, value: String) -> some View {
+        HStack(alignment: .top, spacing: 4) {
+            Text(label).font(.caption2.bold()).frame(width: 24, alignment: .leading)
+            Text(value).font(.caption2).foregroundStyle(.secondary)
         }
     }
 

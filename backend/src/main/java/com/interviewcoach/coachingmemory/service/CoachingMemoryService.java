@@ -6,6 +6,7 @@ import com.interviewcoach.coachingmemory.entity.CoachingMemory;
 import com.interviewcoach.coachingmemory.entity.CoachingMemoryItem;
 import com.interviewcoach.coachingmemory.repository.CoachingMemoryRepository;
 import com.interviewcoach.common.api.AssessmentQuestionDto;
+import com.interviewcoach.common.api.AssessmentQuestionScoreDto;
 import com.interviewcoach.common.api.AssessmentResultDto;
 import com.interviewcoach.common.api.CoachingMemoryCorrectionRequest;
 import com.interviewcoach.common.api.CoachingMemoryDto;
@@ -64,9 +65,10 @@ public class CoachingMemoryService {
     public CoachingMemoryDto generateFromAssessment(User user, UUID targetId,
                                                     AssessmentResultDto resultDto,
                                                     List<AssessmentQuestionDto> questions,
+                                                    List<AssessmentQuestionScoreDto> questionScores,
                                                     UUID sessionId) {
         InterviewTarget target = findTarget(targetId, user.getId());
-        AiPrompt prompt = buildAssessmentPrompt(target, resultDto, questions);
+        AiPrompt prompt = buildAssessmentPrompt(target, resultDto, questions, questionScores);
         return generateAndSave(user, target, "assessment", sessionId, prompt);
     }
 
@@ -173,7 +175,8 @@ public class CoachingMemoryService {
 
     private AiPrompt buildAssessmentPrompt(InterviewTarget target,
                                            AssessmentResultDto resultDto,
-                                           List<AssessmentQuestionDto> questions) {
+                                           List<AssessmentQuestionDto> questions,
+                                           List<AssessmentQuestionScoreDto> questionScores) {
         String systemPrompt = SYSTEM_PROMPT_TEMPLATE.formatted("测评结果", "测评");
 
         StringBuilder qaBuilder = new StringBuilder();
@@ -190,6 +193,35 @@ public class CoachingMemoryService {
                 AssessmentQuestionDto q = questions.get(i);
                 qaBuilder.append("  Q%d [%s/%s]: %s\n".formatted(
                         i + 1, q.dimension(), q.difficulty(), q.question()));
+            }
+        }
+        if (questionScores != null && !questionScores.isEmpty()) {
+            qaBuilder.append("\n逐题诊断:\n");
+            for (AssessmentQuestionScoreDto s : questionScores) {
+                qaBuilder.append("  Q%d [%s] %d 分:\n".formatted(
+                        s.questionIndex() + 1, s.dimension(), s.score()));
+                qaBuilder.append("    反馈: %s\n".formatted(s.feedback()));
+                if (s.problems() != null && !s.problems().isEmpty()) {
+                    qaBuilder.append("    问题: %s\n".formatted(String.join("；", s.problems())));
+                }
+                if (s.followUpRisks() != null && !s.followUpRisks().isEmpty()) {
+                    qaBuilder.append("    追问风险: %s\n".formatted(String.join("；", s.followUpRisks())));
+                }
+                if (s.contentHighlights() != null && !s.contentHighlights().isEmpty()) {
+                    qaBuilder.append("    内容亮点: %s\n".formatted(String.join("；", s.contentHighlights())));
+                }
+                if (s.contentGaps() != null && !s.contentGaps().isEmpty()) {
+                    qaBuilder.append("    内容短板: %s\n".formatted(String.join("；", s.contentGaps())));
+                }
+                if (s.answerStructure() != null) {
+                    qaBuilder.append("    回答结构: 背景=%s, 任务=%s, 行动=%s, 结果=%s, 权衡=%s, 复盘=%s\n".formatted(
+                            s.answerStructure().background(),
+                            s.answerStructure().task(),
+                            s.answerStructure().action(),
+                            s.answerStructure().result(),
+                            s.answerStructure().tradeoff(),
+                            s.answerStructure().review()));
+                }
             }
         }
 

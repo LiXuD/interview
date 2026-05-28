@@ -118,7 +118,11 @@ public class AssessmentService {
                 question.dimension(),
                 aiScore.feedback(),
                 CollectionUtils.copyList(aiScore.problems()),
-                aiScore.improvedExample()
+                aiScore.improvedExample(),
+                aiScore.answerStructure(),
+                CollectionUtils.copyList(aiScore.followUpRisks()),
+                CollectionUtils.copyList(aiScore.contentHighlights()),
+                CollectionUtils.copyList(aiScore.contentGaps())
         );
 
         // Store scores
@@ -167,7 +171,8 @@ public class AssessmentService {
 
         try {
             coachingMemoryService.generateFromAssessment(
-                    session.getUser(), session.getTarget().getId(), resultDto, session.getQuestions(), sessionId);
+                    session.getUser(), session.getTarget().getId(), resultDto, session.getQuestions(),
+                    CollectionUtils.copyList(session.getQuestionScores()), sessionId);
         } catch (Exception ex) {
             log.warn("Failed to generate coaching memory for assessment {}", sessionId, ex);
         }
@@ -282,7 +287,7 @@ public class AssessmentService {
 
     private AiPrompt buildQuestionScorePrompt(AssessmentSession session, AssessmentQuestionDto question, String answer, int questionIndex) {
         String systemPrompt = """
-                你是 AI 技术面试教练，对候选人的一道面试回答进行逐题评分。
+                你是 AI 技术面试教练，对候选人的一道面试回答进行逐题评分与结构诊断。
                 只返回合法 JSON 对象，不返回任何其他文字。
 
                 JSON 结构必须严格如下：
@@ -292,13 +297,31 @@ public class AssessmentService {
                   "dimension": "维度名",
                   "feedback": "反馈内容",
                   "problems": ["问题1"],
-                  "improvedExample": "改进后的示范回答"
+                  "improvedExample": "改进后的示范回答",
+                  "answerStructure": {
+                    "background": "present: 候选人清晰说明了项目背景",
+                    "task": "partial: 任务描述不够具体",
+                    "action": "present: 详细说明了技术方案",
+                    "result": "missing: 未说明最终结果和指标",
+                    "tradeoff": "missing: 未讨论技术权衡",
+                    "review": "missing: 未进行复盘反思"
+                  },
+                  "followUpRisks": ["面试官可能追问具体 QPS 数据"],
+                  "contentHighlights": ["技术方案选择合理"],
+                  "contentGaps": ["缺少量化指标"]
                 }
 
                 score 范围 0-100。
                 feedback 必须针对该回答的具体内容给出，禁止泛泛而谈。
                 problems 必须指出回答中的具体不足，至少 1 条。
                 improvedExample 必须基于候选人已确认的真实经历改写，禁止编造新项目。
+
+                answerStructure 诊断回答的 STAR+ 结构（背景 background、任务 task、行动 action、结果 result、权衡 tradeoff、复盘 review）。
+                每个字段格式为 "状态: 简短评语"，状态只能是 present、partial 或 missing。
+
+                followUpRisks 列出真实面试官可能追问的薄弱点，至少 1 条。
+                contentHighlights 列出回答中的具体亮点。
+                contentGaps 列出回答中的内容缺失或不足。
                 """.formatted(questionIndex);
         String userPrompt = """
                 题号：%d（共 %d 题）
@@ -369,7 +392,8 @@ public class AssessmentService {
                         .toList(),
                 CollectionUtils.copyList(result.getStrengths()),
                 CollectionUtils.copyList(result.getWeaknesses()),
-                CollectionUtils.copyList(result.getNextActions())
+                CollectionUtils.copyList(result.getNextActions()),
+                CollectionUtils.copyList(result.getSession().getQuestionScores())
         );
     }
 

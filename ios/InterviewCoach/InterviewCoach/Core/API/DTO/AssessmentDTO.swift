@@ -23,6 +23,15 @@ struct AssessmentQuestionDTO: Decodable, Equatable {
   let rubric: [String]
 }
 
+struct AnswerStructureDTO: Decodable, Equatable {
+  let background: String
+  let task: String
+  let action: String
+  let result: String
+  let tradeoff: String
+  let review: String
+}
+
 struct AssessmentQuestionScoreDTO: Decodable, Equatable {
   let questionIndex: Int
   let score: Int
@@ -30,6 +39,10 @@ struct AssessmentQuestionScoreDTO: Decodable, Equatable {
   let feedback: String
   let problems: [String]
   let improvedExample: String
+  let answerStructure: AnswerStructureDTO?
+  let followUpRisks: [String]?
+  let contentHighlights: [String]?
+  let contentGaps: [String]?
 }
 
 struct AssessmentAnswerRequestDTO: Encodable {
@@ -49,4 +62,5 @@ struct AssessmentResultDTO: Decodable, Equatable {
   let strengths: [String]
   let weaknesses: [String]
   let nextActions: [String]
+  let questionScores: [AssessmentQuestionScoreDTO]?
 }
