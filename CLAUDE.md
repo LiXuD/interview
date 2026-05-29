@@ -16,7 +16,7 @@
 
 MVP 只验收这条最窄闭环。只要这条路径不完整，就不算 MVP 完成。
 
-当前 Task 1-17 全部完成：MVP 功能闭环、TestFlight 提审前置认证、Post-MVP AI 质量闭环（平台默认真实 AI 接入、CandidateProfile AI 摘要、AI Prompt 契约补齐、AI 质量迭代）。下一阶段已批准为 Task 18-25：Post-MVP Real AI Adaptive Coaching（真实 AI 自适应面试教练阶段）。MVP 完成后的新增开发必须继续服务 AI 面试教练定位，并且只能按 `docs/product/vibecoding-development-plan.md` 中已批准的 Post-MVP 任务推进。
+Task 1-25 全部完成：MVP 功能闭环、Post-MVP AI 质量闭环、Post-MVP Real AI Adaptive Coaching。Spring AI 底座迁移 Phase 2-6 已完成。MVP 完成后的新增开发必须继续服务 AI 面试教练定位，并且只能按 `docs/product/vibecoding-development-plan.md` 中已批准的 Post-MVP 任务推进。
 
 ## 2. MVP 范围
 

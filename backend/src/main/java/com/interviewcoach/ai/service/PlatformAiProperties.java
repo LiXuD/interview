@@ -31,10 +31,6 @@ public class PlatformAiProperties {
     public void setRequireRealForCoaching(boolean requireRealForCoaching) { this.requireRealForCoaching = requireRealForCoaching; }
 
     public boolean isComplete() {
-        return !isBlank(baseUrl) && !isBlank(apiKey) && !isBlank(model) && !isBlank(mode);
-    }
-
-    private static boolean isBlank(String value) {
-        return value == null || value.isBlank();
+        return !AiStrings.isBlank(baseUrl) && !AiStrings.isBlank(apiKey) && !AiStrings.isBlank(model) && !AiStrings.isBlank(mode);
     }
 }

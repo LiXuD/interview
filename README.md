@@ -81,9 +81,7 @@ interview/
 └── scripts/
 ```
 
-当前仓库已完成 Task 1-13：Walking Skeleton、OpenAPI 契约与 DTO、Dev Login 认证链路、Target CRUD、CandidateProfile 隐私链路、Platform AI + JobBrief、Assessment 5 题测评、TrainingPlan 1 天任务、MockInterview 文字模拟面试、User OpenAI Provider、Delete Account、TestFlight Polish、Sign in with Apple。MVP 闭环已全部打通。
-
-说明：MVP 阶段已打通完整功能路径。Post-MVP AI 质量阶段已全部完成：Task 14（平台默认真实 AI 接入）、Task 15（CandidateProfile AI 摘要生成）、Task 16（AI Prompt 契约补齐）、Task 17（AI 质量迭代）。下一阶段已批准为 Post-MVP Real AI Adaptive Coaching（Task 18-25），目标是用真实 AI、结构化测评、教练记忆、用户纠错、逐题诊断和自适应训练/模拟面试，把产品从一次性测评工具升级为持续理解用户的面试教练。
+当前仓库已完成 Task 1-25：MVP 闭环（Walking Skeleton → OpenAPI → Dev Login → Target CRUD → CandidateProfile → JobBrief → Assessment → TrainingPlan → MockInterview → User Provider → Delete Account → TestFlight Polish → Sign in with Apple）、Post-MVP AI 质量闭环（Task 14-17）、Post-MVP Real AI Adaptive Coaching（Task 18-25）。Spring AI 底座迁移 Phase 2-6 已完成，AI 调用通过 `AiModelGateway` 统一路由到 Spring AI 或旧客户端。
 
 ## 开发计划
 
@@ -169,66 +167,28 @@ Task 18 起，测评出题、测评评分、训练计划/反馈、模拟面试�
 
 ## 当前状态
 
-当前阶段：Post-MVP Real AI Adaptive Coaching 已完成 Task 18（开发环境真实 AI 基线），下一步进入 Task 19（真实 AI 验收样例集）。
+所有计划内任务已完成：Task 1-25（MVP + Post-MVP AI 质量 + Real AI Adaptive Coaching）。Spring AI 底座迁移 Phase 2-6 已完成，AI 调用已通过 `AiModelGateway` 统一路由到 Spring AI `ChatClient`（`chatCompletions` 模式）或旧客户端（`responses` 模式）。
 
 已完成：
 
-- Task 1：Spring Boot 后端 health API、SwiftUI iOS App 壳、OpenAPI health 契约。
-- Task 2：完整 OpenAPI 契约（29 个路径、30+ 个 Schema、bearerAuth 安全方案）。
-- Task 2：后端 33 个 Java record DTO（`common/api` + `common/error`）。
-- Task 2：iOS 10 个 Swift Codable DTO 文件（`Core/API/DTO/`）。
-- Task 3：后端 JWT 签发/验证（jjwt）、Spring Security Bearer Token 拦截器链、User 实体与 Repository。
-- Task 3：后端 AuthController（dev-login、logout）和 UserController（GET/DELETE /api/me）。
-- Task 3：iOS KeychainHelper、APIClient actor、AuthService（ObservableObject）、DevLoginView。
-- Task 3：AppRootView auth gating、infra/docker-compose.yml（PostgreSQL）。
-- Task 4：后端 InterviewTarget 实体、Repository、Service、Controller（5 个 REST 端点）。
-- Task 4：后端 TargetNotFoundException、status 白名单校验、8 个集成测试。
-- Task 4：iOS TargetListView、TargetCreateView、TargetDetailView。
-- Task 4：iOS TargetLocal SwiftData 模型、TargetStatusHelper 共享 UI 组件。
-- Task 5：后端 CandidateProfile 实体、Repository、Service（Stub draft）、Controller（3 个端点）。
-- Task 5：后端 ProfileNotFoundException、隐私约束（原文内存使用、不记录日志）。
-- Task 5：iOS CandidateProfileLocal SwiftData 模型、ProfileInputView、ProfileConfirmView。
-- Task 5：docs/privacy/data-policy.md 隐私文档。
-- Task 6：后端 PlatformAiClient 接口 + LocalPlatformAiClient（stub）、AiStructuredOutputService（generateJobBrief + retry）。
-- Task 6：后端 JobBrief 实体、Repository、Service、Controller（2 个端点）、6 个集成测试。
-- Task 6：iOS JobBriefView（岗位画像展示 + 重新生成）。
-- Task 7：后端 AssessmentSession/AssessmentResult/Report 实体、AssessmentDimension @Embeddable。
-- Task 7：后端 AssessmentService（start/answer/finish 流程 + 状态机）、AssessmentController（4 端点）。
-- Task 7：后端 ReportService/ReportController、6 个集成测试。
-- Task 7：iOS AssessmentView（答题流程）、AssessmentResultView（评分展示）。
-- 代码清理：提取 SecurityUtils.currentUser()、AI 泛型重试方法、ReportNotFoundException。
-- Task 8：后端 TrainingPlan/TrainingTask/TrainingFeedback 实体、3 个 Repository、TrainingService。
-- Task 8：后端 TrainingPlanController + TrainingTaskController（4 个端点）、7 个集成测试。
-- Task 8：AiStructuredOutputService 扩展（generateTrainingPlan + generateTrainingFeedback）。
-- Task 8：iOS TrainingPlanView（生成/查看计划）、TrainingTaskView（答题+反馈+完成）。
-- Task 9：后端 MockInterview/MockInterviewMessage 实体、2 个 Repository、MockInterviewService。
-- Task 9：后端 MockInterviewController（4 个端点）、5 个集成测试。
-- Task 9：AiStructuredOutputService 扩展（generateMockInterviewQuestion + generateMockInterviewReport）。
-- Task 9：iOS MockInterviewView（聊天界面）、MockInterviewResultView（报告展示）。
-- Task 9：InterviewTargetService + AuthService 级联删除 MockInterview。
-- Task 10：后端 AiProvider 实体（@ManyToOne User）、Repository、Service、Controller（5 个端点）。
-- Task 10：后端 ApiKeyEncryption（AES-GCM）、OpenAiCompatibleClient（chatCompletions + responses）。
-- Task 10：后端 AiStructuredOutputService Provider 路由（SecurityContextHolder → 默认 Provider → OpenAiCompatibleClient / 平台 AI）。
-- Task 10：后端 7 个集成测试（全生命周期、认证、跨用户隔离、级联删除、API Key 不泄露）。
-- Task 10：iOS SettingsView、AiProviderListView（列表+默认切换+滑动删除）、AiProviderCreateView（创建表单+连接测试）。
-- Task 11：后端无改动，DELETE /api/me 已在 Task 3+10 中完整实现（10 张表级联删除）。
-- Task 11：iOS AuthService 新增 deleteAccount() 方法（调用 DELETE /api/me 后 logout 清除本地登录态和业务缓存；Post-MVP 本机教练记忆按 Task 25 规则默认保留）。
-- Task 11：iOS SettingsView 新增删除账号区域 + confirmationDialog 二次确认。
-- Task 11：后端 9 个测试通过（deleteMeWithValidTokenReturns204 + deleteUserAfterProfileConfirmSucceeds）。
-- Task 13：后端 User 实体新增 appleUserId（unique）+ email 字段。
-- Task 13：后端 AppleTokenVerifier（RS256 RSA 公钥验签 + JWKS 缓存 1 小时 TTL + nonce 重放保护）。
-- Task 13：后端 AppleLoginRequest DTO（identityToken + nonce 必填）、AuthService.appleLogin() + findOrCreateAppleUser()。
-- Task 13：后端 AuthController POST /api/auth/apple 端点、SecurityConfig permitAll。
-- Task 13：后端 54 个测试全部通过。
-- Task 13：iOS LoginView（SignInWithAppleButton + CryptoKit nonce 生成 + #if DEBUG dev login 入口）。
-- Task 13：iOS AuthService.appleLogin()、AppleLoginRequestDTO（含 nonce）、performLogin 通用方法。
-- Task 13：iOS InterviewCoach.entitlements（com.apple.developer.applesignin array）。
-- Task 13：OpenAPI 新增 /api/auth/apple 路径、AppleLoginRequest schema（nonce required）、错误响应 401。
-- Task 18：后端新增 AI runtime status 接口，区分 `realUserProvider`、`realPlatformProvider`、`stubOnly`、`unavailable`。
-- Task 18：核心教练路径在真实 AI 未可用时阻止继续，测试/CI/离线演示保留显式 stub 能力。
-- Task 18：iOS Settings 展示 AI 运行状态，测评、训练、模拟面试入口调用状态门禁。
-- Task 18：OpenAPI、Provider 规约、README、CLAUDE 同步真实 AI 开发基线。
+- Task 1-13：MVP 闭环全部打通（Walking Skeleton → OpenAPI → Dev Login → Target CRUD → CandidateProfile → JobBrief → Assessment → TrainingPlan → MockInterview → User Provider → Delete Account → TestFlight Polish → Sign in with Apple）。
+- Task 14-17：Post-MVP AI 质量闭环（平台默认真实 AI 接入、CandidateProfile AI 摘要、AI Prompt 契约补齐、AI 质量迭代）。
+- Task 18-25：Post-MVP Real AI Adaptive Coaching（开发环境真实 AI 基线、真实 AI 验收样例、固定 5 题结构化测评、教练记忆、用户纠错与记忆可信度、逐题评分与回答结构诊断、自适应专项训练、自适应模拟面试增强与本地记忆策略）。
+- Spring AI 底座迁移：Phase 2（依赖引入）→ Phase 3（平台 Provider 迁移）→ Phase 4（用户 Provider 迁移）→ Phase 5（结构化输出升级）→ Phase 6（Advisor 与记忆增强）。
 
-尚未创建：
+当前架构：
 
-- 无（Task 1-18 已按当前计划完成）。
+```text
+业务模块 → AiStructuredOutputService → AiModelGateway
+  ├── SpringAiPlatformClient（平台默认 AI，chatCompletions 模式）
+  ├── SpringAiUserProviderClient（用户自定义 Provider，chatCompletions 模式）
+  ├── PlatformRealAiClient（平台默认 AI，responses 模式回退）
+  ├── OpenAiCompatibleClient（用户 Provider，responses 模式回退）
+  └── LocalPlatformAiClient（仅测试/离线演示/CI）
+```
+
+环境变量（Spring AI 相关）：
+
+- `IC_SPRING_AI_ENABLED`：Spring AI 灰度开关，默认 `false`。设为 `true` 时平台和用户的 `chatCompletions` 模式走 Spring AI 路径。
+- `IC_AI_HTTP_CONNECT_TIMEOUT_MS`：AI HTTP 连接超时，默认 5000ms。
+- `IC_AI_HTTP_READ_TIMEOUT_MS`：AI HTTP 读取超时，默认 60000ms。

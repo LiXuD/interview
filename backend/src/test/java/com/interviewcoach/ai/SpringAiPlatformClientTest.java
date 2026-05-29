@@ -5,8 +5,11 @@ import com.interviewcoach.ai.service.AiPrompt;
 import com.interviewcoach.ai.service.PlatformAiProperties;
 import com.interviewcoach.ai.service.SpringAiPlatformClient;
 import com.interviewcoach.common.api.CandidateProfileDraftDto;
+import com.interviewcoach.common.error.AiProviderCallFailedException;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -14,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SpringAiPlatformClientTest {
 
@@ -87,6 +91,47 @@ class SpringAiPlatformClientTest {
         } finally {
             server.stop(0);
         }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"baseUrl", "apiKey", "model", "mode"})
+    void generateJsonThrowsOnBlankConfig(String blankField) {
+        PlatformAiProperties platformProperties = new PlatformAiProperties();
+        platformProperties.setBaseUrl("http://example.com/v1");
+        platformProperties.setApiKey("sk-test");
+        platformProperties.setModel("gpt-test");
+        platformProperties.setMode("chatCompletions");
+        switch (blankField) {
+            case "baseUrl" -> platformProperties.setBaseUrl("");
+            case "apiKey" -> platformProperties.setApiKey("");
+            case "model" -> platformProperties.setModel("");
+            case "mode" -> platformProperties.setMode("");
+        }
+        AiHttpProperties httpProperties = new AiHttpProperties();
+        SpringAiPlatformClient client = new SpringAiPlatformClient(platformProperties, httpProperties);
+
+        AiPrompt prompt = new AiPrompt(AiPrompt.TASK_JOB_BRIEF, "t1", "sys", "usr");
+        assertThatThrownBy(() -> client.generateJson(prompt))
+                .isInstanceOf(AiProviderCallFailedException.class)
+                .hasMessageContaining("configuration is incomplete")
+                .hasMessageContaining(AiPrompt.TASK_JOB_BRIEF)
+                .hasMessageNotContaining("sk-test");
+    }
+
+    @Test
+    void generateEntityThrowsOnBlankConfig() {
+        PlatformAiProperties platformProperties = new PlatformAiProperties();
+        platformProperties.setBaseUrl("");
+        platformProperties.setApiKey("sk-test");
+        platformProperties.setModel("gpt-test");
+        platformProperties.setMode("chatCompletions");
+        AiHttpProperties httpProperties = new AiHttpProperties();
+        SpringAiPlatformClient client = new SpringAiPlatformClient(platformProperties, httpProperties);
+
+        AiPrompt prompt = new AiPrompt(AiPrompt.TASK_JOB_BRIEF, "t1", "sys", "usr");
+        assertThatThrownBy(() -> client.generateEntity(prompt, Object.class))
+                .isInstanceOf(AiProviderCallFailedException.class)
+                .hasMessageContaining("configuration is incomplete");
     }
 
     private HttpServer startOpenAiCompatibleServer(AtomicReference<String> authorization,

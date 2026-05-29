@@ -20,7 +20,7 @@ MVP 最窄闭环必须是：
 
 所有新增功能必须服务这条闭环。
 
-当前 MVP 功能闭环已完成。MVP 之后的新增内容必须继续服务 AI 面试教练定位，并且只能按 `docs/product/vibecoding-development-plan.md` 中已批准的 Post-MVP 任务推进；Post-MVP AI 质量闭环（Task 14-17）已全部完成。下一阶段已批准为 Post-MVP Real AI Adaptive Coaching（Task 18-25）：开发环境真实 AI 基线、真实 AI 验收样例、结构化测评、教练记忆、用户纠错、逐题诊断、自适应训练和自适应模拟面试增强。
+当前 MVP 功能闭环已完成。MVP 之后的新增内容必须继续服务 AI 面试教练定位，并且只能按 `docs/product/vibecoding-development-plan.md` 中已批准的 Post-MVP 任务推进。Post-MVP AI 质量闭环（Task 14-17）和 Post-MVP Real AI Adaptive Coaching（Task 18-25）已全部完成。Spring AI 底座迁移 Phase 2-6 已完成，AI 调用通过 `AiModelGateway` 统一路由到 Spring AI 或旧客户端（灰度开关 `IC_SPRING_AI_ENABLED`）。
 
 ## 硬约束
 

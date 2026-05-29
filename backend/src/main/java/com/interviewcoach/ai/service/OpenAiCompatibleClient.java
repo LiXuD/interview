@@ -132,11 +132,7 @@ public class OpenAiCompatibleClient {
 
     private String providerCallFailure(String operation, String model, String mode) {
         return "OpenAI-compatible provider call failed. operation=" + operation
-                + " model=" + safe(model)
-                + " mode=" + safe(mode);
-    }
-
-    private String safe(String value) {
-        return value == null || value.isBlank() ? "unknown" : value;
+                + " model=" + AiStrings.safe(model)
+                + " mode=" + AiStrings.safe(mode);
     }
 }

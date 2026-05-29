@@ -99,19 +99,17 @@ public class DefaultAiModelGateway implements AiModelGateway {
     }
 
     private <T> T generateEntityFromPlatformProvider(AiPrompt prompt, Class<T> responseType) {
-        if (springAiProperties == null
-                || !springAiProperties.isEnabled()
-                || !(platformAiClient instanceof SpringAiPlatformClient springAiPlatformClient)) {
+        if (springAiProperties == null || !springAiProperties.isEnabled()) {
             return null;
         }
         try {
-            return springAiPlatformClient.generateEntity(prompt, responseType);
+            return platformAiClient.generateEntity(prompt, responseType);
         } catch (Exception ex) {
             throw new AiProviderCallFailedException(
                     "Platform AI call failed. task=" + prompt.task()
                             + " provider=platformDefault"
-                            + " model=" + safe(platformProperties.getModel())
-                            + " mode=" + safe(platformProperties.getMode()),
+                            + " model=" + AiStrings.safe(platformProperties.getModel())
+                            + " mode=" + AiStrings.safe(platformProperties.getMode()),
                     ex);
         }
     }
@@ -146,16 +144,12 @@ public class DefaultAiModelGateway implements AiModelGateway {
                 "Custom AI Provider failed. task=" + prompt.task()
                         + " provider=userOpenAICompatible"
                         + " providerId=" + safeProviderId(provider)
-                        + " model=" + safe(provider.getModel())
-                        + " mode=" + safe(provider.getOpenaiApiMode()),
+                        + " model=" + AiStrings.safe(provider.getModel())
+                        + " mode=" + AiStrings.safe(provider.getOpenaiApiMode()),
                 ex);
     }
 
     private String safeProviderId(AiProvider provider) {
         return provider.getId() == null ? "unknown" : provider.getId().toString();
-    }
-
-    private String safe(String value) {
-        return value == null || value.isBlank() ? "unknown" : value;
     }
 }

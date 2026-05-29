@@ -1,6 +1,7 @@
 package com.interviewcoach.ai.service;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 
 @ConfigurationProperties(prefix = "app.ai.http")
 public class AiHttpProperties {
@@ -22,5 +23,12 @@ public class AiHttpProperties {
 
     public void setReadTimeoutMs(int readTimeoutMs) {
         this.readTimeoutMs = readTimeoutMs;
+    }
+
+    public SimpleClientHttpRequestFactory requestFactory() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(connectTimeoutMs);
+        factory.setReadTimeout(readTimeoutMs);
+        return factory;
     }
 }

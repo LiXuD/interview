@@ -14,12 +14,12 @@ public class PlatformRealAiClient implements PlatformAiClient {
 
     @Override
     public String generateJson(AiPrompt prompt) {
-        if (isBlank(properties.getBaseUrl()) || isBlank(properties.getApiKey())
-                || isBlank(properties.getModel()) || isBlank(properties.getMode())) {
+        if (AiStrings.isBlank(properties.getBaseUrl()) || AiStrings.isBlank(properties.getApiKey())
+                || AiStrings.isBlank(properties.getModel()) || AiStrings.isBlank(properties.getMode())) {
             throw new AiProviderCallFailedException(
                     "Platform AI configuration is incomplete. task=" + prompt.task()
-                    + " provider=platformDefault model=" + safe(properties.getModel())
-                    + " mode=" + safe(properties.getMode()) + ". "
+                    + " provider=platformDefault model=" + AiStrings.safe(properties.getModel())
+                    + " mode=" + AiStrings.safe(properties.getMode()) + ". "
                     + "Required: IC_PLATFORM_AI_BASE_URL, IC_PLATFORM_AI_API_KEY, IC_PLATFORM_AI_MODEL, IC_PLATFORM_AI_MODE",
                     null);
         }
@@ -35,17 +35,9 @@ public class PlatformRealAiClient implements PlatformAiClient {
             throw new AiProviderCallFailedException(
                     "Platform AI call failed. task=" + prompt.task()
                     + " provider=platformDefault"
-                    + " model=" + safe(properties.getModel())
-                    + " mode=" + safe(properties.getMode()),
+                    + " model=" + AiStrings.safe(properties.getModel())
+                    + " mode=" + AiStrings.safe(properties.getMode()),
                     ex);
         }
-    }
-
-    private static boolean isBlank(String s) {
-        return s == null || s.isBlank();
-    }
-
-    private static String safe(String value) {
-        return isBlank(value) ? "unknown" : value;
     }
 }

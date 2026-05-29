@@ -335,12 +335,13 @@ Spring AI Chat Memory 可以用于管理短窗口对话上下文，但业务教�
 
 目标：在不破坏业务记忆约束的前提下，引入 Advisor 管理 prompt 装配和短窗口上下文。
 
-当前进度：
+当前进度（已完成）：
 
 - `SpringAiPlatformClient` 与 `SpringAiUserProviderClient` 已通过 Spring AI advisor params 附加低风险调用上下文。
 - 当前 advisor context 包含 `ai.task`、`ai.provider`、`ai.providerId`（仅用户 Provider）、`ai.model`、`ai.mode`、`ai.targetId`、`ai.requestId`。
 - advisor context 不包含 system prompt、user prompt、completion、API Key、Authorization Header、简历原文或用户回答原文。
-- 暂未启用 Spring AI Chat Memory 持久化；业务 `CoachingMemory` 仍是唯一事实记忆来源。
+- Spring AI Chat Memory 持久化未集成，有意推迟：业务层已在 `MockInterviewService.getContextMessages()` 实现受控消息窗口（最近 6 轮、12 条 message），在 `MockInterviewService.buildCoachingContext()` 实现按 source/confidence 过滤教练记忆。引入 `MessageWindowChatMemory` 需维护 JPA + ChatMemory 双重状态，且 ChatMemory 不理解 `confirmed`/`rejected` 语义，违反最小代码原则。
+- 代码质量收尾：提取 `OpenAiCompatibleEndpoint` 共享类消除重复，提取 `AiStrings` 工具类消除 5 处 `safe()` 重复，`PlatformAiClient` 接口增加 `generateEntity` default 方法消除 `instanceof` 检查。
 
 范围：
 
@@ -348,11 +349,11 @@ Spring AI Chat Memory 可以用于管理短窗口对话上下文，但业务教�
 - 模拟面试使用受控 message window。
 - 教练记忆只注入必要摘要，不注入完整历史。
 
-验收：
+验收（全部满足）：
 
-- Prompt 不随轮次无限增长。
-- 仍然最多携带最近 6 轮、12 条 message。
-- `rejected` 记忆不会再次作为事实进入 prompt。
+- Prompt 不随轮次无限增长。✓ `MockInterviewService.getContextMessages()` 尾部截断至 12 条。
+- 仍然最多携带最近 6 轮、12 条 message。✓ 同上。
+- `rejected` 记忆不会再次作为事实进入 prompt。✓ `buildCoachingContext()` 按 source 分桶，rejected 单独标注"禁止当事实"。
 
 ## 12. 测试矩阵
 
