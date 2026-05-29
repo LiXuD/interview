@@ -79,21 +79,18 @@ Spring AI 的价值主要体现在以下方面：
 
 ### 6.2 AiModelGateway
 
-新增内部网关接口，替代直接依赖 `PlatformAiClient` 和 `OpenAiCompatibleClient` 的散落调用。
+当前已新增内部网关接口，替代 `AiStructuredOutputService` 直接依赖 `PlatformAiClient`、`OpenAiCompatibleClient` 和 Spring AI 适配客户端的路由逻辑。
 
-建议接口：
+当前接口：
 
 ```java
 public interface AiModelGateway {
     String generateJson(AiPrompt prompt);
+    <T> T generateEntity(AiPrompt prompt, Class<T> responseType);
 }
 ```
 
-第一阶段保持返回 String，降低迁移风险。结构化 DTO 映射稳定后，再评估增加：
-
-```java
-<T> T generateEntity(AiPrompt prompt, Class<T> responseType);
-```
+`DefaultAiModelGateway` 负责用户 Provider 优先级、Spring AI chat completions typed DTO 路由、responses 模式旧客户端路由、平台默认 AI 路由，以及核心教练路径真实 AI 门禁。`AiStructuredOutputService` 继续只负责 JSON/DTO 解析和二次业务校验。
 
 ### 6.3 SpringAiPlatformClient
 
@@ -157,6 +154,7 @@ ID 策略：
 - connect timeout：建议 5 秒。
 - read timeout：建议 60 秒。
 - live AI 验收单个 task 最大耗时：建议 90 秒。
+- 当前 Phase 1 实现使用 `IC_AI_HTTP_CONNECT_TIMEOUT_MS`（默认 5000）和 `IC_AI_HTTP_READ_TIMEOUT_MS`（默认 60000）配置 AI HTTP 超时；live AI 验收测试使用 JUnit 单 task 90 秒上限。
 - 默认不自动重试完整业务生成，避免重复扣费和不可预期内容漂移。
 - 仅对明确可重试的网络瞬断做 1 次受控重试。
 - 用户 Provider 失败返回 `AiProviderCallFailedException`，不得自动切换平台 Provider。
@@ -248,8 +246,8 @@ Spring AI Chat Memory 可以用于管理短窗口对话上下文，但业务教�
 
 范围：
 
-- 在 `backend/pom.xml` 引入 Spring AI BOM 和 OpenAI starter。
-- 新增 Spring AI 配置类，但不替换生产路径。
+- 在 `backend/pom.xml` 引入 Spring AI BOM 和 OpenAI starter（当前使用 Maven Central 可用的 `1.1.5` 稳定版）。
+- 新增 Spring AI 配置类，但不替换生产路径；默认 `spring.ai.model.chat/embedding/image/moderation/audio.*=none`、`spring.ai.chat.client.enabled=false`、`IC_SPRING_AI_ENABLED=false`。
 - 增加配置绑定测试，确认环境变量仍沿用 `IC_PLATFORM_AI_*`。
 
 验收：
@@ -265,12 +263,16 @@ Spring AI Chat Memory 可以用于管理短窗口对话上下文，但业务教�
 范围：
 
 - 新增 `SpringAiPlatformClient`。
-- 在平台 AI enabled 且配置完整时使用 Spring AI。
-- 保留 `PlatformRealAiClient` 作为回退开关，便于灰度。
+- 在 `IC_PLATFORM_AI_ENABLED=true`、`IC_SPRING_AI_ENABLED=true` 且 `IC_PLATFORM_AI_MODE=chatCompletions` 时，平台默认 AI 使用 Spring AI `ChatClient`/OpenAI ChatModel。
+- `IC_PLATFORM_AI_MODE=responses` 暂时继续使用 `PlatformRealAiClient`，避免 Spring AI ChatModel 与 Responses API 语义不一致。
+- 保留 `PlatformRealAiClient` 作为灰度回退；关闭 `IC_SPRING_AI_ENABLED` 后平台默认 AI 仍走旧实现。
+- 兼容项目既有 OpenAI-compatible `baseUrl` 语义：配置值仍是 API root，例如 `https://example.com/v1`，Spring AI 适配层负责映射到 chat completions endpoint。
 
 验收：
 
-- 平台真实 AI 可通过 live AI 验收。
+- 默认回归通过，且未启用 Spring AI 时不改变生产路径。
+- 平台真实 AI chat completions 可通过 Spring AI 适配层完成 JSON mode 调用。
+- responses mode 明确留在旧客户端路径。
 - stub 状态不会被误展示为真实 AI。
 - 平台配置缺失时明确失败。
 
@@ -281,13 +283,17 @@ Spring AI Chat Memory 可以用于管理短窗口对话上下文，但业务教�
 范围：
 
 - 新增 `SpringAiUserProviderClient`。
-- 支持用户配置的 baseUrl、model、mode。
+- 在 `IC_SPRING_AI_ENABLED=true` 且用户 Provider `openaiApiMode=chatCompletions` 时，使用 Spring AI `ChatClient`/OpenAI ChatModel 调用用户 Provider。
+- 用户 Provider `openaiApiMode=responses` 暂时继续走旧 `OpenAiCompatibleClient` Responses API。
+- 模型列表和连接测试仍走旧 `OpenAiCompatibleClient`，避免影响创建 Provider 的辅助能力。
 - 保留 API Key 解密只在请求内存中发生。
 - Provider 失败时不得自动切换平台 AI。
 
 验收：
 
 - 用户默认 Provider 优先。
+- Spring AI 用户 Provider 调用仍使用用户配置的 `baseUrl`、`model` 和 Bearer API Key。
+- Spring AI 适配层兼容既有 `baseUrl` API root 语义，例如 `https://example.com/v1`。
 - 删除 Provider 后密钥不可再用。
 - API Key 不出现在响应、日志、异常 message 中。
 
@@ -295,16 +301,29 @@ Spring AI Chat Memory 可以用于管理短窗口对话上下文，但业务教�
 
 目标：稳定 task 使用 Spring AI structured output，复杂 task 使用 JSON Schema。
 
+当前进度：
+
+- 用户默认 Provider `openaiApiMode=chatCompletions` 且 `IC_SPRING_AI_ENABLED=true` 时，`AiStructuredOutputService` 已优先使用 Spring AI `ChatClient.call().entity(...)` 获取强类型 DTO。
+- 平台默认 AI 在 `IC_PLATFORM_AI_MODE=chatCompletions` 且实际注入 `SpringAiPlatformClient` 时，也支持同一 typed DTO 路径。
+- typed DTO 与旧 JSON String 生成路径均已通过 `AiModelGateway` 统一路由，业务结构化校验层不再直接编排底层模型客户端。
+- 已覆盖 `candidateProfileDraft`、`jobBrief`、`assessmentQuestions`、`assessmentQuestionScore`、`assessmentResult`、`trainingPlan`、`trainingFeedback`、`adaptiveTrainingTurn`、`mockInterviewQuestion`、`mockInterviewReport`、`coachingMemory`。
+- `candidateProfileDraft.rawTextLength` 仍由后端计算并覆盖 AI 输出。
+- 所有 typed DTO 结果仍经过 `AiStructuredOutputService` 二次业务校验。
+- `responses` 模式仍保持 JSON String + Jackson 校验路径。
+
 迁移顺序：
 
 1. `candidateProfileDraft`
 2. `jobBrief`
 3. `assessmentQuestions`
-4. `assessmentResult`
-5. `trainingPlan`
-6. `trainingFeedback`
-7. `mockInterviewQuestion`
-8. `mockInterviewReport`
+4. `assessmentQuestionScore`
+5. `assessmentResult`
+6. `trainingPlan`
+7. `trainingFeedback`
+8. `adaptiveTrainingTurn`
+9. `mockInterviewQuestion`
+10. `mockInterviewReport`
+11. `coachingMemory`
 
 验收：
 
@@ -315,6 +334,13 @@ Spring AI Chat Memory 可以用于管理短窗口对话上下文，但业务教�
 ### Phase 6: Advisor 与记忆增强
 
 目标：在不破坏业务记忆约束的前提下，引入 Advisor 管理 prompt 装配和短窗口上下文。
+
+当前进度：
+
+- `SpringAiPlatformClient` 与 `SpringAiUserProviderClient` 已通过 Spring AI advisor params 附加低风险调用上下文。
+- 当前 advisor context 包含 `ai.task`、`ai.provider`、`ai.providerId`（仅用户 Provider）、`ai.model`、`ai.mode`、`ai.targetId`、`ai.requestId`。
+- advisor context 不包含 system prompt、user prompt、completion、API Key、Authorization Header、简历原文或用户回答原文。
+- 暂未启用 Spring AI Chat Memory 持久化；业务 `CoachingMemory` 仍是唯一事实记忆来源。
 
 范围：
 
@@ -355,4 +381,3 @@ Spring AI Chat Memory 可以用于管理短窗口对话上下文，但业务教�
 推荐采用“适配层渐进迁移”。
 
 不要把 Spring AI 直接灌进业务 service，也不要一次性替换 `AiStructuredOutputService`。先让 Spring AI 成为底层模型调用和观测底座，再逐步迁移结构化输出和 Advisor。这样可以保留现有隐私、安全、Provider 优先级和 AI 质量验收约束，同时为后续自适应教练能力提供更稳的工程基础。
-

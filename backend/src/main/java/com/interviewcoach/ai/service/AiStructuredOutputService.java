@@ -2,7 +2,6 @@ package com.interviewcoach.ai.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.interviewcoach.ai.entity.AiProvider;
 import com.interviewcoach.common.api.AnswerStructureDto;
 import com.interviewcoach.common.api.AdaptiveTrainingTurnDto;
 import com.interviewcoach.common.api.AssessmentDimensionName;
@@ -18,11 +17,7 @@ import com.interviewcoach.common.api.CoachingMemoryDto;
 import com.interviewcoach.common.api.CoachingMemoryItemDto;
 import com.interviewcoach.common.api.TrainingFeedbackDto;
 import com.interviewcoach.common.error.AiParseException;
-import com.interviewcoach.common.error.AiProviderCallFailedException;
-import com.interviewcoach.user.entity.User;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -39,38 +34,34 @@ public class AiStructuredOutputService {
     private static final Set<String> VALID_MEMORY_CONFIDENCE = Set.of("high", "medium", "low");
     private static final Set<String> VALID_STRUCTURE_STATUS = Set.of("present", "partial", "missing");
     private static final Set<String> VALID_ADAPTIVE_TRAINING_ACTIONS = Set.of("continue", "pass", "switch", "stop");
-    private static final Set<String> REAL_AI_REQUIRED_TASKS = Set.of(
-            AiPrompt.TASK_ASSESSMENT_QUESTIONS,
-            AiPrompt.TASK_ASSESSMENT_QUESTION_SCORE,
-            AiPrompt.TASK_ASSESSMENT_RESULT,
-            AiPrompt.TASK_TRAINING_PLAN,
-            AiPrompt.TASK_TRAINING_FEEDBACK,
-            AiPrompt.TASK_ADAPTIVE_TRAINING_TURN,
-            AiPrompt.TASK_MOCK_INTERVIEW_QUESTION,
-            AiPrompt.TASK_MOCK_INTERVIEW_REPORT,
-            AiPrompt.TASK_COACHING_MEMORY
-    );
 
-    private final PlatformAiClient platformAiClient;
-    private final OpenAiCompatibleClient openAiClient;
-    private final AiProviderService providerService;
-    private final ApiKeyEncryption encryption;
+    private final AiModelGateway aiModelGateway;
     private final ObjectMapper objectMapper;
-    private final PlatformAiProperties platformProperties;
 
     @Autowired
+    public AiStructuredOutputService(AiModelGateway aiModelGateway,
+                                     ObjectMapper objectMapper) {
+        this.aiModelGateway = aiModelGateway;
+        this.objectMapper = objectMapper;
+    }
+
     public AiStructuredOutputService(PlatformAiClient platformAiClient,
                                      OpenAiCompatibleClient openAiClient,
                                      AiProviderService providerService,
                                      ApiKeyEncryption encryption,
                                      ObjectMapper objectMapper,
-                                     PlatformAiProperties platformProperties) {
-        this.platformAiClient = platformAiClient;
-        this.openAiClient = openAiClient;
-        this.providerService = providerService;
-        this.encryption = encryption;
-        this.objectMapper = objectMapper;
-        this.platformProperties = platformProperties;
+                                     PlatformAiProperties platformProperties,
+                                     SpringAiFoundationProperties springAiProperties,
+                                     SpringAiUserProviderClient springAiUserProviderClient) {
+        this(new DefaultAiModelGateway(
+                        platformAiClient,
+                        openAiClient,
+                        providerService,
+                        encryption,
+                        platformProperties,
+                        springAiProperties,
+                        springAiUserProviderClient),
+                objectMapper);
     }
 
     public AiStructuredOutputService(PlatformAiClient platformAiClient,
@@ -78,7 +69,8 @@ public class AiStructuredOutputService {
                                      AiProviderService providerService,
                                      ApiKeyEncryption encryption,
                                      ObjectMapper objectMapper) {
-        this(platformAiClient, openAiClient, providerService, encryption, objectMapper, testPlatformProperties());
+        this(platformAiClient, openAiClient, providerService, encryption, objectMapper,
+                testPlatformProperties(), new SpringAiFoundationProperties(), null);
     }
 
     private static PlatformAiProperties testPlatformProperties() {
@@ -88,6 +80,10 @@ public class AiStructuredOutputService {
     }
 
     public JobBriefDto generateJobBrief(AiPrompt prompt) {
+        JobBriefDto structuredResult = generateStructuredFromSpringProvider(prompt, JobBriefDto.class);
+        if (structuredResult != null) {
+            return validateStructured(prompt, structuredResult, (dto, p) -> validateJobBrief(dto));
+        }
         return generateAndValidate(prompt, JobBriefDto.class, (dto, p) -> validateJobBrief(dto));
     }
 
@@ -121,11 +117,19 @@ public class AiStructuredOutputService {
     public record AssessmentQuestionsResult(List<AssessmentQuestionDto> questions) {}
 
     public List<AssessmentQuestionDto> generateAssessmentQuestions(AiPrompt prompt) {
+        AssessmentQuestionsResult structuredResult = generateStructuredFromSpringProvider(prompt, AssessmentQuestionsResult.class);
+        if (structuredResult != null) {
+            return validateStructured(prompt, structuredResult, (r, p) -> validateQuestions(r.questions())).questions();
+        }
         AssessmentQuestionsResult result = generateAndValidate(prompt, AssessmentQuestionsResult.class, (r, p) -> validateQuestions(r.questions()));
         return result.questions();
     }
 
     public AssessmentQuestionScoreDto generateQuestionScore(AiPrompt prompt) {
+        AssessmentQuestionScoreDto structuredResult = generateStructuredFromSpringProvider(prompt, AssessmentQuestionScoreDto.class);
+        if (structuredResult != null) {
+            return validateStructured(prompt, structuredResult, (dto, p) -> validateQuestionScore(dto));
+        }
         return generateAndValidate(prompt, AssessmentQuestionScoreDto.class, (dto, p) -> validateQuestionScore(dto));
     }
 
@@ -174,6 +178,10 @@ public class AiStructuredOutputService {
     }
 
     public AssessmentResultDto generateAssessmentResult(AiPrompt prompt) {
+        AssessmentResultDto structuredResult = generateStructuredFromSpringProvider(prompt, AssessmentResultDto.class);
+        if (structuredResult != null) {
+            return validateStructured(prompt, structuredResult, (dto, p) -> validateAssessmentResult(dto));
+        }
         return generateAndValidate(prompt, AssessmentResultDto.class, (dto, p) -> validateAssessmentResult(dto));
     }
 
@@ -239,35 +247,17 @@ public class AiStructuredOutputService {
         throw new AiParseException(prompt.task());
     }
 
-    private String generateFromProvider(AiPrompt prompt) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getPrincipal() instanceof User user) {
-            AiProvider provider = providerService.findDefaultProvider(user.getId());
-            if (provider != null) {
-                String apiKey = encryption.decrypt(provider.getApiKeyEncrypted());
-                try {
-                    return openAiClient.generateJson(
-                            provider.getBaseUrl(), apiKey, provider.getModel(),
-                            provider.getOpenaiApiMode(), prompt.systemPrompt(), prompt.userPrompt());
-                } catch (Exception ex) {
-                    throw new AiProviderCallFailedException(
-                            "Custom AI Provider failed: " + ex.getMessage(), ex);
-                }
-            }
+    private <T> T validateStructured(AiPrompt prompt, T result, BiConsumer<T, AiPrompt> validator) {
+        try {
+            validator.accept(result, prompt);
+            return result;
+        } catch (IllegalArgumentException ex) {
+            throw new AiParseException(prompt.task());
         }
-        if (requiresRealAi(prompt)) {
-            throw new AiProviderCallFailedException(
-                    "Real AI is required for coaching task: " + prompt.task(), null);
-        }
-        return platformAiClient.generateJson(prompt);
     }
 
-    private boolean requiresRealAi(AiPrompt prompt) {
-        if (!platformProperties.isRequireRealForCoaching()
-                || !REAL_AI_REQUIRED_TASKS.contains(prompt.task())) {
-            return false;
-        }
-        return !platformProperties.isEnabled() || !platformProperties.isComplete();
+    private String generateFromProvider(AiPrompt prompt) {
+        return aiModelGateway.generateJson(prompt);
     }
 
     private void requireText(String value, String field) {
@@ -296,6 +286,10 @@ public class AiStructuredOutputService {
     public record TrainingPlanResult(List<TrainingPlanTaskItem> tasks) {}
 
     public List<TrainingPlanTaskItem> generateTrainingPlan(AiPrompt prompt) {
+        TrainingPlanResult structuredResult = generateStructuredFromSpringProvider(prompt, TrainingPlanResult.class);
+        if (structuredResult != null) {
+            return validateStructured(prompt, structuredResult, (r, p) -> validateTrainingPlan(r)).tasks();
+        }
         TrainingPlanResult result = generateAndValidate(prompt, TrainingPlanResult.class, (r, p) -> validateTrainingPlan(r));
         return result.tasks();
     }
@@ -311,10 +305,18 @@ public class AiStructuredOutputService {
     }
 
     public TrainingFeedbackDto generateTrainingFeedback(AiPrompt prompt) {
+        TrainingFeedbackDto structuredResult = generateStructuredFromSpringProvider(prompt, TrainingFeedbackDto.class);
+        if (structuredResult != null) {
+            return validateStructured(prompt, structuredResult, (dto, p) -> validateTrainingFeedback(dto));
+        }
         return generateAndValidate(prompt, TrainingFeedbackDto.class, (dto, p) -> validateTrainingFeedback(dto));
     }
 
     public AdaptiveTrainingTurnDto generateAdaptiveTrainingTurn(AiPrompt prompt) {
+        AdaptiveTrainingTurnDto structuredResult = generateStructuredFromSpringProvider(prompt, AdaptiveTrainingTurnDto.class);
+        if (structuredResult != null) {
+            return validateStructured(prompt, structuredResult, (dto, p) -> validateAdaptiveTrainingTurn(dto));
+        }
         return generateAndValidate(prompt, AdaptiveTrainingTurnDto.class, (dto, p) -> validateAdaptiveTrainingTurn(dto));
     }
 
@@ -356,6 +358,10 @@ public class AiStructuredOutputService {
     public record MockInterviewQuestionResult(String question) {}
 
     public String generateMockInterviewQuestion(AiPrompt prompt) {
+        MockInterviewQuestionResult structuredResult = generateStructuredFromSpringProvider(prompt, MockInterviewQuestionResult.class);
+        if (structuredResult != null) {
+            return validateStructured(prompt, structuredResult, (r, p) -> validateMockInterviewQuestion(r)).question();
+        }
         MockInterviewQuestionResult result = generateAndValidate(prompt, MockInterviewQuestionResult.class, (r, p) -> validateMockInterviewQuestion(r));
         return result.question();
     }
@@ -368,6 +374,10 @@ public class AiStructuredOutputService {
     }
 
     public MockInterviewReportDto generateMockInterviewReport(AiPrompt prompt) {
+        MockInterviewReportDto structuredResult = generateStructuredFromSpringProvider(prompt, MockInterviewReportDto.class);
+        if (structuredResult != null) {
+            return validateStructured(prompt, structuredResult, (dto, p) -> validateMockInterviewReport(dto));
+        }
         return generateAndValidate(prompt, MockInterviewReportDto.class, (dto, p) -> validateMockInterviewReport(dto));
     }
 
@@ -399,7 +409,11 @@ public class AiStructuredOutputService {
      * Returns DTO with AI-generated content fields; rawTextLength is NOT taken from AI output.
      */
     public CandidateProfileDraftDto generateCandidateProfileDraft(AiPrompt prompt, int rawTextLength) {
-        CandidateProfileDraftDto aiResult = generateAndValidate(prompt, CandidateProfileDraftDto.class, (dto, p) -> validateCandidateProfileDraft(dto));
+        CandidateProfileDraftDto structuredResult = generateStructuredFromSpringProvider(prompt, CandidateProfileDraftDto.class);
+        CandidateProfileDraftDto aiResult = structuredResult != null
+                ? validateStructured(prompt, structuredResult, (dto, p) -> validateCandidateProfileDraft(dto))
+                : generateAndValidate(prompt, CandidateProfileDraftDto.class, (dto, p) -> validateCandidateProfileDraft(dto));
+        validateCandidateProfileDraft(aiResult);
         return new CandidateProfileDraftDto(
                 aiResult.summary(),
                 aiResult.skills() != null ? aiResult.skills() : List.of(),
@@ -407,6 +421,10 @@ public class AiStructuredOutputService {
                 aiResult.experience() != null ? aiResult.experience() : List.of(),
                 rawTextLength
         );
+    }
+
+    private <T> T generateStructuredFromSpringProvider(AiPrompt prompt, Class<T> type) {
+        return aiModelGateway.generateEntity(prompt, type);
     }
 
     private void validateCandidateProfileDraft(CandidateProfileDraftDto dto) {
@@ -420,6 +438,10 @@ public class AiStructuredOutputService {
     }
 
     public CoachingMemoryDto generateCoachingMemory(AiPrompt prompt) {
+        CoachingMemoryDto structuredResult = generateStructuredFromSpringProvider(prompt, CoachingMemoryDto.class);
+        if (structuredResult != null) {
+            return validateStructured(prompt, structuredResult, (dto, p) -> validateCoachingMemory(dto));
+        }
         return generateAndValidate(prompt, CoachingMemoryDto.class, (dto, p) -> validateCoachingMemory(dto));
     }
 

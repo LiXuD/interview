@@ -37,12 +37,17 @@ Post-MVP AI 质量阶段将平台默认 AI 升级为可配置的 OpenAI-compatib
 | `IC_PLATFORM_AI_MODEL` | 启用时必填 | 平台默认模型名称 |
 | `IC_PLATFORM_AI_MODE` | 启用时必填 | `chatCompletions` 或 `responses` |
 | `IC_REQUIRE_REAL_AI_FOR_COACHING` | Task 18-25 默认 `true` | 核心教练路径是否要求真实 AI；测试环境可显式关闭 |
+| `IC_AI_HTTP_CONNECT_TIMEOUT_MS` | 否 | AI HTTP 连接超时，默认 `5000` 毫秒 |
+| `IC_AI_HTTP_READ_TIMEOUT_MS` | 否 | AI HTTP 读取超时，默认 `60000` 毫秒 |
+| `IC_SPRING_AI_ENABLED` | 否 | Spring AI 底座灰度开关，默认 `false`；Phase 3 仅在平台默认 AI 的 `chatCompletions` 模式接管调用路径 |
 
 安全要求：
 
 - `IC_PLATFORM_AI_API_KEY` 不得返回给 iOS。
 - 禁止将平台 API Key、Authorization Header 或完整请求头写入日志。
 - 平台默认 AI 仍必须通过后端统一代理，iOS 禁止直接调用 AI。
+- Provider 调用失败时，错误信息只允许包含 task、provider 类型、providerId（用户 Provider）、model、mode 等分类字段；不得包含 API Key、Authorization Header、完整请求头或 prompt 原文。
+- 当 `IC_SPRING_AI_ENABLED=true` 且 `IC_PLATFORM_AI_MODE=chatCompletions` 时，平台默认 AI 通过 `SpringAiPlatformClient` 调用 Spring AI OpenAI ChatModel；`responses` 模式仍通过旧 `PlatformRealAiClient` 调用 OpenAI-compatible Responses API。
 
 ## 3. 用户自定义 OpenAI-compatible Provider
 
@@ -73,16 +78,18 @@ Post-MVP AI 质量阶段将平台默认 AI 升级为可配置的 OpenAI-compatib
 - `chatCompletions`：调用 `POST {baseUrl}/chat/completions`，使用 messages 数组。
 - `responses`：调用 `POST {baseUrl}/responses`，使用 input 字段。
 - 模型列表：调用 `GET {baseUrl}/models`，解析 OpenAI-compatible 响应中的 `data[].id`。该接口用于创建 Provider 时辅助选择模型；若 Provider 不支持或返回空列表，iOS 必须允许用户手动输入 `model`。
+- Phase 4 中 `IC_SPRING_AI_ENABLED=true` 时，用户自定义 Provider 的 `chatCompletions` 生成调用通过 `SpringAiUserProviderClient` 接入 Spring AI；`responses`、模型列表和连接测试仍由旧 `OpenAiCompatibleClient` 调用。
+- Phase 5 中 Spring AI `chatCompletions` 路径优先使用 `ChatClient.call().entity(...)` 生成后端强类型 DTO；所有 DTO 仍必须经过后端二次业务校验，`responses` 模式仍走旧 JSON String + Jackson 校验。
 
 ## 4. Provider 路由
 
-`AiStructuredOutputService.generateFromProvider()` 中的路由逻辑：
+`DefaultAiModelGateway` 中的路由逻辑：
 
 1. 通过 `SecurityContextHolder` 获取当前用户。
 2. 调用 `AiProviderService.findDefaultProvider(userId)` 查询默认 Provider。
-3. 若存在默认 Provider → 解密 apiKey → 调用 `OpenAiCompatibleClient.generateJson()`。
+3. 若存在默认 Provider → 解密 apiKey → 当 `IC_SPRING_AI_ENABLED=true` 且 `openaiApiMode=chatCompletions` 时调用 `SpringAiUserProviderClient`；其他模式调用 `OpenAiCompatibleClient`。
 4. 若不存在默认 Provider，且当前 task 属于核心教练路径，同时 `IC_REQUIRE_REAL_AI_FOR_COACHING=true` 且平台真实 AI 未完整配置 → 明确失败。
-5. 若不存在默认 Provider，且平台真实 AI 完整配置 → 调用 `PlatformAiClient.generateJson()`（平台默认 AI）。
+5. 若不存在默认 Provider，且平台真实 AI 完整配置 → 调用 `PlatformAiClient`（平台默认 AI；Spring AI chat completions 灰度开启时实际注入 `SpringAiPlatformClient`）。
 6. 非核心路径、测试、CI 非 live AI 回归、明确离线演示或基础健康检查可使用 `LocalPlatformAiClient` stub。
 
 **禁止自动回退**：当用户 Provider 调用失败时，不自动切换到平台 AI，必须让用户确认。

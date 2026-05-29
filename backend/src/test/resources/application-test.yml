@@ -1,4 +1,16 @@
 spring:
+  ai:
+    model:
+      chat: none
+      embedding: none
+      image: none
+      moderation: none
+      audio:
+        speech: none
+        transcription: none
+    chat:
+      client:
+        enabled: false
   datasource:
     url: jdbc:h2:mem:testdb
     driver-class-name: org.h2.Driver
@@ -20,6 +32,11 @@ app:
     expiration-ms: 3600000
   ai:
     encryption-key: dGVzdC1haS1lbmNyeXB0aW9uLWtleS0zMmJ5dGVzISE=
+    spring:
+      enabled: false
+    http:
+      connect-timeout-ms: 5000
+      read-timeout-ms: 60000
     platform:
       require-real-for-coaching: false
       enabled: false

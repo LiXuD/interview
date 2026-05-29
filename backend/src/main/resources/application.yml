@@ -2,6 +2,18 @@ server:
   port: 18080
 
 spring:
+  ai:
+    model:
+      chat: none
+      embedding: none
+      image: none
+      moderation: none
+      audio:
+        speech: none
+        transcription: none
+    chat:
+      client:
+        enabled: false
   datasource:
     url: jdbc:postgresql://localhost:5432/interview_coach
     username: ic_user
@@ -22,6 +34,11 @@ app:
     expiration-ms: 604800000
   ai:
     encryption-key: ZGV2LWFpLWVuY3J5cHRpb24ta2V5LTMyLWJ5dGVzISE=
+    spring:
+      enabled: ${IC_SPRING_AI_ENABLED:false}
+    http:
+      connect-timeout-ms: ${IC_AI_HTTP_CONNECT_TIMEOUT_MS:5000}
+      read-timeout-ms: ${IC_AI_HTTP_READ_TIMEOUT_MS:60000}
     platform:
       require-real-for-coaching: ${IC_REQUIRE_REAL_AI_FOR_COACHING:true}
       enabled: ${IC_PLATFORM_AI_ENABLED:false}

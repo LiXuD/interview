@@ -59,7 +59,7 @@ public class OpenAiCompatibleClient {
             ResponseEntity<JsonNode> response = restTemplate.postForEntity(url, request, JsonNode.class);
             return response.getBody().path("choices").get(0).path("message").path("content").asText();
         } catch (Exception ex) {
-            throw new IllegalStateException("OpenAI chat completions call failed: " + ex.getMessage(), ex);
+            throw new IllegalStateException(providerCallFailure("chatCompletions", model, MODE_CHAT_COMPLETIONS), ex);
         }
     }
 
@@ -87,10 +87,8 @@ public class OpenAiCompatibleClient {
                 }
             }
             throw new IllegalStateException("Unexpected responses API output structure");
-        } catch (IllegalStateException ex) {
-            throw ex;
         } catch (Exception ex) {
-            throw new IllegalStateException("OpenAI responses call failed: " + ex.getMessage(), ex);
+            throw new IllegalStateException(providerCallFailure("responses", model, MODE_RESPONSES), ex);
         }
     }
 
@@ -122,14 +120,23 @@ public class OpenAiCompatibleClient {
                 }
             });
             return models;
-        } catch (IllegalStateException ex) {
-            throw ex;
         } catch (Exception ex) {
-            throw new IllegalStateException("OpenAI models call failed: " + ex.getMessage(), ex);
+            throw new IllegalStateException(
+                    "OpenAI-compatible provider call failed. operation=listModels", ex);
         }
     }
 
     private String normalizeUrl(String baseUrl) {
         return baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
+    }
+
+    private String providerCallFailure(String operation, String model, String mode) {
+        return "OpenAI-compatible provider call failed. operation=" + operation
+                + " model=" + safe(model)
+                + " mode=" + safe(mode);
+    }
+
+    private String safe(String value) {
+        return value == null || value.isBlank() ? "unknown" : value;
     }
 }

@@ -2,6 +2,18 @@
 # 需要同时设置 IC_LIVE_AI_TEST=true 环境变量才会运行
 # 平台 AI 配置从 IC_PLATFORM_AI_* 环境变量读取（参考 backend/.env）
 spring:
+  ai:
+    model:
+      chat: none
+      embedding: none
+      image: none
+      moderation: none
+      audio:
+        speech: none
+        transcription: none
+    chat:
+      client:
+        enabled: false
   datasource:
     url: jdbc:h2:mem:liveaitestdb
     driver-class-name: org.h2.Driver
@@ -23,6 +35,11 @@ app:
     expiration-ms: 3600000
   ai:
     encryption-key: dGVzdC1haS1lbmNyeXB0aW9uLWtleS0zMmJ5dGVzISE=
+    spring:
+      enabled: ${IC_SPRING_AI_ENABLED:false}
+    http:
+      connect-timeout-ms: ${IC_AI_HTTP_CONNECT_TIMEOUT_MS:5000}
+      read-timeout-ms: ${IC_AI_HTTP_READ_TIMEOUT_MS:60000}
     platform:
       # 验收测试必须使用真实 AI，禁止回退到 stub
       enabled: ${IC_PLATFORM_AI_ENABLED:true}
