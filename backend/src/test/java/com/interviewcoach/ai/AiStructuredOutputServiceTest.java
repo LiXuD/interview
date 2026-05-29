@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewcoach.ai.entity.AiProvider;
 import com.interviewcoach.ai.service.AiProviderService;
 import com.interviewcoach.ai.service.AiPrompt;
+import com.interviewcoach.ai.service.AiStructuredOutputMappingException;
 import com.interviewcoach.ai.service.AiStructuredOutputService;
 import com.interviewcoach.ai.service.ApiKeyEncryption;
 import com.interviewcoach.ai.service.OpenAiCompatibleClient;
@@ -651,6 +652,58 @@ class AiStructuredOutputServiceTest {
                 prompt,
                 TrainingFeedbackDto.class))
                 .thenReturn(invalidDto);
+
+        AiStructuredOutputService service = new AiStructuredOutputService(
+                p -> fail("Should use user provider before platform provider"),
+                openAiClient,
+                providerService,
+                encryption,
+                new ObjectMapper(),
+                new PlatformAiProperties(),
+                springProperties,
+                springAiUserProviderClient);
+
+        AiParseException ex = assertThrows(AiParseException.class, () -> service.generateTrainingFeedback(prompt));
+        assertThat(ex.getMessage()).contains(AiPrompt.TASK_TRAINING_FEEDBACK);
+        verifyNoInteractions(openAiClient);
+    }
+
+    @Test
+    void springAiStructuredOutputMappingFailureThrowsAiParseException() {
+        UUID userId = UUID.randomUUID();
+        User user = new User();
+        user.setUsername("mapping_failure_user");
+        ReflectionTestUtils.setField(user, "id", userId);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(user, null, List.of()));
+
+        AiProvider provider = new AiProvider();
+        provider.setBaseUrl("https://api.example.com/v1");
+        provider.setApiKeyEncrypted("encrypted-key");
+        provider.setModel("gpt-user");
+        provider.setOpenaiApiMode("chatCompletions");
+
+        AiProviderService providerService = mock(AiProviderService.class);
+        ApiKeyEncryption encryption = mock(ApiKeyEncryption.class);
+        OpenAiCompatibleClient openAiClient = mock(OpenAiCompatibleClient.class);
+        SpringAiUserProviderClient springAiUserProviderClient = mock(SpringAiUserProviderClient.class);
+        SpringAiFoundationProperties springProperties = new SpringAiFoundationProperties();
+        springProperties.setEnabled(true);
+
+        AiPrompt prompt = new AiPrompt(
+                AiPrompt.TASK_TRAINING_FEEDBACK,
+                "task-1",
+                "system",
+                "user");
+
+        when(providerService.findDefaultProvider(userId)).thenReturn(provider);
+        when(encryption.decrypt("encrypted-key")).thenReturn("sk-user-secret");
+        when(springAiUserProviderClient.generateEntity(
+                provider,
+                "sk-user-secret",
+                prompt,
+                TrainingFeedbackDto.class))
+                .thenThrow(new AiStructuredOutputMappingException(new RuntimeException("bad json")));
 
         AiStructuredOutputService service = new AiStructuredOutputService(
                 p -> fail("Should use user provider before platform provider"),

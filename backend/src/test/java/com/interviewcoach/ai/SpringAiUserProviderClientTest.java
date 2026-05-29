@@ -3,8 +3,10 @@ package com.interviewcoach.ai;
 import com.interviewcoach.ai.entity.AiProvider;
 import com.interviewcoach.ai.service.AiHttpProperties;
 import com.interviewcoach.ai.service.AiPrompt;
+import com.interviewcoach.ai.service.AiStructuredOutputMappingException;
 import com.interviewcoach.ai.service.SpringAiUserProviderClient;
 import com.interviewcoach.common.api.CandidateProfileDraftDto;
+import com.interviewcoach.common.error.AiProviderCallFailedException;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SpringAiUserProviderClientTest {
 
@@ -86,6 +89,59 @@ class SpringAiUserProviderClientTest {
                     .contains("\"model\":\"gpt-user\"")
                     .contains("\"response_format\"")
                     .contains("\"json_object\"");
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void generateJsonThrowsConfigurationIncompleteForBlankProviderConfig() {
+        AiProvider provider = new AiProvider();
+        provider.setBaseUrl("");
+        provider.setModel("gpt-user");
+        provider.setOpenaiApiMode("chatCompletions");
+
+        SpringAiUserProviderClient client = new SpringAiUserProviderClient(new AiHttpProperties());
+
+        assertThatThrownBy(() -> client.generateJson(provider, "sk-user-secret", new AiPrompt(
+                AiPrompt.TASK_JOB_BRIEF,
+                "target-1",
+                "system",
+                "user")))
+                .isInstanceOf(AiProviderCallFailedException.class)
+                .hasMessageContaining("configuration is incomplete")
+                .hasMessageNotContaining("Custom AI Provider failed")
+                .hasMessageNotContaining("sk-user-secret");
+    }
+
+    @Test
+    void generateEntityThrowsMappingExceptionForInvalidStructuredOutput() throws Exception {
+        AtomicReference<String> authorization = new AtomicReference<>();
+        AtomicReference<String> requestBody = new AtomicReference<>();
+        HttpServer server = startOpenAiCompatibleServer(authorization, requestBody, "not-json");
+        try {
+            AiProvider provider = new AiProvider();
+            provider.setBaseUrl("http://127.0.0.1:" + server.getAddress().getPort() + "/v1");
+            provider.setModel("gpt-user");
+            provider.setOpenaiApiMode("chatCompletions");
+
+            AiHttpProperties httpProperties = new AiHttpProperties();
+            httpProperties.setConnectTimeoutMs(1000);
+            httpProperties.setReadTimeoutMs(1000);
+            SpringAiUserProviderClient client = new SpringAiUserProviderClient(httpProperties);
+
+            assertThatThrownBy(() -> client.generateEntity(
+                    provider,
+                    "sk-user-secret",
+                    new AiPrompt(
+                            AiPrompt.TASK_CANDIDATE_PROFILE_DRAFT,
+                            null,
+                            "Return JSON only.",
+                            "Summarize."),
+                    CandidateProfileDraftDto.class))
+                    .isInstanceOf(AiStructuredOutputMappingException.class)
+                    .hasMessageNotContaining("not-json")
+                    .hasMessageNotContaining("sk-user-secret");
         } finally {
             server.stop(0);
         }

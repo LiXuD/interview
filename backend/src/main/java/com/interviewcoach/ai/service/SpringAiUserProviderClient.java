@@ -22,6 +22,7 @@ public class SpringAiUserProviderClient {
     }
 
     public String generateJson(AiProvider provider, String apiKey, AiPrompt prompt) {
+        validateProviderConfig(provider, apiKey, prompt);
         try {
             return call(provider, apiKey, prompt).content();
         } catch (Exception ex) {
@@ -30,14 +31,32 @@ public class SpringAiUserProviderClient {
     }
 
     public <T> T generateEntity(AiProvider provider, String apiKey, AiPrompt prompt, Class<T> responseType) {
+        validateProviderConfig(provider, apiKey, prompt);
         try {
             return call(provider, apiKey, prompt).entity(responseType);
+        } catch (AiStructuredOutputMappingException ex) {
+            throw ex;
         } catch (Exception ex) {
+            if (AiExceptionClassifier.hasJsonProcessingCause(ex)) {
+                throw new AiStructuredOutputMappingException(ex);
+            }
             throw providerCallFailed(provider, prompt, ex);
         }
     }
 
     private ChatClient.CallResponseSpec call(AiProvider provider, String apiKey, AiPrompt prompt) {
+        ChatClient chatClient = ChatClient.create(createChatModel(provider, apiKey));
+        return chatClient.prompt()
+                .system(prompt.systemPrompt())
+                .user(prompt.userPrompt())
+                .advisors(advisor -> advisor.params(SpringAiCallContext.user(
+                        prompt,
+                        provider,
+                        UUID.randomUUID().toString())))
+                .call();
+    }
+
+    private void validateProviderConfig(AiProvider provider, String apiKey, AiPrompt prompt) {
         if (AiStrings.isBlank(provider.getBaseUrl()) || AiStrings.isBlank(apiKey)
                 || AiStrings.isBlank(provider.getModel()) || AiStrings.isBlank(provider.getOpenaiApiMode())) {
             throw new AiProviderCallFailedException(
@@ -48,15 +67,6 @@ public class SpringAiUserProviderClient {
                             + " mode=" + AiStrings.safe(provider.getOpenaiApiMode()),
                     null);
         }
-        ChatClient chatClient = ChatClient.create(createChatModel(provider, apiKey));
-        return chatClient.prompt()
-                .system(prompt.systemPrompt())
-                .user(prompt.userPrompt())
-                .advisors(advisor -> advisor.params(SpringAiCallContext.user(
-                        prompt,
-                        provider,
-                        UUID.randomUUID().toString())))
-                .call();
     }
 
     private AiProviderCallFailedException providerCallFailed(AiProvider provider, AiPrompt prompt, Exception ex) {

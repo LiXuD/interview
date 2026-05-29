@@ -3,6 +3,7 @@ package com.interviewcoach.ai;
 import com.interviewcoach.ai.entity.AiProvider;
 import com.interviewcoach.ai.service.AiModelGateway;
 import com.interviewcoach.ai.service.AiPrompt;
+import com.interviewcoach.ai.service.AiStructuredOutputMappingException;
 import com.interviewcoach.ai.service.ApiKeyEncryption;
 import com.interviewcoach.ai.service.DefaultAiModelGateway;
 import com.interviewcoach.ai.service.AiProviderService;
@@ -13,6 +14,7 @@ import com.interviewcoach.ai.service.SpringAiFoundationProperties;
 import com.interviewcoach.ai.service.SpringAiPlatformClient;
 import com.interviewcoach.ai.service.SpringAiUserProviderClient;
 import com.interviewcoach.common.api.CandidateProfileDraftDto;
+import com.interviewcoach.common.error.AiProviderCallFailedException;
 import com.interviewcoach.user.entity.User;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +26,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -176,6 +179,92 @@ class DefaultAiModelGatewayTest {
 
         assertThat(result).isSameAs(dto);
         verifyNoInteractions(openAiClient, providerService, encryption, springAiUserProviderClient);
+    }
+
+    @Test
+    void springAiUserProviderStructuredMappingFailureIsNotWrappedAsProviderFailure() {
+        UUID userId = UUID.randomUUID();
+        User user = authenticatedUser(userId);
+        AiProvider provider = provider("chatCompletions");
+
+        PlatformAiClient platformAiClient = mock(PlatformAiClient.class);
+        OpenAiCompatibleClient openAiClient = mock(OpenAiCompatibleClient.class);
+        AiProviderService providerService = mock(AiProviderService.class);
+        ApiKeyEncryption encryption = mock(ApiKeyEncryption.class);
+        SpringAiUserProviderClient springAiUserProviderClient = mock(SpringAiUserProviderClient.class);
+        SpringAiFoundationProperties springProperties = new SpringAiFoundationProperties();
+        springProperties.setEnabled(true);
+
+        AiPrompt prompt = new AiPrompt(
+                AiPrompt.TASK_CANDIDATE_PROFILE_DRAFT,
+                null,
+                "system",
+                "user");
+        AiStructuredOutputMappingException mappingException =
+                new AiStructuredOutputMappingException(new RuntimeException("bad json"));
+
+        when(providerService.findDefaultProvider(user.getId())).thenReturn(provider);
+        when(encryption.decrypt("encrypted-key")).thenReturn("sk-user-secret");
+        when(springAiUserProviderClient.generateEntity(
+                provider,
+                "sk-user-secret",
+                prompt,
+                CandidateProfileDraftDto.class))
+                .thenThrow(mappingException);
+
+        AiModelGateway gateway = gateway(
+                platformAiClient,
+                openAiClient,
+                providerService,
+                encryption,
+                new PlatformAiProperties(),
+                springProperties,
+                springAiUserProviderClient);
+
+        assertThatThrownBy(() -> gateway.generateEntity(prompt, CandidateProfileDraftDto.class))
+                .isSameAs(mappingException);
+        verifyNoInteractions(openAiClient, platformAiClient);
+    }
+
+    @Test
+    void userProviderConfigurationFailureIsNotWrappedAsProviderCallFailure() {
+        UUID userId = UUID.randomUUID();
+        User user = authenticatedUser(userId);
+        AiProvider provider = provider("chatCompletions");
+        provider.setBaseUrl("");
+
+        PlatformAiClient platformAiClient = mock(PlatformAiClient.class);
+        OpenAiCompatibleClient openAiClient = mock(OpenAiCompatibleClient.class);
+        AiProviderService providerService = mock(AiProviderService.class);
+        ApiKeyEncryption encryption = mock(ApiKeyEncryption.class);
+        SpringAiUserProviderClient springAiUserProviderClient = mock(SpringAiUserProviderClient.class);
+        SpringAiFoundationProperties springProperties = new SpringAiFoundationProperties();
+        springProperties.setEnabled(true);
+
+        AiPrompt prompt = new AiPrompt(
+                AiPrompt.TASK_JOB_BRIEF,
+                "target-1",
+                "system",
+                "user");
+
+        when(providerService.findDefaultProvider(user.getId())).thenReturn(provider);
+        when(encryption.decrypt("encrypted-key")).thenReturn("sk-user-secret");
+
+        AiModelGateway gateway = gateway(
+                platformAiClient,
+                openAiClient,
+                providerService,
+                encryption,
+                new PlatformAiProperties(),
+                springProperties,
+                springAiUserProviderClient);
+
+        assertThatThrownBy(() -> gateway.generateJson(prompt))
+                .isInstanceOf(AiProviderCallFailedException.class)
+                .hasMessageContaining("configuration is incomplete")
+                .hasMessageNotContaining("Custom AI Provider failed")
+                .hasMessageNotContaining("sk-user-secret");
+        verifyNoInteractions(openAiClient, platformAiClient, springAiUserProviderClient);
     }
 
     private User authenticatedUser(UUID userId) {

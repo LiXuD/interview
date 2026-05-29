@@ -37,7 +37,12 @@ public class SpringAiPlatformClient implements PlatformAiClient {
         validatePlatformConfig(prompt);
         try {
             return call(prompt).entity(responseType);
+        } catch (AiStructuredOutputMappingException ex) {
+            throw ex;
         } catch (Exception ex) {
+            if (AiExceptionClassifier.hasJsonProcessingCause(ex)) {
+                throw new AiStructuredOutputMappingException(ex);
+            }
             throw platformCallFailed(prompt, ex);
         }
     }

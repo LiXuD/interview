@@ -2,6 +2,7 @@ package com.interviewcoach.ai;
 
 import com.interviewcoach.ai.service.AiHttpProperties;
 import com.interviewcoach.ai.service.AiPrompt;
+import com.interviewcoach.ai.service.AiStructuredOutputMappingException;
 import com.interviewcoach.ai.service.PlatformAiProperties;
 import com.interviewcoach.ai.service.SpringAiPlatformClient;
 import com.interviewcoach.common.api.CandidateProfileDraftDto;
@@ -132,6 +133,37 @@ class SpringAiPlatformClientTest {
         assertThatThrownBy(() -> client.generateEntity(prompt, Object.class))
                 .isInstanceOf(AiProviderCallFailedException.class)
                 .hasMessageContaining("configuration is incomplete");
+    }
+
+    @Test
+    void generateEntityThrowsMappingExceptionForInvalidStructuredOutput() throws Exception {
+        AtomicReference<String> authorization = new AtomicReference<>();
+        AtomicReference<String> requestBody = new AtomicReference<>();
+        HttpServer server = startOpenAiCompatibleServer(authorization, requestBody, "not-json");
+        try {
+            PlatformAiProperties platformProperties = new PlatformAiProperties();
+            platformProperties.setBaseUrl("http://127.0.0.1:" + server.getAddress().getPort() + "/v1");
+            platformProperties.setApiKey("sk-test-key");
+            platformProperties.setModel("gpt-test");
+            platformProperties.setMode("chatCompletions");
+            AiHttpProperties httpProperties = new AiHttpProperties();
+            httpProperties.setConnectTimeoutMs(1000);
+            httpProperties.setReadTimeoutMs(1000);
+            SpringAiPlatformClient client = new SpringAiPlatformClient(platformProperties, httpProperties);
+
+            assertThatThrownBy(() -> client.generateEntity(
+                    new AiPrompt(
+                            AiPrompt.TASK_CANDIDATE_PROFILE_DRAFT,
+                            null,
+                            "Return JSON only.",
+                            "Summarize."),
+                    CandidateProfileDraftDto.class))
+                    .isInstanceOf(AiStructuredOutputMappingException.class)
+                    .hasMessageNotContaining("not-json")
+                    .hasMessageNotContaining("sk-test-key");
+        } finally {
+            server.stop(0);
+        }
     }
 
     private HttpServer startOpenAiCompatibleServer(AtomicReference<String> authorization,

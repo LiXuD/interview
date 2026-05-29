@@ -75,6 +75,7 @@ public class DefaultAiModelGateway implements AiModelGateway {
 
     private String generateJsonFromUserProvider(AiProvider provider, AiPrompt prompt) {
         String apiKey = encryption.decrypt(provider.getApiKeyEncrypted());
+        validateUserProviderConfig(provider, apiKey, prompt);
         try {
             if (usesSpringAiUserProvider(provider)) {
                 return springAiUserProviderClient.generateJson(provider, apiKey, prompt);
@@ -91,8 +92,11 @@ public class DefaultAiModelGateway implements AiModelGateway {
                                                  AiPrompt prompt,
                                                  Class<T> responseType) {
         String apiKey = encryption.decrypt(provider.getApiKeyEncrypted());
+        validateUserProviderConfig(provider, apiKey, prompt);
         try {
             return springAiUserProviderClient.generateEntity(provider, apiKey, prompt, responseType);
+        } catch (AiStructuredOutputMappingException ex) {
+            throw ex;
         } catch (Exception ex) {
             throw customProviderFailed(provider, prompt, ex);
         }
@@ -104,6 +108,8 @@ public class DefaultAiModelGateway implements AiModelGateway {
         }
         try {
             return platformAiClient.generateEntity(prompt, responseType);
+        } catch (AiStructuredOutputMappingException ex) {
+            throw ex;
         } catch (Exception ex) {
             throw new AiProviderCallFailedException(
                     "Platform AI call failed. task=" + prompt.task()
@@ -135,6 +141,19 @@ public class DefaultAiModelGateway implements AiModelGateway {
             return false;
         }
         return !platformProperties.isEnabled() || !platformProperties.isComplete();
+    }
+
+    private void validateUserProviderConfig(AiProvider provider, String apiKey, AiPrompt prompt) {
+        if (AiStrings.isBlank(provider.getBaseUrl()) || AiStrings.isBlank(apiKey)
+                || AiStrings.isBlank(provider.getModel()) || AiStrings.isBlank(provider.getOpenaiApiMode())) {
+            throw new AiProviderCallFailedException(
+                    "Custom AI Provider configuration is incomplete. task=" + prompt.task()
+                            + " provider=userOpenAICompatible"
+                            + " providerId=" + safeProviderId(provider)
+                            + " model=" + AiStrings.safe(provider.getModel())
+                            + " mode=" + AiStrings.safe(provider.getOpenaiApiMode()),
+                    null);
+        }
     }
 
     private AiProviderCallFailedException customProviderFailed(AiProvider provider,

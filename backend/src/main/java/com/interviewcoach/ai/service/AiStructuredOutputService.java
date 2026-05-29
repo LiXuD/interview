@@ -424,7 +424,11 @@ public class AiStructuredOutputService {
     }
 
     private <T> T generateStructuredFromSpringProvider(AiPrompt prompt, Class<T> type) {
-        return aiModelGateway.generateEntity(prompt, type);
+        try {
+            return aiModelGateway.generateEntity(prompt, type);
+        } catch (AiStructuredOutputMappingException ex) {
+            throw new AiParseException(prompt.task());
+        }
     }
 
     private void validateCandidateProfileDraft(CandidateProfileDraftDto dto) {
