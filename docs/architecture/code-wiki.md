@@ -1,6 +1,6 @@
 # Interview Coach Code Wiki
 
-生成日期：2026-05-28
+生成日期：2026-05-28（2026-05-30 更新 Spring AI 架构）
 
 本文档是项目代码级导航，用于帮助后续开发、Code Review 和问题定位。它描述当前仓库中的实际代码结构，不替代以下主约束与契约文档：
 
@@ -227,15 +227,29 @@ AI 模块是后端唯一允许接触模型原始响应的地方。
 - `ApiKeyEncryption`：AES-GCM 加解密 API Key。
 - `AiProviderService`：Provider CRUD、默认 Provider、跨用户隔离、连接测试。
 - `AiStructuredOutputService`：统一调用 Provider、解析 JSON、校验强类型 DTO。
+- `AiModelGateway`：内部网关接口，隔离 `AiStructuredOutputService` 与底层模型客户端。
+- `DefaultAiModelGateway`：网关实现，负责 Provider 优先级路由、Spring AI typed DTO 路由和真实 AI 门禁。
+- `SpringAiPlatformClient`：平台默认 AI 的 Spring AI 实现（`chatCompletions` 模式），替代旧 `PlatformRealAiClient` 的 chatCompletions 路径。
+- `SpringAiUserProviderClient`：用户自定义 Provider 的 Spring AI 实现（`chatCompletions` 模式），替代旧 `OpenAiCompatibleClient` 的 chatCompletions 路径。
+- `SpringAiFoundationConfig` / `SpringAiFoundationProperties`：Spring AI 配置类。
+- `SpringAiCallContext`：advisor params 附加低风险调用上下文（task/provider/model/requestId），禁止包含 prompt、completion、API Key 或简历原文。
+- `AiHttpProperties`：AI HTTP 超时配置（`IC_AI_HTTP_CONNECT_TIMEOUT_MS` / `IC_AI_HTTP_READ_TIMEOUT_MS`）。
+
+Spring AI 灰度开关 `IC_SPRING_AI_ENABLED` 默认 `false`，关闭时所有行为与迁移前一致。开启后平台和用户的 `chatCompletions` 模式走 Spring AI 路径，`responses` 模式仍走旧客户端。typed DTO 路径（`ChatClient.call().entity()`）获取强类型结果后仍经过 `AiStructuredOutputService` 二次业务校验。
 
 AI 输出规则：
 
 ```text
 Service 组装 AiPrompt
   -> AiStructuredOutputService.generateXxx()
-  -> 选择用户默认 Provider 或平台 AI
-  -> 获取 raw JSON
-  -> ObjectMapper 解析为强类型 DTO
+  -> AiModelGateway（Provider 优先级路由 + 真实 AI 门禁）
+     ├── SpringAiPlatformClient（chatCompletions，IC_SPRING_AI_ENABLED=true 时）
+     ├── SpringAiUserProviderClient（chatCompletions，IC_SPRING_AI_ENABLED=true 时）
+     ├── PlatformRealAiClient（responses 模式回退）
+     ├── OpenAiCompatibleClient（用户 Provider，responses 模式回退）
+     └── LocalPlatformAiClient（仅测试/离线演示/CI）
+  -> 获取 raw JSON 或 typed DTO（Spring AI 路径）
+  -> ObjectMapper 解析为强类型 DTO + AiStructuredOutputService 二次业务校验
   -> validateXxx()
   -> 解析失败最多重试 1 次
   -> 仍失败抛 AiParseException（消息包含 task 名称，便于定位）

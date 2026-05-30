@@ -69,7 +69,10 @@ interview/
 │   │   └── openapi.yaml
 │   ├── ai/
 │   │   ├── prompt-contracts.md
-│   │   └── provider-contracts.md
+│   │   ├── provider-contracts.md
+│   │   └── spring-ai-long-term-foundation-plan.md
+│   ├── architecture/
+│   │   └── code-wiki.md
 │   ├── privacy/
 │   │   └── data-policy.md
 │   └── product/

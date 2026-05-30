@@ -128,7 +128,8 @@ interview/
 │   │   └── data-policy.md
 │   └── ai/
 │       ├── prompt-contracts.md
-│       └── provider-contracts.md
+│       ├── provider-contracts.md
+│       └── spring-ai-long-term-foundation-plan.md
 ├── ios/
 │   └── InterviewCoach/
 ├── backend/
@@ -239,6 +240,7 @@ dto/
 - `docs/privacy/data-policy.md`：简历、API Key、账号删除、日志脱敏策略。
 - `docs/ai/prompt-contracts.md`：AI 输入输出 JSON、Prompt 版本、解析失败策略。
 - `docs/ai/provider-contracts.md`：平台 AI、OpenAI-compatible Provider 规则。
+- `docs/ai/spring-ai-long-term-foundation-plan.md`：Spring AI 底座迁移方案、阶段进度与设计决策。
 
 禁止把正式产品、架构、隐私、AI 契约文档散落到项目根目录。临时调研笔记必须放在 `docs/research/`，并且不得包含 API Key、简历原文或隐私数据。
 
