@@ -20,7 +20,7 @@ MVP 最窄闭环必须是：
 
 所有新增功能必须服务这条闭环。
 
-当前 MVP 功能闭环已完成。MVP 之后的新增内容必须继续服务 AI 面试教练定位，并且只能按 `docs/product/vibecoding-development-plan.md` 中已批准的 Post-MVP 任务推进。Post-MVP AI 质量闭环（Task 14-17）和 Post-MVP Real AI Adaptive Coaching（Task 18-25）已全部完成。Spring AI 底座迁移 Phase 2-6 已完成，AI 调用通过 `AiModelGateway` 统一路由到 Spring AI 或旧客户端（灰度开关 `IC_SPRING_AI_ENABLED`）。
+当前 MVP 功能闭环已完成。MVP 之后的新增内容必须继续服务 AI 面试教练定位，并且只能按 `docs/product/vibecoding-development-plan.md` 中已批准的 Post-MVP 任务推进。Post-MVP AI 质量闭环（Task 14-17）和 Post-MVP Real AI Adaptive Coaching（Task 18-25）已全部完成。Phase 3（Task 26-33）已批准为“持续训练伙伴与 AI 质量运营闭环”，但尚未实现。Spring AI 底座迁移 Phase 2-6 已完成，AI 调用通过 `AiModelGateway` 统一路由到 Spring AI 或旧客户端（灰度开关 `IC_SPRING_AI_ENABLED`）。
 
 ## 硬约束
 
@@ -32,6 +32,8 @@ MVP 最窄闭环必须是：
 - 禁止实现 Anthropic 自定义 Provider；当前只支持平台默认 AI 和 OpenAI-compatible 自定义 Provider。
 - 平台默认真实 AI 必须走后端 OpenAI-compatible 代理配置，禁止 iOS 直连 AI，禁止在仓库中提交平台 API Key。
 - Task 18-25 阶段，开发环境也必须能连接真实 AI；测评、训练、模拟面试等核心教练路径禁止静默使用 `LocalPlatformAiClient` stub。
+- Phase 3 阶段必须先补齐 AI 可观测与真实 AI 回归评测，再扩展多天训练、进步追踪和多轮模拟面试。
+- 多天训练计划只允许按 Phase 3 受控实现：默认 3 天、每天 2-4 个任务，禁止扩展为开放式课程系统或刷题系统。
 
 ## 目录规范红线
 
@@ -58,6 +60,7 @@ MVP 最窄闭环必须是：
 - API Key 必须加密保存，禁止返回给 iOS，禁止写入日志。
 - Post-MVP 教练记忆禁止保存简历原文、API Key 或 AI hidden chain-of-thought。
 - 删除账号时远端数据必须删除；本机 `CoachingMemoryArchive` 默认保留，只有用户勾选“同时删除本机教练记忆文件”才允许删除。
+- Phase 3 的 Observability 禁止采集 prompt、completion、简历原文、用户回答原文、API Key、Authorization Header 或完整请求头。
 
 ## API 与 AI 输出红线
 
@@ -68,6 +71,7 @@ MVP 最窄闭环必须是：
 - AI 结构化输出必须在后端解析为 DTO。
 - AI 解析失败必须返回统一错误响应，禁止返回半成品字符串。
 - 教练记忆必须区分 `confirmed`、`observed`、`corrected`、`inferred`、`rejected` 来源；`inferred` 不能当事实使用，`rejected` 禁止再次作为事实使用。
+- Chat Memory 只允许用于模拟面试短窗口上下文管理；业务长期教练记忆仍由 `CoachingMemory` 和纠错可信度规则承载。
 
 ## MockInterview 红线
 
@@ -131,7 +135,7 @@ Agent-Limitation: <已知局限或后续 TODO>
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **interview** (3581 symbols, 11572 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **interview** (3611 symbols, 11658 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 

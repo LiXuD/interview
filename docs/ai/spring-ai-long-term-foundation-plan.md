@@ -2,7 +2,7 @@
 
 ## 1. 背景
 
-当前后端 AI 模块已经完成平台默认真实 AI、OpenAI-compatible 自定义 Provider、AI 结构化输出解析、真实 AI 门禁和 Task 19 live AI 验收样例集。现阶段 Task 18-25 仍由其他团队推进，本方案不插队改造当前任务，不改变正在开发的业务范围。
+当前后端 AI 模块已经完成平台默认真实 AI、OpenAI-compatible 自定义 Provider、AI 结构化输出解析、真实 AI 门禁、Task 19 live AI 验收样例集，以及 Task 18-25 Real AI Adaptive Coaching。Phase 3（Task 26-33）已批准为“持续训练伙伴与 AI 质量运营闭环”，其中 Task 26 将补齐 Spring AI Observability，Task 31 将在受控边界内引入 Chat Memory 短窗口上下文管理。
 
 本方案用于当前开发任务全部完成后，将 AI 调用底座逐步迁移到 Spring AI。目标不是追求框架替换本身，而是降低长期维护成本，提升结构化输出、超时控制、观测、记忆和自适应教练能力的工程稳定性。
 
@@ -17,11 +17,11 @@
 
 ## 3. 非目标
 
-- 不在当前 Task 18-25 进行中途重构。
+- 不回头重构已完成的 Task 18-25 业务边界；Phase 3 只按 Task 26-33 小步推进。
 - 不引入 Anthropic 自定义 Provider。
 - 不让 iOS 直接调用 Spring AI 或任何大模型。
 - 不保存 AI hidden chain-of-thought。
-- 不把 Spring AI Chat Memory 直接当作业务教练记忆事实来源。
+- 不把 Spring AI Chat Memory 直接当作业务教练记忆事实来源；Chat Memory 只允许管理模拟面试短窗口上下文。
 - 不一次性替换所有 AI task；迁移必须按小任务推进。
 
 ## 4. 当前实现问题
@@ -340,7 +340,7 @@ Spring AI Chat Memory 可以用于管理短窗口对话上下文，但业务教�
 - `SpringAiPlatformClient` 与 `SpringAiUserProviderClient` 已通过 Spring AI advisor params 附加低风险调用上下文。
 - 当前 advisor context 包含 `ai.task`、`ai.provider`、`ai.providerId`（仅用户 Provider）、`ai.model`、`ai.mode`、`ai.targetId`、`ai.requestId`。
 - advisor context 不包含 system prompt、user prompt、completion、API Key、Authorization Header、简历原文或用户回答原文。
-- Spring AI Chat Memory 持久化未集成，有意推迟：业务层已在 `MockInterviewService.getContextMessages()` 实现受控消息窗口（最近 6 轮、12 条 message），在 `MockInterviewService.buildCoachingContext()` 实现按 source/confidence 过滤教练记忆。引入 `MessageWindowChatMemory` 需维护 JPA + ChatMemory 双重状态，且 ChatMemory 不理解 `confirmed`/`rejected` 语义，违反最小代码原则。
+- Spring AI Chat Memory 持久化未在 Phase 6 集成，有意推迟到 Phase 3 Task 31：业务层当前已在 `MockInterviewService.getContextMessages()` 实现受控消息窗口（最近 6 轮、12 条 message），在 `MockInterviewService.buildCoachingContext()` 实现按 source/confidence 过滤教练记忆。Task 31 只能用 `MessageWindowChatMemory` 替代短窗口切片逻辑，不得让 Chat Memory 承载 `confirmed`/`rejected` 等业务事实语义，也不得放宽 12 条 message 上限。
 - 代码质量收尾：提取 `OpenAiCompatibleEndpoint` 共享类消除重复，提取 `AiStrings` 工具类消除 5 处 `safe()` 重复，`PlatformAiClient` 接口增加 `generateEntity` default 方法消除 `instanceof` 检查。
 
 范围：
@@ -375,7 +375,7 @@ Spring AI Chat Memory 可以用于管理短窗口对话上下文，但业务教�
 | JSON Schema 对部分模型支持不一致 | 先保持 JSON String + Jackson 校验，再逐步启用 schema |
 | Observability 暴露敏感 prompt | 默认关闭 prompt/completion 内容采集，只采集元数据 |
 | Chat Memory 与业务记忆混用 | 明确 Chat Memory 只做短窗口上下文，事实记忆仍用业务 DTO |
-| 迁移影响正在开发任务 | 只在 Task 18-25 完成后启动，按 Phase 小步提交 |
+| 迁移影响正在开发任务 | Task 18-25 已完成；后续只按 Phase 3 Task 26-33 小步提交 |
 
 ## 14. 推荐决策
 

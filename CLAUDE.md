@@ -16,7 +16,7 @@
 
 MVP 只验收这条最窄闭环。只要这条路径不完整，就不算 MVP 完成。
 
-Task 1-25 全部完成：MVP 功能闭环、Post-MVP AI 质量闭环、Post-MVP Real AI Adaptive Coaching。Spring AI 底座迁移 Phase 2-6 已完成。MVP 完成后的新增开发必须继续服务 AI 面试教练定位，并且只能按 `docs/product/vibecoding-development-plan.md` 中已批准的 Post-MVP 任务推进。
+Task 1-25 全部完成：MVP 功能闭环、Post-MVP AI 质量闭环、Post-MVP Real AI Adaptive Coaching。Spring AI 底座迁移 Phase 2-6 已完成。Phase 3（Task 26-33）已批准为“持续训练伙伴与 AI 质量运营闭环”，但尚未实现。MVP 完成后的新增开发必须继续服务 AI 面试教练定位，并且只能按 `docs/product/vibecoding-development-plan.md` 中已批准的 Post-MVP 任务推进。
 
 ## 2. MVP 范围
 
@@ -46,7 +46,7 @@ MVP 禁止实现：
 - 简历自动投递。
 - 任意未进入已批准计划的模型厂商适配。
 - Anthropic 自定义 Provider。
-- 多天复杂训练计划。
+- 未进入 Phase 3 受控范围的多天复杂课程系统或刷题计划。
 
 ## 3. 开发方式
 
@@ -105,6 +105,7 @@ AI 调用必须遵守：
 - Anthropic 协议只作为 post-MVP 扩展点预留，MVP 禁止实现。
 - Post-MVP 平台默认真实 AI 只能采用 OpenAI-compatible 后端代理配置。
 - Post-MVP Real AI Adaptive Coaching 阶段，开发环境也必须能连接真实 AI；测评、训练、模拟面试等核心教练路径禁止静默使用 stub。
+- Phase 3 持续训练伙伴阶段必须先补齐 AI 可观测与真实 AI 回归评测，再扩展多天训练、进步追踪和多轮模拟面试。
 - 平台 API Key 只能通过环境变量或部署配置提供，禁止写入仓库、返回给 iOS 或写入日志。
 
 ## 5. 项目目录与模块边界规范
@@ -278,6 +279,14 @@ dto/
 - 教练记忆与用户纠错：主要改 `backend/src/main/java/com/interviewcoach/coachingmemory`（新增模块）、`backend/src/main/java/com/interviewcoach/common/api`、`ios/InterviewCoach/InterviewCoach/Features/Reports`、`ios/InterviewCoach/InterviewCoach/Core/Storage`、`docs/privacy/data-policy.md`。
 - 自适应专项训练：主要改 `backend/src/main/java/com/interviewcoach/training`、`backend/src/main/java/com/interviewcoach/ai`、`backend/src/main/java/com/interviewcoach/coachingmemory`、`ios/InterviewCoach/InterviewCoach/Features/Training`、`docs/api/openapi.yaml`。
 - 自适应模拟面试增强与本地记忆策略：主要改 `backend/src/main/java/com/interviewcoach/mockinterview`、`backend/src/main/java/com/interviewcoach/coachingmemory`、`ios/InterviewCoach/InterviewCoach/Features/MockInterview`、`ios/InterviewCoach/InterviewCoach/Features/Settings`、`docs/privacy/data-policy.md`。
+- Spring AI Observability 与质量基线：主要改 `backend/src/main/java/com/interviewcoach/ai`、`backend/src/main/resources/application.yml`、`docs/ai/provider-contracts.md`、`docs/ai/spring-ai-long-term-foundation-plan.md`。
+- 真实 AI 回归评测集升级：主要改 `backend/src/test`、`docs/ai/prompt-contracts.md`、`docs/product/vibecoding-development-plan.md`。
+- 多天训练计划：主要改 `backend/src/main/java/com/interviewcoach/training`、`ios/InterviewCoach/InterviewCoach/Features/Training`、`docs/api/openapi.yaml`、`docs/ai/prompt-contracts.md`。
+- 能力维度深度分析：主要改 `backend/src/main/java/com/interviewcoach/assessment`、`backend/src/main/java/com/interviewcoach/coachingmemory`、`ios/InterviewCoach/InterviewCoach/Features/Reports`、`docs/api/openapi.yaml`。
+- 教练进步追踪 Dashboard：主要改 `backend/src/main/java/com/interviewcoach/progress`、`ios/InterviewCoach/InterviewCoach/Features/Progress`、`ios/InterviewCoach/InterviewCoach/Core/API/DTO`、`docs/api/openapi.yaml`。
+- Chat Memory 上下文管理：主要改 `backend/src/main/java/com/interviewcoach/mockinterview`、`backend/src/main/java/com/interviewcoach/ai`、`docs/ai/spring-ai-long-term-foundation-plan.md`。
+- 多轮模拟面试：主要改 `backend/src/main/java/com/interviewcoach/mockinterview`、`ios/InterviewCoach/InterviewCoach/Features/MockInterview`、`docs/api/openapi.yaml`、`docs/ai/prompt-contracts.md`。
+- 发布硬化与记忆导入审查：主要改 `ios/InterviewCoach/InterviewCoach/Features/Settings`、`ios/InterviewCoach/InterviewCoach/Core/Storage`、`ios/InterviewCoach/InterviewCoach/Core/Auth`、`docs/privacy/data-policy.md`、`README.md`。
 
 禁止为了一个任务横跨无关模块做大改。若确实需要跨越上述边界，必须先说明原因、风险和替代方案，并等待用户确认。
 
@@ -449,6 +458,7 @@ Provider API：
 - 平台真实 AI 未启用时，可以保留 `LocalPlatformAiClient` 作为单元测试、CI 非 live AI 回归、明确标记的离线演示和基础健康检查兜底。
 - Post-MVP Real AI Adaptive Coaching 阶段，开发环境必须支持真实 AI 配置；测评出题、测评评分、训练反馈、专项训练、模拟面试追问和报告复盘不得静默走 stub。
 - 平台真实 AI 启用但配置缺失时必须明确失败，不允许静默回退到本地 stub。
+- Phase 3 的 Spring AI Observability 只能采集 task、provider、model、mode、latency、success/failure、parseFailed、timeout、估算 token usage 等低风险元数据；禁止采集 prompt、completion、简历原文、用户回答原文、API Key、Authorization Header 或完整请求头。
 
 禁止实现 Anthropic Provider。Anthropic 只允许在架构中保留扩展点，不允许创建可用业务入口。
 
@@ -520,6 +530,7 @@ AI 生成内容必须遵守：
 - 禁止保存或返回 AI hidden chain-of-thought；只能保存结构化依据、题目意图、rubric、评分、反馈、用户纠错和记忆摘要。
 - 教练记忆必须标注来源和可信度：`confirmed`、`observed`、`corrected`、`inferred`、`rejected`。
 - 后续 Prompt 只能把 `confirmed`、`observed`、`corrected` 当作可用事实；`inferred` 只能用于追问验证，`rejected` 禁止再次作为事实使用。
+- Phase 3 Chat Memory 只能用于模拟面试短窗口上下文管理；业务长期教练记忆仍由 `CoachingMemory` 和纠错可信度规则承载。
 
 ## 12. MockInterview 上下文限制
 
@@ -588,6 +599,14 @@ Report API：
 23. 逐题评分与回答结构诊断：按题诊断回答内容、结构、追问风险和改进示范。
 24. 自适应专项训练会话：根据回答动态决定追问、换角度、达标或停止。
 25. 自适应模拟面试增强与本地记忆策略：增强真实面试追问，并明确本地记忆保留/删除规则。
+26. Spring AI Observability 与质量基线：先建立 AI 调用观测、失败率和成本信号。
+27. 真实 AI 回归评测集升级：扩展 live AI 质量回归、幻觉检查和结构化解析定位。
+28. 多天训练计划：从 1 天扩展为默认 3 天的受控持续训练计划。
+29. 能力维度深度分析：围绕 7 个稳定能力维度沉淀趋势、短板和下一步训练重点。
+30. 教练进步追踪 Dashboard：展示分数趋势、维度雷达和训练完成率。
+31. Chat Memory 上下文管理：用 Spring AI 短窗口记忆替代手写切片，同时保留业务教练记忆边界。
+32. 多轮模拟面试：同一目标岗位支持多次模拟面试和同维度对比。
+33. 发布硬化与记忆导入审查：补齐 TestFlight/App Store、删除账号和本地记忆导入验收。
 
 ## 15. 每次任务输出格式
 
@@ -680,7 +699,7 @@ dev login
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **interview** (3581 symbols, 11572 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **interview** (3611 symbols, 11658 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 

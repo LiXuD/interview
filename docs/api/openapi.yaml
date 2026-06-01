@@ -71,7 +71,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/LoginResponse"
         "401":
-          description: Apple authentication failed (code: APPLE_AUTH_FAILED).
+          description: "Apple authentication failed (code: APPLE_AUTH_FAILED)."
           content:
             application/json:
               schema:

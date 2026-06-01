@@ -24,6 +24,7 @@ Post-MVP AI 质量阶段将平台默认 AI 升级为可配置的 OpenAI-compatib
 - 用户已配置默认 Provider 时，用户 Provider 优先于平台默认 AI。
 - 平台真实 AI 启用但配置缺失时必须明确失败，不允许静默回退到本地 stub。
 - Task 18-25 阶段，开发环境也必须能连接真实 AI；测评、训练、模拟面试等核心教练路径禁止静默使用 stub。
+- Phase 3（Task 26-33）阶段在扩展多天训练、进步追踪和多轮模拟面试前，必须先补齐 AI 可观测与真实 AI 回归评测。
 
 ### 2.1 平台默认 AI 配置
 
@@ -36,10 +37,12 @@ Post-MVP AI 质量阶段将平台默认 AI 升级为可配置的 OpenAI-compatib
 | `IC_PLATFORM_AI_API_KEY` | 启用时必填 | 平台默认 AI API Key |
 | `IC_PLATFORM_AI_MODEL` | 启用时必填 | 平台默认模型名称 |
 | `IC_PLATFORM_AI_MODE` | 启用时必填 | `chatCompletions` 或 `responses` |
-| `IC_REQUIRE_REAL_AI_FOR_COACHING` | Task 18-25 默认 `true` | 核心教练路径是否要求真实 AI；测试环境可显式关闭 |
+| `IC_REQUIRE_REAL_AI_FOR_COACHING` | Task 18 起默认 `true` | 核心教练路径是否要求真实 AI；测试环境可显式关闭 |
 | `IC_AI_HTTP_CONNECT_TIMEOUT_MS` | 否 | AI HTTP 连接超时，默认 `5000` 毫秒 |
 | `IC_AI_HTTP_READ_TIMEOUT_MS` | 否 | AI HTTP 读取超时，默认 `60000` 毫秒 |
-| `IC_SPRING_AI_ENABLED` | 否 | Spring AI 底座灰度开关，默认 `false`；Phase 3 仅在平台默认 AI 的 `chatCompletions` 模式接管调用路径 |
+| `IC_SPRING_AI_ENABLED` | 否 | Spring AI 底座灰度开关，默认 `false`；Spring AI 底座迁移 Phase 3（已完成）起平台默认 AI 的 `chatCompletions` 模式接管调用路径 |
+
+产品 Phase 3（Task 26-33，待实现）的 Observability 只允许采集以下低风险元数据：`task`、`provider`、`providerId`、`model`、`mode`、`latency`、`success/failure`、`parseFailed`、`timeout`、估算 token usage。禁止采集 prompt、completion、简历原文、用户回答原文、API Key、Authorization Header 或完整请求头。
 
 安全要求：
 

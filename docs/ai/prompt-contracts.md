@@ -448,7 +448,7 @@ System Prompt 要求：
 
 ## 11. Post-MVP Real AI Adaptive Coaching 计划契约
 
-Task 18-25 将在现有 AI task 基础上扩展以下契约。实现前必须同步 `docs/api/openapi.yaml`、后端 DTO、iOS DTO 和本文件。
+Task 18-25 已在现有 AI task 基础上扩展以下契约。后续修改相关 AI task 时必须同步 `docs/api/openapi.yaml`、后端 DTO、iOS DTO 和本文件。
 
 ### 11.1 结构化测评题（已实现 Task 20）
 
@@ -577,12 +577,73 @@ Task 25 的模拟面试追问必须：
 - 继续遵守最近 6 轮、最多 12 条 message 的上下文限制。
 - 结合教练记忆时只使用必要摘要，不传完整历史。
 
-## 12. 测试要求
+## 12. Phase 3 持续训练伙伴与 AI 质量运营契约
+
+Task 26-33 已批准为 Phase 3，尚未实现。实现前必须同步 `docs/api/openapi.yaml`、后端 DTO、iOS DTO 和本文件。
+
+### 12.1 真实 AI 回归评测升级
+
+Task 27 的 live AI 回归样例必须覆盖：
+
+- `jobBrief`
+- `assessmentQuestions`
+- `assessmentQuestionScore`
+- `assessmentResult`
+- `trainingPlan`
+- `trainingFeedback`
+- `adaptiveTrainingTurn`
+- `mockInterviewQuestion`
+- `mockInterviewReport`
+- `coachingMemory`
+
+每个样例至少记录：
+
+- 目标岗位与 JD 摘要。
+- 候选人确认摘要。
+- 输入回答或历史短板摘要。
+- 预期质量检查点。
+- 是否允许 live AI 运行。
+
+质量检查必须包含：是否虚构候选人经历、是否引用未确认业务指标、评分是否具体、训练建议是否可执行、结构化解析失败是否能定位到具体 task。
+
+### 12.2 多天训练计划
+
+Task 28 的 `trainingPlan` 输出需要从 1 天扩展为默认 3 天，但仍必须保持受控训练计划：
+
+- 默认 3 天。
+- 每天 2-4 个任务。
+- 每个任务必须引用 Assessment weakness、逐题诊断或可信教练记忆。
+- 后一天任务可以基于前一天训练反馈和记忆摘要调整。
+- 禁止扩展为开放式课程系统、题库或社区打卡。
+
+### 12.3 能力维度分析与进步追踪
+
+Task 29-30 的进步分析只允许基于结构化事实：
+
+- 7 个固定能力维度。
+- AssessmentResult / AssessmentQuestionScore。
+- TrainingFeedback。
+- MockInterviewReport。
+- CoachingMemory 中 `confirmed`、`corrected`、`observed` 来源的摘要。
+
+`inferred` 只能作为待验证追问线索；`rejected` 禁止再次作为事实进入分析或推荐。
+
+### 12.4 Chat Memory 短窗口上下文
+
+Task 31 可以使用 Spring AI `MessageWindowChatMemory` 管理模拟面试短窗口上下文，但必须遵守：
+
+- 窗口等价于最近 6 轮、最多 12 条 message。
+- Chat Memory 不承载业务长期教练记忆。
+- `CoachingMemory` 仍是 `confirmed`、`observed`、`corrected`、`inferred`、`rejected` 语义的唯一业务来源。
+- 不保存简历原文、API Key、AI hidden chain-of-thought。
+- 不因为引入 Chat Memory 而放宽 MockInterview Prompt 上下文限制。
+
+## 13. 测试要求
 
 - 每个 AI task 必须有结构化输出解析测试。
 - 每个 AI task 必须覆盖非法 JSON 和缺失必填字段。
 - 包含目标 ID 或会话 ID 的 task 还必须覆盖 ID 不匹配场景。
 - 默认测试不得依赖 live AI 调用。
-- Task 18-25 的真实 AI 验收必须显式开启，不能污染默认 CI。
+- Task 18 之后的真实 AI 验收必须显式开启，不能污染默认 CI。
 - 涉及简历原文的测试必须确认原文不落库、不写日志、不进入返回给 iOS 的字段。
 - `candidateProfileDraft` 测试必须确认 `rawTextLength` 由后端计算，不受 AI 输出影响。

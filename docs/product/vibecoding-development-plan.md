@@ -553,6 +553,14 @@ Report 来源：
 23. 逐题评分与回答结构诊断：按题诊断回答内容、结构、追问风险和改进示范。
 24. 自适应专项训练会话：根据回答动态决定追问、换角度、达标或停止。
 25. 自适应模拟面试增强与本地记忆策略：增强真实面试追问，并明确本地记忆保留/删除规则。
+26. Spring AI Observability 与质量基线：先建立 AI 调用观测、失败率和成本信号。
+27. 真实 AI 回归评测集升级：扩展 live AI 质量回归、幻觉检查和结构化解析定位。
+28. 多天训练计划：从 1 天扩展为默认 3 天的受控持续训练计划。
+29. 能力维度深度分析：围绕 7 个稳定能力维度沉淀趋势、短板和下一步训练重点。
+30. 教练进步追踪 Dashboard：展示分数趋势、维度雷达和训练完成率。
+31. Chat Memory 上下文管理：用 Spring AI 短窗口记忆替代手写切片，同时保留业务教练记忆边界。
+32. 多轮模拟面试：同一目标岗位支持多次模拟面试和同维度对比。
+33. 发布硬化与记忆导入审查：补齐 TestFlight/App Store、删除账号和本地记忆导入验收。
 
 ### Task 1: Walking Skeleton
 
@@ -1197,7 +1205,237 @@ Task1-17 已完成 MVP 功能闭环、TestFlight 提审前置认证和第一轮 
 
 ---
 
-## 6. 最终 MVP 验收路径
+## 6. Phase 3: 持续训练伙伴与 AI 质量运营闭环
+
+Task1-25 已完成 MVP 功能闭环、TestFlight 提审前置认证、Post-MVP AI 质量闭环和 Real AI Adaptive Coaching。Phase 3 的目标是把产品从单次闭环升级为持续训练伙伴，同时先补齐真实 AI 的质量运营能力，避免在多天训练和多轮面试扩展后才暴露不可观测的质量、成本和上下文问题。
+
+阶段目标：
+
+```text
+Spring AI 可观测性
+-> 真实 AI 回归评测
+-> 多天训练计划
+-> 能力维度深度分析
+-> 进步追踪 Dashboard
+-> Chat Memory 短窗口上下文管理
+-> 多轮模拟面试
+-> 发布硬化与本地记忆导入审查
+```
+
+阶段硬约束：
+
+- Phase 3 仍必须服务 AI 面试教练定位，禁止扩展题库社区、招聘投递、企业端、订阅付费、多人协作、语音面试。
+- 多天训练计划必须是受控训练伙伴能力，默认 3 天，每天 2-4 个任务；禁止扩展为开放式课程系统或刷题系统。
+- 进步追踪和能力分析只能使用结构化 DTO、评分、维度、短板、训练状态和教练记忆摘要；禁止让 iOS 解析 AI 原始文本。
+- Spring AI Observability 默认不得采集 prompt、completion、简历原文、用户回答原文、API Key、Authorization Header 或完整请求头。
+- Chat Memory 只用于模拟面试短窗口上下文管理；业务长期教练记忆仍由 `CoachingMemory`、纠错来源和可信度规则承载。
+- MockInterview 仍必须遵守最近 6 轮、最多 12 条 message 的上下文上限；引入 Chat Memory 后不得放宽该红线。
+- 真实 AI 回归和发布硬化不得污染默认 CI；live AI 验收必须显式开启。
+- 本机 `CoachingMemoryArchive` 仍默认保留；重新登录或重新注册时不得自动上传，必须用户主动确认导入。
+
+### Task 26: Spring AI Observability 与质量基线
+
+目标：先让真实 AI 调用质量、失败率、延迟和成本信号可见，再继续扩展持续训练能力。
+
+范围：
+
+- 集成 Micrometer metrics，记录 AI task、provider、model、mode、latency、success/failure、parseFailed、timeout 和估算 token usage。
+- 提供后端内部使用的 AI 调用健康视图或 actuator metrics，不做用户端展示。
+- 对结构化解析失败率、超时率、token 超限建立可查询指标。
+- 指标标签只能包含低风险元数据，禁止 prompt/completion/用户原文/API Key/Authorization Header。
+
+文件边界：
+
+- `backend/src/main/java/com/interviewcoach/ai`
+- `backend/src/main/resources/application.yml`
+- `docs/ai/provider-contracts.md`
+- `docs/ai/spring-ai-long-term-foundation-plan.md`
+
+验收：
+
+- 默认测试不依赖外部监控系统。
+- 每类 AI 调用能按 task/provider/model 维度统计成功、失败、延迟。
+- 解析失败和 Provider 调用失败可区分。
+- 日志和 metrics 中不包含敏感内容或用户原文。
+
+### Task 27: 真实 AI 回归评测集升级
+
+目标：扩展现有真实 AI 验收样例，建立能持续发现幻觉、评分漂移和结构化输出退化的质量回归集。
+
+范围：
+
+- 扩展 Java 后端/支付系统、AI 应用工程师/RAG Agent、数据平台/调度数仓等样例。
+- 覆盖 JobBrief、Assessment、QuestionScore、TrainingPlan、TrainingFeedback、AdaptiveTraining、MockInterview、CoachingMemory。
+- 增加虚构经历检查、评分一致性检查、结构化解析失败定位和任务级错误报告。
+- 默认 CI 不运行 live AI；通过显式 profile/env 开启。
+
+文件边界：
+
+- `backend/src/test`
+- `docs/ai/prompt-contracts.md`
+- `docs/product/vibecoding-development-plan.md`
+
+验收：
+
+- live AI 失败能定位到具体 task、模型配置和失败类型。
+- 样例能发现 AI 是否虚构候选人经历或业务指标。
+- 样例能检查训练建议是否可执行、评分是否具体、题目是否有区分度。
+- 不引入外部真实简历或隐私数据 fixture。
+
+### Task 28: 多天训练计划
+
+目标：将 1 天训练计划扩展为默认 3 天的受控持续训练计划，让后续任务基于前一天表现动态调整。
+
+范围：
+
+- `TrainingPlan` 支持可配置天数，默认 3 天。
+- 每天仍保持 2-4 个训练任务，任务基于测评短板、训练反馈和教练记忆生成。
+- 后一天任务可基于前一天完成状态、分数、问题和推荐复习点动态调整。
+- 增加训练计划进度：`pending`、`inProgress`、`completed`。
+- 保持 `TrainingTask answer` 只生成 `TrainingFeedback`，不创建 Report。
+
+文件边界：
+
+- `backend/src/main/java/com/interviewcoach/training`
+- `ios/InterviewCoach/InterviewCoach/Features/Training`
+- `docs/api/openapi.yaml`
+- `docs/ai/prompt-contracts.md`
+
+验收：
+
+- 默认生成 3 天计划，每天 2-4 个任务。
+- 计划必须引用 Assessment weakness、逐题诊断和可用教练记忆。
+- 后一天任务能反映前一天表现，而不是一次性静态课程。
+- 不扩展为题库、课程系统或多天打卡社区。
+
+### Task 29: 能力维度深度分析
+
+目标：围绕既有 7 个能力维度建立可追踪的深度分析，为训练重点和进步追踪提供统一依据。
+
+范围：
+
+- 追踪 `technicalDepth`、`projectSpecificity`、`systemThinking`、`tradeoffAwareness`、`failureHandling`、`communicationClarity`、`businessContext`。
+- 聚合 Assessment、QuestionScore、TrainingFeedback、MockInterviewReport 和 CoachingMemory 中的维度分、短板和改进建议。
+- 每个维度提供历史分数、趋势方向、具体短板描述、证据来源和下一步训练重点。
+- `inferred` 只能作为待验证追问线索，`rejected` 禁止作为事实。
+
+文件边界：
+
+- `backend/src/main/java/com/interviewcoach/assessment`
+- `backend/src/main/java/com/interviewcoach/coachingmemory`
+- `ios/InterviewCoach/InterviewCoach/Features/Reports`
+- `docs/api/openapi.yaml`
+
+验收：
+
+- 每个维度能展示最近表现和历史趋势。
+- 推荐训练重点来自结构化评分、反馈或可信教练记忆。
+- 不把 AI 自然语言原文直接作为 iOS 解析依据。
+- 不重复保存与现有模块冲突的事实来源。
+
+### Task 30: 教练进步追踪 Dashboard
+
+目标：让用户看到持续训练是否有效，而不只是看到单次报告。
+
+范围：
+
+- 新增进步追踪入口，展示分数趋势、能力维度雷达图、训练计划完成率和最近短板变化。
+- 后端可新增 `progress` 模块，负责聚合而不是复制 Assessment/Training/MockInterview/CoachingMemory 的事实。
+- iOS 新增 `Features/Progress`，展示结构化指标和图表。
+- Dashboard 不展示 AI 原始输出，不暴露内部 metrics 或 Provider 信息。
+
+文件边界：
+
+- `backend/src/main/java/com/interviewcoach/progress`
+- `ios/InterviewCoach/InterviewCoach/Features/Progress`
+- `ios/InterviewCoach/InterviewCoach/Core/API/DTO`
+- `docs/api/openapi.yaml`
+
+验收：
+
+- 能按目标岗位查看训练完成率、总分趋势和 7 维度雷达。
+- 数据来源可追溯到已有会话、报告、训练反馈和教练记忆。
+- 空状态、加载状态、错误状态完整。
+- 不引入排行榜、社区或社交比较。
+
+### Task 31: Chat Memory 上下文管理
+
+目标：用 Spring AI `MessageWindowChatMemory` 管理模拟面试短窗口上下文，替代手写切片逻辑，同时保持业务记忆边界。
+
+范围：
+
+- 在 MockInterview answer/finish 相关 AI 调用中引入 Spring AI 短窗口 Chat Memory。
+- 窗口大小必须等价于最近 6 轮、最多 12 条 message。
+- 业务长期教练记忆仍由 `CoachingMemory` 实体承载，Chat Memory 不保存 `confirmed`/`rejected` 事实语义。
+- 避免 JPA message 历史与 Chat Memory 状态不一致；必要时以后端持久化消息为权威来源。
+
+文件边界：
+
+- `backend/src/main/java/com/interviewcoach/mockinterview`
+- `backend/src/main/java/com/interviewcoach/ai`
+- `docs/ai/spring-ai-long-term-foundation-plan.md`
+
+验收：
+
+- Prompt 不随对话轮次无限增长。
+- 最近 6 轮、最多 12 条 message 红线仍有自动化测试覆盖。
+- `rejected` 记忆不会通过 Chat Memory 或 CoachingMemory 重新进入事实上下文。
+- Chat Memory 不保存简历原文、API Key 或 AI hidden chain-of-thought。
+
+### Task 32: 多轮模拟面试
+
+目标：同一目标岗位支持多次模拟面试，并能比较不同面试之间的维度变化和重复短板。
+
+范围：
+
+- 同一目标岗位可以创建多次 MockInterview。
+- 开始面试时可选择侧重维度，例如系统设计、项目深挖、故障处理、表达清晰。
+- 面试报告支持同维度分数变化、重复短板、追问风险变化。
+- 后续面试可参考可信教练记忆和最近短板，但禁止塞入完整历史。
+
+文件边界：
+
+- `backend/src/main/java/com/interviewcoach/mockinterview`
+- `ios/InterviewCoach/InterviewCoach/Features/MockInterview`
+- `docs/api/openapi.yaml`
+- `docs/ai/prompt-contracts.md`
+
+验收：
+
+- 同一目标岗位可进行多次模拟面试。
+- 每次面试可选择一个侧重维度或默认综合面试。
+- 面试间对比使用结构化报告字段，不依赖 iOS 解析自然语言。
+- 仍遵守最近 6 轮、最多 12 条 message 上下文限制。
+
+### Task 33: 发布硬化与记忆导入审查
+
+目标：在持续训练能力扩展后，补齐发布前的隐私、删除账号、本地记忆导入和失败恢复验收。
+
+范围：
+
+- 完整验收删除账号：远端数据删除、本地登录态清理、本机 `CoachingMemoryArchive` 默认保留。
+- 删除账号页继续提供“同时删除本机教练记忆文件”选项。
+- 重新登录或重新注册检测到本机记忆时，提供主动导入、差异审查、拒绝入口，不自动上传。
+- 补齐 TestFlight/App Store 隐私文案、真实 AI 配置检查、失败恢复和离线草稿体验。
+
+文件边界：
+
+- `ios/InterviewCoach/InterviewCoach/Features/Settings`
+- `ios/InterviewCoach/InterviewCoach/Core/Storage`
+- `ios/InterviewCoach/InterviewCoach/Core/Auth`
+- `docs/privacy/data-policy.md`
+- `README.md`
+
+验收：
+
+- 删除账号后远端无法查询旧数据。
+- 未勾选删除本机记忆时，本机归档保留；勾选时本机归档被清除。
+- 本机记忆导入必须用户主动确认，且能拒绝。
+- 发布隐私文案与实际数据流一致。
+
+---
+
+## 7. 最终 MVP 验收路径
 
 Task1-12 的最终验收仍按 MVP 功能闭环执行；Task13 是 TestFlight 提审前置认证任务，不改变 MVP 功能闭环验收路径。
 
@@ -1224,7 +1462,7 @@ dev login
 
 只要这条路径不完整，就不算 MVP 完成。
 
-## 7. 每次任务完成输出
+## 8. 每次任务完成输出
 
 每次实现后必须回复：
 

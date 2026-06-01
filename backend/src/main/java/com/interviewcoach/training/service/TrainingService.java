@@ -244,8 +244,8 @@ public class TrainingService {
             session.setLastAction(aiTurn.action());
             completeAdaptiveSession(session, task, aiTurn);
         } else {
-            round.setAction("continue");
-            session.setLastAction("continue");
+            round.setAction(aiTurn.action());
+            session.setLastAction(aiTurn.action());
             session.setCurrentQuestion(requireNextQuestion(aiTurn));
         }
 

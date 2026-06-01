@@ -1,6 +1,6 @@
 # Interview Coach Code Wiki
 
-生成日期：2026-05-28（2026-05-30 更新 Spring AI 架构）
+生成日期：2026-05-28（2026-06-01 更新 Phase 3 状态）
 
 本文档是项目代码级导航，用于帮助后续开发、Code Review 和问题定位。它描述当前仓库中的实际代码结构，不替代以下主约束与契约文档：
 
@@ -17,6 +17,13 @@
 ```text
 目标岗位 -> 简历摘要确认 -> 岗位画像 -> 5 题测评 -> 1 天训练计划 -> 1 次文字模拟面试 -> 报告
 ```
+
+当前实现状态：
+
+- Task 1-25 已完成：MVP 功能闭环、Post-MVP AI 质量闭环、Real AI Adaptive Coaching。
+- Spring AI 底座迁移 Phase 2-6 已完成，AI 调用通过 `AiModelGateway` 路由到 Spring AI 或旧客户端。
+- 产品 Phase 3（Task 26-33）已批准为“持续训练伙伴与 AI 质量运营闭环”，尚未实现。
+- 当前代码仍保持 1 天训练计划、单次文字模拟面试和已有自适应训练/教练记忆能力；尚无 AI Observability、真实 AI 回归升级、多天训练计划、Progress Dashboard、Spring AI Chat Memory 短窗口替换或多轮模拟面试对比实现。
 
 代码上采用 monorepo：
 
@@ -1041,4 +1048,3 @@ iOS：
 - 隐私或数据生命周期改动更新 `docs/privacy/data-policy.md`。
 - AI Provider 或 Prompt 契约改动更新 `docs/ai/`。
 - 产品范围改动更新 `docs/product/vibecoding-development-plan.md`。
-

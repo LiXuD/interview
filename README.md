@@ -84,7 +84,7 @@ interview/
 └── scripts/
 ```
 
-当前仓库已完成 Task 1-25：MVP 闭环（Walking Skeleton → OpenAPI → Dev Login → Target CRUD → CandidateProfile → JobBrief → Assessment → TrainingPlan → MockInterview → User Provider → Delete Account → TestFlight Polish → Sign in with Apple）、Post-MVP AI 质量闭环（Task 14-17）、Post-MVP Real AI Adaptive Coaching（Task 18-25）。Spring AI 底座迁移 Phase 2-6 已完成，AI 调用通过 `AiModelGateway` 统一路由到 Spring AI 或旧客户端。
+当前仓库已完成 Task 1-25：MVP 闭环（Walking Skeleton → OpenAPI → Dev Login → Target CRUD → CandidateProfile → JobBrief → Assessment → TrainingPlan → MockInterview → User Provider → Delete Account → TestFlight Polish → Sign in with Apple）、Post-MVP AI 质量闭环（Task 14-17）、Post-MVP Real AI Adaptive Coaching（Task 18-25）。Phase 3（Task 26-33）已批准为“持续训练伙伴与 AI 质量运营闭环”，尚未实现。Spring AI 底座迁移 Phase 2-6 已完成，AI 调用通过 `AiModelGateway` 统一路由到 Spring AI 或旧客户端。
 
 ## 开发计划
 
@@ -126,6 +126,17 @@ Post-MVP Real AI Adaptive Coaching 路线：
 24. 自适应专项训练会话：根据回答动态决定追问、换角度、达标或停止。
 25. 自适应模拟面试增强与本地记忆策略：增强真实面试追问，并明确本地记忆保留/删除规则。
 
+Phase 3 持续训练伙伴与 AI 质量运营闭环：
+
+26. Spring AI Observability 与质量基线：先建立 AI 调用观测、失败率和成本信号。
+27. 真实 AI 回归评测集升级：扩展 live AI 质量回归、幻觉检查和结构化解析定位。
+28. 多天训练计划：从 1 天扩展为默认 3 天的受控持续训练计划。
+29. 能力维度深度分析：围绕 7 个稳定能力维度沉淀趋势、短板和下一步训练重点。
+30. 教练进步追踪 Dashboard：展示分数趋势、维度雷达和训练完成率。
+31. Chat Memory 上下文管理：用 Spring AI 短窗口记忆替代手写切片，同时保留业务教练记忆边界。
+32. 多轮模拟面试：同一目标岗位支持多次模拟面试和同维度对比。
+33. 发布硬化与记忆导入审查：补齐 TestFlight/App Store、删除账号和本地记忆导入验收。
+
 ## 本地真实 AI 配置
 
 Task 18 起，测评出题、测评评分、训练计划/反馈、模拟面试追问和报告复盘必须使用真实 AI。开发环境可以二选一：
@@ -152,6 +163,8 @@ Task 18 起，测评出题、测评评分、训练计划/反馈、模拟面试�
 - 每次只实现一个小任务。
 - MVP 阶段禁止扩展非 MVP 功能；MVP 完成后只允许按已批准的 Post-MVP 计划推进。
 - Task 18-25 阶段，开发环境也必须能连接真实 AI；测评、训练、模拟面试等核心教练路径禁止静默使用 stub。
+- Phase 3 阶段必须先补齐 AI 可观测与真实 AI 回归评测，再扩展多天训练、进步追踪和多轮模拟面试。
+- Phase 3 的多天训练计划必须保持受控：默认 3 天、每天 2-4 个任务，禁止扩展为开放式课程系统或刷题系统。
 - 后端必须使用 Spring Security Bearer Token。
 - 所有后端返回给 iOS 的 JSON 必须使用 camelCase。
 - 后端必须返回强类型 DTO。
@@ -161,6 +174,8 @@ Task 18 起，测评出题、测评评分、训练计划/反馈、模拟面试�
 - 禁止记录简历原文或 API Key 到日志。
 - 禁止保存或返回 AI hidden chain-of-thought；教练记忆只能保存结构化依据、题目意图、rubric、评分、反馈、用户纠错和记忆摘要。
 - 模拟面试 Prompt 最多携带最近 6 轮，也就是 12 条 message。
+- Spring AI Observability 禁止采集 prompt、completion、简历原文、用户回答原文、API Key、Authorization Header 或完整请求头。
+- Chat Memory 只允许用于模拟面试短窗口上下文管理，业务长期教练记忆仍由 `CoachingMemory` 和纠错可信度规则承载。
 
 ## GitHub
 
@@ -170,7 +185,7 @@ Task 18 起，测评出题、测评评分、训练计划/反馈、模拟面试�
 
 ## 当前状态
 
-所有计划内任务已完成：Task 1-25（MVP + Post-MVP AI 质量 + Real AI Adaptive Coaching）。Spring AI 底座迁移 Phase 2-6 已完成，AI 调用已通过 `AiModelGateway` 统一路由到 Spring AI `ChatClient`（`chatCompletions` 模式）或旧客户端（`responses` 模式）。
+Task 1-25 已完成：MVP + Post-MVP AI 质量 + Real AI Adaptive Coaching。Phase 3（Task 26-33）已批准，尚未实现。Spring AI 底座迁移 Phase 2-6 已完成，AI 调用已通过 `AiModelGateway` 统一路由到 Spring AI `ChatClient`（`chatCompletions` 模式）或旧客户端（`responses` 模式）。
 
 已完成：
 
@@ -178,6 +193,10 @@ Task 18 起，测评出题、测评评分、训练计划/反馈、模拟面试�
 - Task 14-17：Post-MVP AI 质量闭环（平台默认真实 AI 接入、CandidateProfile AI 摘要、AI Prompt 契约补齐、AI 质量迭代）。
 - Task 18-25：Post-MVP Real AI Adaptive Coaching（开发环境真实 AI 基线、真实 AI 验收样例、固定 5 题结构化测评、教练记忆、用户纠错与记忆可信度、逐题评分与回答结构诊断、自适应专项训练、自适应模拟面试增强与本地记忆策略）。
 - Spring AI 底座迁移：Phase 2（依赖引入）→ Phase 3（平台 Provider 迁移）→ Phase 4（用户 Provider 迁移）→ Phase 5（结构化输出升级）→ Phase 6（Advisor 与记忆增强）。
+
+已批准、待实现：
+
+- Task 26-33：Phase 3 持续训练伙伴与 AI 质量运营闭环（Spring AI Observability、真实 AI 回归评测升级、多天训练计划、能力维度深度分析、进步追踪 Dashboard、Chat Memory 上下文管理、多轮模拟面试、发布硬化与记忆导入审查）。
 
 当前架构：
 
