@@ -2,9 +2,9 @@
 
 ## 1. 背景
 
-当前后端 AI 模块已经完成平台默认真实 AI、OpenAI-compatible 自定义 Provider、AI 结构化输出解析、真实 AI 门禁、Task 19 live AI 验收样例集，以及 Task 18-25 Real AI Adaptive Coaching。Phase 3（Task 26-33）已批准为“持续训练伙伴与 AI 质量运营闭环”，其中 Task 26 将补齐 Spring AI Observability，Task 31 将在受控边界内引入 Chat Memory 短窗口上下文管理。
+当前后端 AI 模块已完成平台默认真实 AI、OpenAI-compatible 自定义 Provider、AI 结构化输出解析、真实 AI 门禁、Task 19 live AI 验收样例集，以及 Task 18-25 全部 Post-MVP Real AI Adaptive Coaching 任务。Phase 3（Task 26-33）已批准为”持续训练伙伴与 AI 质量运营闭环”，其中 Task 26 将补齐 Spring AI Observability，Task 31 将在受控边界内引入 Chat Memory 短窗口上下文管理。
 
-本方案用于当前开发任务全部完成后，将 AI 调用底座逐步迁移到 Spring AI。目标不是追求框架替换本身，而是降低长期维护成本，提升结构化输出、超时控制、观测、记忆和自适应教练能力的工程稳定性。
+本方案已完成 Phase 2-6 迁移，AI 调用底座已切换到 Spring AI。当前架构为 `AiStructuredOutputService` -> `AiModelGateway` -> `SpringAiPlatformClient`/`SpringAiUserProviderClient`（chatCompletions 模式），`IC_SPRING_AI_ENABLED` 灰度开关已就绪。目标不是追求框架替换本身，而是降低长期维护成本，提升结构化输出、超时控制、观测、记忆和自适应教练能力的工程稳定性。
 
 ## 2. 迁移目标
 
@@ -240,7 +240,7 @@ Spring AI Chat Memory 可以用于管理短窗口对话上下文，但业务教�
 - 错误不包含 API Key、Authorization Header 或原始 prompt。
 - 默认 `rtk mvn -q test` 不依赖 live AI。
 
-### Phase 2: 引入 Spring AI 依赖但不改业务行为
+### Phase 2: 引入 Spring AI 依赖但不改业务行为（已完成）
 
 目标：加入 Spring AI 依赖和最小配置，保证编译和测试稳定。
 
@@ -256,7 +256,7 @@ Spring AI Chat Memory 可以用于管理短窗口对话上下文，但业务教�
 - 未配置 Spring AI 时不会影响现有 AI 路径。
 - 不引入 Anthropic Provider 业务入口。
 
-### Phase 3: 平台 Provider 迁移到 Spring AI
+### Phase 3: 平台 Provider 迁移到 Spring AI（已完成）
 
 目标：平台默认 AI 走 Spring AI，用户自定义 Provider 暂时保持旧实现。
 
@@ -276,7 +276,7 @@ Spring AI Chat Memory 可以用于管理短窗口对话上下文，但业务教�
 - stub 状态不会被误展示为真实 AI。
 - 平台配置缺失时明确失败。
 
-### Phase 4: 用户 OpenAI-compatible Provider 迁移
+### Phase 4: 用户 OpenAI-compatible Provider 迁移（已完成）
 
 目标：用户 Provider 也通过 Spring AI 统一调用。
 
@@ -297,7 +297,7 @@ Spring AI Chat Memory 可以用于管理短窗口对话上下文，但业务教�
 - 删除 Provider 后密钥不可再用。
 - API Key 不出现在响应、日志、异常 message 中。
 
-### Phase 5: 结构化输出升级
+### Phase 5: 结构化输出升级（已完成）
 
 目标：稳定 task 使用 Spring AI structured output，复杂 task 使用 JSON Schema。
 
@@ -331,7 +331,7 @@ Spring AI Chat Memory 可以用于管理短窗口对话上下文，但业务教�
 - 包含 ID 的 task 覆盖 AI 返回错误 ID 的场景。
 - DTO 二次业务校验仍保留。
 
-### Phase 6: Advisor 与记忆增强
+### Phase 6: Advisor 与记忆增强（已完成）
 
 目标：在不破坏业务记忆约束的前提下，引入 Advisor 管理 prompt 装配和短窗口上下文。
 

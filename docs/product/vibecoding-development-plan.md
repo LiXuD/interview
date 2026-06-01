@@ -16,6 +16,18 @@ MVP Provider 范围：
 - 首版支持 OpenAI-compatible 自定义 Provider。
 - Anthropic 协议后移，不进入最窄 MVP。
 
+### 当前进度总览
+
+| 阶段 | 任务 | 状态 |
+|------|------|------|
+| MVP 功能闭环 | Task 1-12 | 全部完成 |
+| TestFlight 提审前置 | Task 13 (Sign in with Apple) | 已完成 |
+| Post-MVP AI 质量 | Task 14-17 | 全部完成 |
+| Post-MVP Real AI Adaptive Coaching | Task 18-25 | 全部完成 |
+| Spring AI 底座迁移 | Phase 2-6 | 已完成 |
+
+所有 25 个 Task 和 Spring AI 底座迁移 Phase 2-6 均已完成。后续新增开发必须继续服务 AI 面试教练定位，按已批准的 Post-MVP 任务推进。
+
 ---
 
 ## 1. Product Spec
@@ -910,16 +922,17 @@ Report 来源：
 
 ---
 
-## 4. Post-MVP AI Quality Roadmap
+## 4. Post-MVP AI Quality Roadmap（已全部完成）
 
-Task1-13 已完成 MVP 功能闭环和 TestFlight 提审前置认证任务。Post-MVP 阶段优先补齐 AI 质量闭环，不改变 MVP 已完成结论。
+Task1-13 已完成 MVP 功能闭环和 TestFlight 提审前置认证任务。Task 14-17 已全部完成，AI 质量闭环已补齐。
 
 当前 AI 状态：
 
 - 用户自定义 OpenAI-compatible Provider 已可用于业务 AI 调用。
-- 平台默认 AI 已支持通过 `IC_PLATFORM_AI_*` 环境变量启用真实 OpenAI-compatible 后端模型；未启用时仍以 `LocalPlatformAiClient` 本地 stub 保持测试、离线演示和基础健康检查稳定。Task18 之后核心教练路径禁止静默走 stub。
+- 平台默认 AI 已支持通过 `IC_PLATFORM_AI_*` 环境变量启用真实 OpenAI-compatible 后端模型；未启用时仍以 `LocalPlatformAiClient` 本地 stub 保持测试、离线演示和基础健康检查稳定。核心教练路径禁止静默走 stub。
 - `POST /api/profiles/draft-summary` 已接入统一 AI 路由生成结构化 `CandidateProfileDraftDto`；后端仍自行计算 `rawTextLength`，并继续禁止保存或记录简历原文。
 - iOS 仍禁止直接调用 AI，所有 AI 调用继续由后端统一代理。
+- Spring AI 底座迁移 Phase 2-6 已完成，`AiModelGateway` 已替代直接编排底层客户端的路由逻辑，`IC_SPRING_AI_ENABLED` 灰度开关已就绪。
 
 ### Task 14: 平台默认真实 AI 接入
 
@@ -1011,9 +1024,9 @@ Task1-13 已完成 MVP 功能闭环和 TestFlight 提审前置认证任务。Pos
 
 ---
 
-## 5. Post-MVP Real AI Adaptive Coaching Roadmap
+## 5. Post-MVP Real AI Adaptive Coaching Roadmap（已全部完成）
 
-Task1-17 已完成 MVP 功能闭环、TestFlight 提审前置认证和第一轮 Post-MVP AI 质量闭环。下一阶段以真实 AI 面试能力提升为核心，将产品从一次性测评工具升级为持续理解用户的 AI 面试教练。
+Task1-17 已完成 MVP 功能闭环、TestFlight 提审前置认证和第一轮 Post-MVP AI 质量闭环。Task 18-25 已全部完成，产品已从一次性测评工具升级为持续理解用户的 AI 面试教练。
 
 阶段目标：
 
