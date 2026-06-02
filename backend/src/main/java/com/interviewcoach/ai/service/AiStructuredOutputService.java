@@ -323,11 +323,18 @@ public class AiStructuredOutputService {
         if (result.tasks() == null || result.tasks().size() < 6 || result.tasks().size() > 12) {
             throw new IllegalArgumentException("Expected 6-12 training tasks (3 days, 2-4 per day)");
         }
+        int[] dayCounts = new int[3];
         for (TrainingPlanTaskItem task : result.tasks()) {
             requireText(task.title(), "task.title");
             requireText(task.description(), "task.description");
             if (task.dayIndex() < 0 || task.dayIndex() > 2) {
                 throw new IllegalArgumentException("task.dayIndex must be 0, 1, or 2");
+            }
+            dayCounts[task.dayIndex()]++;
+        }
+        for (int day = 0; day < 3; day++) {
+            if (dayCounts[day] < 2 || dayCounts[day] > 4) {
+                throw new IllegalArgumentException("Day " + day + " has " + dayCounts[day] + " tasks; expected 2-4 per day");
             }
         }
     }

@@ -27,3 +27,8 @@ struct CoachingMemoryCorrectionRequestDTO: Encodable {
   let source: String
   let content: String
 }
+
+struct CoachingMemoryImportRequestDTO: Encodable {
+  let targetId: String
+  let summaries: [String]
+}

@@ -28,6 +28,9 @@ import com.interviewcoach.user.entity.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,8 +41,7 @@ import java.util.UUID;
 public class MockInterviewService {
 
     private static final Logger log = LoggerFactory.getLogger(MockInterviewService.class);
-    private static final int MAX_CONTEXT_TURNS = 6;
-    private static final int MAX_CONTEXT_MESSAGES = MAX_CONTEXT_TURNS * 2;
+    private static final int MAX_CONTEXT_MESSAGES = 12;
     private static final String STATUS_IN_PROGRESS = "in_progress";
     private static final String STATUS_COMPLETED = "completed";
     private static final String ROLE_USER = "user";
@@ -93,6 +95,7 @@ public class MockInterviewService {
         addMessage(interview, ROLE_ASSISTANT, firstQuestion);
 
         interview = interviewRepository.save(interview);
+        chatMemory.add(interview.getId().toString(), List.of(new AssistantMessage(firstQuestion)));
         return toSessionDto(interview);
     }
 
@@ -107,10 +110,18 @@ public class MockInterviewService {
         InterviewTarget target = targetRepository.findById(targetId)
                 .orElseThrow(() -> new TargetNotFoundException(targetId));
 
-        List<MockInterviewMessage> contextMessages = getContextMessages(interview);
+        String conversationId = interviewId.toString();
+        chatMemory.add(conversationId, List.of(new UserMessage(answer)));
+        List<Message> memoryContext = chatMemory.get(conversationId);
+        MockInterview interviewRef = interview;
+        List<MockInterviewMessage> contextMessages = memoryContext.stream()
+                .map(m -> toMockMessage(interviewRef, m))
+                .toList();
+
         String nextQuestion = aiService.generateMockInterviewQuestion(
                 buildAnswerPrompt(target, contextMessages, buildCoachingContext(targetId, userId)));
         addMessage(interview, ROLE_ASSISTANT, nextQuestion);
+        chatMemory.add(conversationId, List.of(new AssistantMessage(nextQuestion)));
 
         interview = interviewRepository.save(interview);
         return toSessionDto(interview);
@@ -179,12 +190,12 @@ public class MockInterviewService {
         interview.getMessages().add(msg);
     }
 
-    private List<MockInterviewMessage> getContextMessages(MockInterview interview) {
-        List<MockInterviewMessage> all = interview.getMessages();
-        if (all.size() <= MAX_CONTEXT_MESSAGES) {
-            return all;
-        }
-        return all.subList(all.size() - MAX_CONTEXT_MESSAGES, all.size());
+    private MockInterviewMessage toMockMessage(MockInterview interview, Message m) {
+        MockInterviewMessage msg = new MockInterviewMessage();
+        msg.setInterview(interview);
+        msg.setRole(m instanceof UserMessage ? ROLE_USER : ROLE_ASSISTANT);
+        msg.setContent(m.getText());
+        return msg;
     }
 
     private String formatConversation(List<MockInterviewMessage> messages) {

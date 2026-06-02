@@ -9,6 +9,18 @@ struct MockInterviewView: View {
     @State private var answerText = ""
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var selectedDimension: String = ""
+
+    private let dimensions: [(String, String)] = [
+        ("", "不指定"),
+        ("technicalDepth", "技术深度"),
+        ("projectSpecificity", "项目 specificity"),
+        ("systemThinking", "系统思维"),
+        ("tradeoffAwareness", "权衡意识"),
+        ("failureHandling", "故障处理"),
+        ("communicationClarity", "表达清晰度"),
+        ("businessContext", "业务上下文")
+    ]
 
     var body: some View {
         NavigationStack {
@@ -46,6 +58,14 @@ struct MockInterviewView: View {
                     systemImage: "person.wave.2",
                     description: Text("AI 将基于岗位画像和你的经历进行文字模拟面试，面试结束后生成复盘报告。")
                 )
+            }
+
+            Section("侧重维度（可选）") {
+                Picker("维度", selection: $selectedDimension) {
+                    ForEach(dimensions, id: \.0) { dim in
+                        Text(dim.1).tag(dim.0)
+                    }
+                }
             }
 
             Section {
@@ -120,7 +140,10 @@ struct MockInterviewView: View {
             session = try await APIClient.shared.request(
                 "POST",
                 path: "/api/mock-interviews/start",
-                body: MockInterviewStartRequestDTO(targetId: target.id)
+                body: MockInterviewStartRequestDTO(
+                    targetId: target.id,
+                    focusDimension: selectedDimension.isEmpty ? nil : selectedDimension
+                )
             )
         } catch {
             errorMessage = "开始失败: \(error.localizedDescription)"

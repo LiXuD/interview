@@ -7,7 +7,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.net.SocketTimeoutException;
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
 
 @Service
 public class DefaultAiModelGateway implements AiModelGateway {
@@ -74,7 +76,7 @@ public class DefaultAiModelGateway implements AiModelGateway {
             String prov = provider != null ? "userOpenAICompatible" : "platformDefault";
             String model = provider != null ? provider.getModel() : platformProperties.getModel();
             String mode = provider != null ? provider.getOpenaiApiMode() : platformProperties.getMode();
-            recordFailure(startNanos, prompt, prov, model, mode);
+            recordFailure(startNanos, prompt, prov, model, mode, ex);
             throw ex;
         }
     }
@@ -104,7 +106,7 @@ public class DefaultAiModelGateway implements AiModelGateway {
             String prov = provider != null ? "userOpenAICompatible" : "platformDefault";
             String model = provider != null ? provider.getModel() : platformProperties.getModel();
             String mode = provider != null ? provider.getOpenaiApiMode() : platformProperties.getMode();
-            recordFailure(startNanos, prompt, prov, model, mode);
+            recordFailure(startNanos, prompt, prov, model, mode, ex);
             throw ex;
         }
     }
@@ -115,8 +117,19 @@ public class DefaultAiModelGateway implements AiModelGateway {
     }
 
     private void recordFailure(long startNanos, AiPrompt prompt,
-                                String provider, String model, String mode) {
+                                String provider, String model, String mode, Throwable ex) {
         aiMetrics.recordCall(startNanos, prompt.task(), provider, model, mode, "failure");
+        if (isTimeout(ex)) {
+            aiMetrics.recordTimeout(prompt.task(), provider, model, mode);
+        }
+    }
+
+    private static boolean isTimeout(Throwable ex) {
+        if (ex == null) return false;
+        if (ex instanceof TimeoutException || ex instanceof SocketTimeoutException) return true;
+        String msg = ex.getMessage();
+        if (msg != null && msg.toLowerCase().contains("timeout")) return true;
+        return isTimeout(ex.getCause());
     }
 
     private String generateJsonFromUserProvider(AiProvider provider, AiPrompt prompt) {

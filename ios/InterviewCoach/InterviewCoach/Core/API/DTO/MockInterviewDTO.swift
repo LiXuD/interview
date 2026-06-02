@@ -2,6 +2,7 @@ import Foundation
 
 struct MockInterviewStartRequestDTO: Encodable {
   let targetId: String
+  let focusDimension: String?
 }
 
 struct MockInterviewSessionDTO: Decodable, Equatable {
@@ -10,6 +11,7 @@ struct MockInterviewSessionDTO: Decodable, Equatable {
   let status: String
   let currentQuestion: String?
   let conversationTurns: Int
+  let focusDimension: String?
 }
 
 struct MockInterviewAnswerRequestDTO: Encodable {

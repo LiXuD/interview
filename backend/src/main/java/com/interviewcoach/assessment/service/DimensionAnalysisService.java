@@ -101,8 +101,8 @@ public class DimensionAnalysisService {
             extractFromCoachingMemory(memory, dimensionName, weaknesses, evidenceSources, nextFocus);
         }
 
-        // Calculate latest score and trend
-        Integer latestScore = scoreHistory.isEmpty() ? null : scoreHistory.get(scoreHistory.size() - 1).score();
+        // Calculate latest score and trend (scoreHistory is in descending createdAt order)
+        Integer latestScore = scoreHistory.isEmpty() ? null : scoreHistory.get(0).score();
         String trend = calculateTrend(scoreHistory);
 
         // Deduplicate and limit lists
@@ -188,8 +188,9 @@ public class DimensionAnalysisService {
 
     private String calculateTrend(List<DimensionDetailDto.DimensionScoreEntry> scoreHistory) {
         if (scoreHistory.size() < 2) return "insufficient_data";
-        int latest = scoreHistory.get(scoreHistory.size() - 1).score();
-        int previous = scoreHistory.get(scoreHistory.size() - 2).score();
+        // scoreHistory is in descending createdAt order: index 0 = latest, index 1 = previous
+        int latest = scoreHistory.get(0).score();
+        int previous = scoreHistory.get(1).score();
         int diff = latest - previous;
         if (diff > 5) return "improving";
         if (diff < -5) return "declining";

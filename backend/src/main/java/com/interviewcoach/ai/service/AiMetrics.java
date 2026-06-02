@@ -53,12 +53,55 @@ public class AiMetrics {
                 .increment();
     }
 
+    public void recordParseFailure(String task, String provider, String model, String mode) {
+        Counter.builder("ai.parse.failure")
+                .description("AI structured output parse failures")
+                .tag("task", safeTag(task))
+                .tag("provider", safeTag(provider))
+                .tag("model", safeTag(model))
+                .tag("mode", safeTag(mode))
+                .register(registry)
+                .increment();
+    }
+
     public void recordValidationFailure(String task) {
         Counter.builder("ai.validation.failure")
                 .description("AI output validation failures")
                 .tag("task", safeTag(task))
                 .register(registry)
                 .increment();
+    }
+
+    public void recordValidationFailure(String task, String provider, String model, String mode) {
+        Counter.builder("ai.validation.failure")
+                .description("AI output validation failures")
+                .tag("task", safeTag(task))
+                .tag("provider", safeTag(provider))
+                .tag("model", safeTag(model))
+                .tag("mode", safeTag(mode))
+                .register(registry)
+                .increment();
+    }
+
+    public void recordTimeout(String task, String provider, String model, String mode) {
+        Counter.builder("ai.timeout")
+                .description("AI call timeouts")
+                .tag("task", safeTag(task))
+                .tag("provider", safeTag(provider))
+                .tag("model", safeTag(model))
+                .tag("mode", safeTag(mode))
+                .register(registry)
+                .increment();
+    }
+
+    public void recordTokenUsage(String task, String provider, String model, int estimatedTokens) {
+        Counter.builder("ai.token.usage")
+                .description("Estimated AI token usage")
+                .tag("task", safeTag(task))
+                .tag("provider", safeTag(provider))
+                .tag("model", safeTag(model))
+                .register(registry)
+                .increment(estimatedTokens);
     }
 
     private static String safeTag(String value) {

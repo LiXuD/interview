@@ -121,6 +121,29 @@ public class CoachingMemoryService {
         return toDto(memoryRepository.save(memory));
     }
 
+    @Transactional
+    public CoachingMemoryDto importFromLocalArchive(User user, UUID targetId, List<String> summaries) {
+        InterviewTarget target = findTarget(targetId, user.getId());
+        List<CoachingMemoryItem> unverifiedItems = summaries.stream()
+                .filter(s -> s != null && !s.isBlank())
+                .map(summary -> new CoachingMemoryItem(summary.trim(), "inferred", "low"))
+                .toList();
+
+        CoachingMemory memory = new CoachingMemory();
+        memory.setUser(user);
+        memory.setTarget(target);
+        memory.setSourceType("localArchiveImport");
+        memory.setSourceId(UUID.randomUUID());
+        memory.setObservedStrengths(List.of());
+        memory.setObservedWeaknesses(List.of());
+        memory.setRecurringProblems(List.of());
+        memory.setVerifiedExperience(List.of());
+        memory.setUnverifiedClaims(unverifiedItems);
+        memory.setRecommendedNextFocus(List.of());
+        memory.setAvoidRepeating(List.of());
+        return toDto(memoryRepository.save(memory));
+    }
+
     private InterviewTarget findTarget(UUID targetId, UUID userId) {
         return targetRepository.findByIdAndUserId(targetId, userId)
                 .orElseThrow(() -> new IllegalArgumentException("Target not found: " + targetId));

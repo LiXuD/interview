@@ -617,6 +617,29 @@ paths:
               schema:
                 $ref: "#/components/schemas/TrainingTaskDto"
 
+  /api/mock-interviews/target/{targetId}:
+    parameters:
+      - name: targetId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags:
+        - MockInterview
+      summary: List mock interviews for a target
+      operationId: listMockInterviews
+      responses:
+        "200":
+          description: List of mock interview sessions.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MockInterviewSessionDto"
+
   /api/mock-interviews/start:
     post:
       tags:
@@ -1867,6 +1890,9 @@ components:
         targetId:
           type: string
           format: uuid
+        focusDimension:
+          type: string
+          description: Optional dimension to focus on (e.g. technicalDepth, systemThinking)
 
     MockInterviewSessionDto:
       type: object
@@ -1889,6 +1915,8 @@ components:
           type: string
         conversationTurns:
           type: integer
+        focusDimension:
+          type: string
 
     MockInterviewAnswerRequest:
       type: object

@@ -53,6 +53,11 @@
 		2A000001000000000000010B /* ReportDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A000001000000000000010A /* ReportDetailView.swift */; };
 		2A000001000000000000010C /* DateHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A000001000000000000010D /* DateHelper.swift */; };
 		2A0000010000000000000110 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000111 /* LoginView.swift */; };
+		2A0000010000000000000120 /* CoachingMemoryImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000121 /* CoachingMemoryImportView.swift */; };
+		2A0000010000000000000122 /* ProgressDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000123 /* ProgressDashboardView.swift */; };
+		2A0000010000000000000124 /* DimensionAnalysisView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000125 /* DimensionAnalysisView.swift */; };
+		2A0000010000000000000126 /* DimensionAnalysisDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000127 /* DimensionAnalysisDTO.swift */; };
+		2A0000010000000000000128 /* ProgressDashboardDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000129 /* ProgressDashboardDTO.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -104,6 +109,11 @@
 		2A000001000000000000010A /* ReportDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportDetailView.swift; sourceTree = "<group>"; };
 		2A000001000000000000010D /* DateHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateHelper.swift; sourceTree = "<group>"; };
 		2A0000010000000000000111 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		2A0000010000000000000121 /* CoachingMemoryImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoachingMemoryImportView.swift; sourceTree = "<group>"; };
+		2A0000010000000000000123 /* ProgressDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressDashboardView.swift; sourceTree = "<group>"; };
+		2A0000010000000000000125 /* DimensionAnalysisView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DimensionAnalysisView.swift; sourceTree = "<group>"; };
+		2A0000010000000000000127 /* DimensionAnalysisDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DimensionAnalysisDTO.swift; sourceTree = "<group>"; };
+		2A0000010000000000000129 /* ProgressDashboardDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressDashboardDTO.swift; sourceTree = "<group>"; };
 		2A0000010000000000000112 /* InterviewCoach.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = InterviewCoach.entitlements; sourceTree = "<group>"; };
 		2A0000010000000000000115 /* InterviewCoachRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = InterviewCoachRelease.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -202,6 +212,8 @@
 				2A000001000000000000001D /* ReportDTO.swift */,
 				2A000001000000000000001E /* AiProviderDTO.swift */,
 				2A0000020000000000000002 /* CoachingMemoryDTO.swift */,
+				2A0000010000000000000127 /* DimensionAnalysisDTO.swift */,
+				2A0000010000000000000129 /* ProgressDashboardDTO.swift */,
 			);
 			path = DTO;
 			sourceTree = "<group>";
@@ -219,6 +231,7 @@
 				2A00000100000000000000FE /* Settings */,
 				2A0000010000000000000113 /* Onboarding */,
 				2A0000010000000000000114 /* Reports */,
+				2A0000010000000000000130 /* Progress */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -338,6 +351,7 @@
 				2A00000100000000000000F9 /* AiProviderListView.swift */,
 				2A00000100000000000000FD /* AiProviderCreateView.swift */,
 				2A0000010000000000000104 /* PrivacyPolicyView.swift */,
+				2A0000010000000000000121 /* CoachingMemoryImportView.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -355,8 +369,17 @@
 			children = (
 				2A0000010000000000000108 /* ReportListView.swift */,
 				2A000001000000000000010A /* ReportDetailView.swift */,
+				2A0000010000000000000125 /* DimensionAnalysisView.swift */,
 			);
 			path = Reports;
+			sourceTree = "<group>";
+		};
+		2A0000010000000000000130 /* Progress */ = {
+			isa = PBXGroup;
+			children = (
+				2A0000010000000000000123 /* ProgressDashboardView.swift */,
+			);
+			path = Progress;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -473,6 +496,11 @@
 				2A000001000000000000010B /* ReportDetailView.swift in Sources */,
 				2A000001000000000000010C /* DateHelper.swift in Sources */,
 				2A0000010000000000000110 /* LoginView.swift in Sources */,
+				2A0000010000000000000120 /* CoachingMemoryImportView.swift in Sources */,
+				2A0000010000000000000122 /* ProgressDashboardView.swift in Sources */,
+				2A0000010000000000000124 /* DimensionAnalysisView.swift in Sources */,
+				2A0000010000000000000126 /* DimensionAnalysisDTO.swift in Sources */,
+				2A0000010000000000000128 /* ProgressDashboardDTO.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

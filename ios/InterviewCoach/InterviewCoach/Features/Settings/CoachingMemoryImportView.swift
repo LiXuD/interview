@@ -89,14 +89,29 @@ struct CoachingMemoryImportView: View {
 
     private func importSelected() {
         isImporting = true
-        let now = ISO8601DateFormatter().string(from: Date())
-        for archive in pendingArchives where selectedIds.contains(archive.archiveId) {
-            archive.userId = currentUserId
-            archive.importConfirmedAt = now
+        let selected = pendingArchives.filter { selectedIds.contains($0.archiveId) }
+        let summaries = selected.map(\.summary)
+        let targetId = selected.first?.targetId ?? ""
+
+        Task {
+            do {
+                let _: CoachingMemoryDTO = try await APIClient.shared.request(
+                    "POST",
+                    path: "/api/coaching-memories/import",
+                    body: CoachingMemoryImportRequestDTO(targetId: targetId, summaries: summaries)
+                )
+                let now = ISO8601DateFormatter().string(from: Date())
+                for archive in selected {
+                    archive.userId = currentUserId
+                    archive.importConfirmedAt = now
+                }
+                try? modelContext.save()
+            } catch {
+                // Import failed — keep archives as pending
+            }
+            isImporting = false
+            dismiss()
         }
-        try? modelContext.save()
-        isImporting = false
-        dismiss()
     }
 
     private func rejectAll() {

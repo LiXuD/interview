@@ -2,9 +2,9 @@
 
 ## 1. 背景
 
-当前后端 AI 模块已完成平台默认真实 AI、OpenAI-compatible 自定义 Provider、AI 结构化输出解析、真实 AI 门禁、Task 19 live AI 验收样例集，以及 Task 18-25 全部 Post-MVP Real AI Adaptive Coaching 任务。Phase 3（Task 26-33）”持续训练伙伴与 AI 质量运营闭环”已全部完成，包括 Spring AI Observability、真实 AI 回归评测升级、多天训练计划、能力维度分析、进步追踪 Dashboard、Chat Memory 短窗口上下文管理、多轮模拟面试和发布硬化。
+当前后端 AI 模块已完成平台默认真实 AI、OpenAI-compatible 自定义 Provider、AI 结构化输出解析、真实 AI 门禁、Task 19 live AI 验收样例集，以及 Task 18-25 全部 Post-MVP Real AI Adaptive Coaching 任务。Phase 3（Task 26-33）"持续训练伙伴与 AI 质量运营闭环"已全部完成，包括 Spring AI Observability、真实 AI 回归评测升级、多天训练计划、能力维度分析、进步追踪 Dashboard、Chat Memory 短窗口上下文管理、多轮模拟面试和发布硬化。
 
-本方案已完成 Phase 2-6 迁移，AI 调用底座已切换到 Spring AI。当前架构为 `AiStructuredOutputService` -> `AiModelGateway` -> `SpringAiPlatformClient`/`SpringAiUserProviderClient`（chatCompletions 模式），`IC_SPRING_AI_ENABLED` 灰度开关已就绪。目标不是追求框架替换本身，而是降低长期维护成本，提升结构化输出、超时控制、观测、记忆和自适应教练能力的工程稳定性。
+本方案已完成 Phase 2-6 迁移。chatCompletions 模式的平台和用户 Provider 已通过 Spring AI 调用，responses 模式仍保留旧客户端路径。当前架构为 `AiStructuredOutputService` -> `AiModelGateway` -> `SpringAiPlatformClient`/`SpringAiUserProviderClient`（chatCompletions 模式），`IC_SPRING_AI_ENABLED` 灰度开关控制新旧路径切换。目标不是追求框架替换本身，而是降低长期维护成本，提升结构化输出、超时控制、观测、记忆和自适应教练能力的工程稳定性。
 
 ## 2. 迁移目标
 
@@ -30,7 +30,7 @@
 
 主要长期问题：
 
-- `RestTemplate` 当前没有 connect/read timeout，live AI 验收在 provider 慢或不可达时可能长时间挂起。
+- `RestTemplate` 已在 Phase 1 配置 connect/read timeout（`IC_AI_HTTP_CONNECT_TIMEOUT_MS`/`IC_AI_HTTP_READ_TIMEOUT_MS`），但旧路径的超时和错误映射仍由项目手写维护。
 - OpenAI-compatible JSON mode、responses mode、错误映射、重试、观测都由项目手写维护。
 - 随着 Task 20-25 引入结构化测评、逐题诊断、教练记忆和自适应追问，自研 prompt/JSON 解析代码会继续膨胀。
 - 缺少统一的 token、latency、model、task 维度观测。
@@ -39,8 +39,8 @@
 
 Spring AI 的价值主要体现在以下方面：
 
-- `ChatClient` 支持把模型输出映射为 Java entity，适合本项目“AI 原始响应只能停留在后端，返回 iOS 前必须是强类型 DTO”的约束。
-- Spring AI OpenAI Chat 支持 `JSON_OBJECT` 和 `JSON_SCHEMA` response format，可以逐步从“合法 JSON”升级为“按 schema 输出”。
+- `ChatClient` 支持把模型输出映射为 Java entity，适合本项目"AI 原始响应只能停留在后端，返回 iOS 前必须是强类型 DTO"的约束。
+- Spring AI OpenAI Chat 支持 `JSON_OBJECT` 和 `JSON_SCHEMA` response format，可以逐步从"合法 JSON"升级为"按 schema 输出"。
 - Advisor API 适合承载 prompt 增强、task 标签、观测上下文、记忆摘要注入等横切逻辑。
 - Chat Memory 提供 message window 和持久化 repository 抽象，可作为自适应模拟面试的上下文窗口工具，但不能替代业务 `CoachingMemory`。
 - Observability 支持 Spring 生态内的 metrics/tracing，可对模型调用、token usage、延迟等进行统一观测。
@@ -379,6 +379,6 @@ Spring AI Chat Memory 可以用于管理短窗口对话上下文，但业务教�
 
 ## 14. 推荐决策
 
-推荐采用“适配层渐进迁移”。
+推荐采用"适配层渐进迁移"。
 
 不要把 Spring AI 直接灌进业务 service，也不要一次性替换 `AiStructuredOutputService`。先让 Spring AI 成为底层模型调用和观测底座，再逐步迁移结构化输出和 Advisor。这样可以保留现有隐私、安全、Provider 优先级和 AI 质量验收约束，同时为后续自适应教练能力提供更稳的工程基础。
