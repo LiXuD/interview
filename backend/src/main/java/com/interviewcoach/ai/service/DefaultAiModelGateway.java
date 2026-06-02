@@ -14,6 +14,14 @@ import java.util.concurrent.TimeoutException;
 @Service
 public class DefaultAiModelGateway implements AiModelGateway {
 
+    public record AiRequestContext(String provider, String model, String mode) {}
+
+    private static final ThreadLocal<AiRequestContext> REQUEST_CONTEXT = new ThreadLocal<>();
+
+    public static AiRequestContext currentRequestContext() {
+        return REQUEST_CONTEXT.get();
+    }
+
     private static final Set<String> REAL_AI_REQUIRED_TASKS = Set.of(
             AiPrompt.TASK_ASSESSMENT_QUESTIONS,
             AiPrompt.TASK_ASSESSMENT_QUESTION_SCORE,
@@ -57,11 +65,14 @@ public class DefaultAiModelGateway implements AiModelGateway {
     public String generateJson(AiPrompt prompt) {
         long startNanos = aiMetrics.startTimerNanos();
         AiProvider provider = currentUserProvider();
+        String prov = provider != null ? "userOpenAICompatible" : "platformDefault";
+        String model = provider != null ? provider.getModel() : platformProperties.getModel();
+        String mode = provider != null ? provider.getOpenaiApiMode() : platformProperties.getMode();
+        REQUEST_CONTEXT.set(new AiRequestContext(prov, model, mode));
         try {
             if (provider != null) {
                 String result = generateJsonFromUserProvider(provider, prompt);
-                recordSuccess(startNanos, prompt, "userOpenAICompatible",
-                        provider.getModel(), provider.getOpenaiApiMode());
+                recordSuccess(startNanos, prompt, prov, model, mode);
                 return result;
             }
             if (requiresRealAi(prompt)) {
@@ -69,15 +80,13 @@ public class DefaultAiModelGateway implements AiModelGateway {
                         "Real AI is required for coaching task: " + prompt.task(), null);
             }
             String result = platformAiClient.generateJson(prompt);
-            recordSuccess(startNanos, prompt, "platformDefault",
-                    platformProperties.getModel(), platformProperties.getMode());
+            recordSuccess(startNanos, prompt, prov, model, mode);
             return result;
         } catch (Exception ex) {
-            String prov = provider != null ? "userOpenAICompatible" : "platformDefault";
-            String model = provider != null ? provider.getModel() : platformProperties.getModel();
-            String mode = provider != null ? provider.getOpenaiApiMode() : platformProperties.getMode();
             recordFailure(startNanos, prompt, prov, model, mode, ex);
             throw ex;
+        } finally {
+            REQUEST_CONTEXT.remove();
         }
     }
 
@@ -85,29 +94,30 @@ public class DefaultAiModelGateway implements AiModelGateway {
     public <T> T generateEntity(AiPrompt prompt, Class<T> responseType) {
         long startNanos = aiMetrics.startTimerNanos();
         AiProvider provider = currentUserProvider();
+        String prov = provider != null ? "userOpenAICompatible" : "platformDefault";
+        String model = provider != null ? provider.getModel() : platformProperties.getModel();
+        String mode = provider != null ? provider.getOpenaiApiMode() : platformProperties.getMode();
+        REQUEST_CONTEXT.set(new AiRequestContext(prov, model, mode));
         try {
             if (provider != null) {
                 if (!usesSpringAiUserProvider(provider)) {
                     return null;
                 }
                 T result = generateEntityFromUserProvider(provider, prompt, responseType);
-                recordSuccess(startNanos, prompt, "userOpenAICompatible",
-                        provider.getModel(), provider.getOpenaiApiMode());
+                recordSuccess(startNanos, prompt, prov, model, mode);
                 return result;
             }
             T result = generateEntityFromPlatformProvider(prompt, responseType);
             if (result == null) {
                 return null;
             }
-            recordSuccess(startNanos, prompt, "platformDefault",
-                    platformProperties.getModel(), platformProperties.getMode());
+            recordSuccess(startNanos, prompt, prov, model, mode);
             return result;
         } catch (Exception ex) {
-            String prov = provider != null ? "userOpenAICompatible" : "platformDefault";
-            String model = provider != null ? provider.getModel() : platformProperties.getModel();
-            String mode = provider != null ? provider.getOpenaiApiMode() : platformProperties.getMode();
             recordFailure(startNanos, prompt, prov, model, mode, ex);
             throw ex;
+        } finally {
+            REQUEST_CONTEXT.remove();
         }
     }
 

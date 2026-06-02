@@ -251,23 +251,24 @@ public class AiStructuredOutputService {
     private <T> T generateAndValidate(AiPrompt prompt, Class<T> type, BiConsumer<T, AiPrompt> validator) {
         for (int attempt = 0; attempt < 2; attempt++) {
             String rawJson = generateFromProvider(prompt);
+            recordTokenUsageIfPossible(prompt, rawJson);
             try {
                 T result = objectMapper.readValue(rawJson, type);
                 validator.accept(result, prompt);
                 return result;
             } catch (JsonProcessingException ex) {
                 if (attempt == 1) {
-                    aiMetrics.recordParseFailure(prompt.task());
+                    recordParseFailure(prompt);
                     throw new AiParseException(prompt.task());
                 }
             } catch (IllegalArgumentException ex) {
                 if (attempt == 1) {
-                    aiMetrics.recordValidationFailure(prompt.task());
+                    recordValidationFailure(prompt);
                     throw new AiParseException(prompt.task());
                 }
             }
         }
-        aiMetrics.recordParseFailure(prompt.task());
+        recordParseFailure(prompt);
         throw new AiParseException(prompt.task());
     }
 
@@ -276,13 +277,46 @@ public class AiStructuredOutputService {
             validator.accept(result, prompt);
             return result;
         } catch (IllegalArgumentException ex) {
-            aiMetrics.recordValidationFailure(prompt.task());
+            recordValidationFailure(prompt);
             throw new AiParseException(prompt.task());
         }
     }
 
     private String generateFromProvider(AiPrompt prompt) {
         return aiModelGateway.generateJson(prompt);
+    }
+
+    private void recordParseFailure(AiPrompt prompt) {
+        var ctx = DefaultAiModelGateway.currentRequestContext();
+        if (ctx != null) {
+            aiMetrics.recordParseFailure(prompt.task(), ctx.provider(), ctx.model(), ctx.mode());
+        } else {
+            aiMetrics.recordParseFailure(prompt.task());
+        }
+    }
+
+    private void recordValidationFailure(AiPrompt prompt) {
+        var ctx = DefaultAiModelGateway.currentRequestContext();
+        if (ctx != null) {
+            aiMetrics.recordValidationFailure(prompt.task(), ctx.provider(), ctx.model(), ctx.mode());
+        } else {
+            aiMetrics.recordValidationFailure(prompt.task());
+        }
+    }
+
+    private void recordTokenUsageIfPossible(AiPrompt prompt, String rawJson) {
+        var ctx = DefaultAiModelGateway.currentRequestContext();
+        if (ctx != null && rawJson != null) {
+            int estimatedTokens = estimateTokens(prompt.systemPrompt(), prompt.userPrompt(), rawJson);
+            aiMetrics.recordTokenUsage(prompt.task(), ctx.provider(), ctx.model(), estimatedTokens);
+        }
+    }
+
+    private static int estimateTokens(String systemPrompt, String userPrompt, String response) {
+        int charCount = (systemPrompt != null ? systemPrompt.length() : 0)
+                + (userPrompt != null ? userPrompt.length() : 0)
+                + (response != null ? response.length() : 0);
+        return Math.max(1, charCount / 4);
     }
 
     private void requireText(String value, String field) {
@@ -460,9 +494,13 @@ public class AiStructuredOutputService {
 
     private <T> T generateStructuredFromSpringProvider(AiPrompt prompt, Class<T> type) {
         try {
-            return aiModelGateway.generateEntity(prompt, type);
+            T result = aiModelGateway.generateEntity(prompt, type);
+            if (result != null) {
+                recordTokenUsageIfPossible(prompt, result.toString());
+            }
+            return result;
         } catch (AiStructuredOutputMappingException ex) {
-            aiMetrics.recordParseFailure(prompt.task());
+            recordParseFailure(prompt);
             throw new AiParseException(prompt.task());
         }
     }
