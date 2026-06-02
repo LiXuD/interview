@@ -3,6 +3,7 @@ package com.interviewcoach.ai;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewcoach.ai.entity.AiProvider;
 import com.interviewcoach.ai.service.AiProviderService;
+import com.interviewcoach.ai.service.AiMetrics;
 import com.interviewcoach.ai.service.AiPrompt;
 import com.interviewcoach.ai.service.AiStructuredOutputMappingException;
 import com.interviewcoach.ai.service.AiStructuredOutputService;
@@ -115,6 +116,51 @@ class AiStructuredOutputServiceTest {
                 .doesNotContain("sk-user-secret")
                 .doesNotContain("Authorization")
                 .doesNotContain("resume raw text");
+    }
+
+    @Test
+    void rawJsonPathRecordsTokenUsageWithProviderModelContext() {
+        PlatformAiClient platformAiClient = mock(PlatformAiClient.class);
+        PlatformAiProperties platformProperties = new PlatformAiProperties();
+        platformProperties.setModel("gpt-platform");
+        platformProperties.setMode("chatCompletions");
+        platformProperties.setRequireRealForCoaching(false);
+        CapturingAiMetrics aiMetrics = new CapturingAiMetrics();
+
+        AiPrompt prompt = new AiPrompt(
+                AiPrompt.TASK_TRAINING_FEEDBACK,
+                "task-1",
+                "system prompt",
+                "user prompt");
+        when(platformAiClient.generateJson(prompt)).thenReturn("""
+                {
+                  "taskId": "task-1",
+                  "score": 82,
+                  "feedback": "clear feedback",
+                  "problems": [],
+                  "rewrittenAnswer": "better answer",
+                  "followUpQuestion": "follow up?",
+                  "recommendedReviewPoints": []
+                }
+                """);
+
+        AiStructuredOutputService service = new AiStructuredOutputService(
+                platformAiClient,
+                null,
+                null,
+                null,
+                new ObjectMapper(),
+                platformProperties,
+                new SpringAiFoundationProperties(),
+                null,
+                aiMetrics);
+
+        service.generateTrainingFeedback(prompt);
+
+        assertThat(aiMetrics.tokenTask).isEqualTo(AiPrompt.TASK_TRAINING_FEEDBACK);
+        assertThat(aiMetrics.tokenProvider).isEqualTo("platformDefault");
+        assertThat(aiMetrics.tokenModel).isEqualTo("gpt-platform");
+        assertThat(aiMetrics.estimatedTokens).isGreaterThan(0);
     }
 
     @Test
@@ -1583,5 +1629,35 @@ class AiStructuredOutputServiceTest {
                 new AiPrompt("mockInterviewQuestion", null, "system", "user"));
         assertEquals("How do you handle concurrency?", result);
         assertEquals(2, callCount[0], "Should have retried once");
+    }
+
+    private static class CapturingAiMetrics extends AiMetrics {
+        private String tokenTask;
+        private String tokenProvider;
+        private String tokenModel;
+        private int estimatedTokens;
+
+        CapturingAiMetrics() {
+            super(new io.micrometer.core.instrument.simple.SimpleMeterRegistry());
+        }
+
+        @Override
+        public long startTimerNanos() {
+            return 0L;
+        }
+
+        @Override
+        public void recordCall(long startNanos, String task, String provider, String model,
+                               String mode, String outcome) {
+            // not relevant for this regression test
+        }
+
+        @Override
+        public void recordTokenUsage(String task, String provider, String model, int estimatedTokens) {
+            this.tokenTask = task;
+            this.tokenProvider = provider;
+            this.tokenModel = model;
+            this.estimatedTokens = estimatedTokens;
+        }
     }
 }

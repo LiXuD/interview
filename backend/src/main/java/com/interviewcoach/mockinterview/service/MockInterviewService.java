@@ -104,14 +104,14 @@ public class MockInterviewService {
         MockInterview interview = findInterview(interviewId, userId);
         assertInProgress(interview);
 
+        String conversationId = interviewId.toString();
+        ensureChatMemoryPopulated(conversationId, interview.getMessages());
         addMessage(interview, ROLE_USER, answer);
 
         UUID targetId = interview.getTargetId();
         InterviewTarget target = targetRepository.findById(targetId)
                 .orElseThrow(() -> new TargetNotFoundException(targetId));
 
-        String conversationId = interviewId.toString();
-        ensureChatMemoryPopulated(conversationId, interview.getMessages());
         chatMemory.add(conversationId, List.of(new UserMessage(answer)));
         List<Message> memoryContext = chatMemory.get(conversationId);
         MockInterview interviewRef = interview;

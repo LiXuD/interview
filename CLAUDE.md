@@ -106,6 +106,8 @@ AI 调用必须遵守：
 - Post-MVP 平台默认真实 AI 只能采用 OpenAI-compatible 后端代理配置。
 - Post-MVP Real AI Adaptive Coaching 阶段，开发环境也必须能连接真实 AI；测评、训练、模拟面试等核心教练路径禁止静默使用 stub。
 - Phase 3 持续训练伙伴阶段必须先补齐 AI 可观测与真实 AI 回归评测，再扩展多天训练、进步追踪和多轮模拟面试。
+- 产品能力验收、阶段评估、面向客户可用性判断、AI 质量审查必须显式使用真实 AI（默认读取 `backend/.env` 中的 `IC_LIVE_AI_TEST` 与 `IC_PLATFORM_AI_*` 配置），至少运行相关 live AI smoke；重要 AI 行为变更必须运行完整 `AiContentQualityTest` 或说明未运行原因。
+- stub、mock、`LocalPlatformAiClient` 和默认 CI 测试只能证明工程结构、DTO、权限、持久化和解析逻辑未坏，禁止作为 AI 产品体验、AI 输出质量或“可面向客户”的验收依据。
 - 平台 API Key 只能通过环境变量或部署配置提供，禁止写入仓库、返回给 iOS 或写入日志。
 
 ## 5. 项目目录与模块边界规范
@@ -458,6 +460,9 @@ Provider API：
 - 平台真实 AI 未启用时，可以保留 `LocalPlatformAiClient` 作为单元测试、CI 非 live AI 回归、明确标记的离线演示和基础健康检查兜底。
 - Post-MVP Real AI Adaptive Coaching 阶段，开发环境必须支持真实 AI 配置；测评出题、测评评分、训练反馈、专项训练、模拟面试追问和报告复盘不得静默走 stub。
 - 平台真实 AI 启用但配置缺失时必须明确失败，不允许静默回退到本地 stub。
+- 凡涉及 JobBrief、Assessment、Training、MockInterview、CoachingMemory、AI Observability 或 Phase 3 质量闭环的产品级验收，必须显式加载 `backend/.env` 并运行真实 AI 测试，例如：
+  `cd backend && set -a; source .env; set +a; mvn -q -Dtest=AiContentQualityTest test`。
+- 若因成本、耗时、外部服务故障或配额限制未运行真实 AI，最终输出必须明确说明“未完成 AI 产品能力验收”，不得用 stub 测试替代。
 - Phase 3 的 Spring AI Observability 只能采集 task、provider、model、mode、latency、success/failure、parseFailed、timeout、估算 token usage 等低风险元数据；禁止采集 prompt、completion、简历原文、用户回答原文、API Key、Authorization Header 或完整请求头。
 
 禁止实现 Anthropic Provider。Anthropic 只允许在架构中保留扩展点，不允许创建可用业务入口。

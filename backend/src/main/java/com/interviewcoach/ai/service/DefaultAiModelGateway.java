@@ -22,6 +22,10 @@ public class DefaultAiModelGateway implements AiModelGateway {
         return REQUEST_CONTEXT.get();
     }
 
+    public static void clearRequestContext() {
+        REQUEST_CONTEXT.remove();
+    }
+
     private static final Set<String> REAL_AI_REQUIRED_TASKS = Set.of(
             AiPrompt.TASK_ASSESSMENT_QUESTIONS,
             AiPrompt.TASK_ASSESSMENT_QUESTION_SCORE,
@@ -91,8 +95,6 @@ public class DefaultAiModelGateway implements AiModelGateway {
         } catch (Exception ex) {
             recordFailure(startNanos, prompt, ctx.provider(), ctx.model(), ctx.mode(), ex);
             throw ex;
-        } finally {
-            REQUEST_CONTEXT.remove();
         }
     }
 
@@ -119,8 +121,6 @@ public class DefaultAiModelGateway implements AiModelGateway {
         } catch (Exception ex) {
             recordFailure(startNanos, prompt, ctx.provider(), ctx.model(), ctx.mode(), ex);
             throw ex;
-        } finally {
-            REQUEST_CONTEXT.remove();
         }
     }
 

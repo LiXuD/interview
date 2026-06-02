@@ -33,6 +33,9 @@ MVP 最窄闭环必须是：
 - 平台默认真实 AI 必须走后端 OpenAI-compatible 代理配置，禁止 iOS 直连 AI，禁止在仓库中提交平台 API Key。
 - Task 18-25 阶段，开发环境也必须能连接真实 AI；测评、训练、模拟面试等核心教练路径禁止静默使用 `LocalPlatformAiClient` stub。
 - Phase 3 阶段必须先补齐 AI 可观测与真实 AI 回归评测，再扩展多天训练、进步追踪和多轮模拟面试。
+- 产品能力验收、阶段评估、面向客户可用性判断、AI 质量审查必须显式使用真实 AI（默认读取 `backend/.env` 中的 `IC_LIVE_AI_TEST` 与 `IC_PLATFORM_AI_*` 配置），至少运行相关 live AI smoke；重要 AI 行为变更必须运行完整 `AiContentQualityTest` 或说明未运行原因。
+- stub、mock、`LocalPlatformAiClient` 和默认 CI 测试只能证明工程结构、DTO、权限、持久化和解析逻辑未坏，禁止作为 AI 产品体验、AI 输出质量或“可面向客户”的验收依据。
+- 真实 AI 验收建议命令：`cd backend && set -a; source .env; set +a; mvn -q -Dtest=AiContentQualityTest test`。若因成本、耗时、外部服务故障或配额限制未运行真实 AI，最终输出必须明确说明“未完成 AI 产品能力验收”。
 - 多天训练计划只允许按 Phase 3 受控实现：默认 3 天、每天 2-4 个任务，禁止扩展为开放式课程系统或刷题系统。
 
 ## 目录规范红线

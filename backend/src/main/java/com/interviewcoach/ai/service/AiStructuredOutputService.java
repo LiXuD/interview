@@ -249,27 +249,31 @@ public class AiStructuredOutputService {
     }
 
     private <T> T generateAndValidate(AiPrompt prompt, Class<T> type, BiConsumer<T, AiPrompt> validator) {
-        for (int attempt = 0; attempt < 2; attempt++) {
-            String rawJson = generateFromProvider(prompt);
-            recordTokenUsageIfPossible(prompt, rawJson);
-            try {
-                T result = objectMapper.readValue(rawJson, type);
-                validator.accept(result, prompt);
-                return result;
-            } catch (JsonProcessingException ex) {
-                if (attempt == 1) {
-                    recordParseFailure(prompt);
-                    throw new AiParseException(prompt.task());
-                }
-            } catch (IllegalArgumentException ex) {
-                if (attempt == 1) {
-                    recordValidationFailure(prompt);
-                    throw new AiParseException(prompt.task());
+        try {
+            for (int attempt = 0; attempt < 2; attempt++) {
+                String rawJson = generateFromProvider(prompt);
+                recordTokenUsageIfPossible(prompt, rawJson);
+                try {
+                    T result = objectMapper.readValue(rawJson, type);
+                    validator.accept(result, prompt);
+                    return result;
+                } catch (JsonProcessingException ex) {
+                    if (attempt == 1) {
+                        recordParseFailure(prompt);
+                        throw new AiParseException(prompt.task());
+                    }
+                } catch (IllegalArgumentException ex) {
+                    if (attempt == 1) {
+                        recordValidationFailure(prompt);
+                        throw new AiParseException(prompt.task());
+                    }
                 }
             }
+            recordParseFailure(prompt);
+            throw new AiParseException(prompt.task());
+        } finally {
+            DefaultAiModelGateway.clearRequestContext();
         }
-        recordParseFailure(prompt);
-        throw new AiParseException(prompt.task());
     }
 
     private <T> T validateStructured(AiPrompt prompt, T result, BiConsumer<T, AiPrompt> validator) {
@@ -279,6 +283,8 @@ public class AiStructuredOutputService {
         } catch (IllegalArgumentException ex) {
             recordValidationFailure(prompt);
             throw new AiParseException(prompt.task());
+        } finally {
+            DefaultAiModelGateway.clearRequestContext();
         }
     }
 
@@ -497,7 +503,11 @@ public class AiStructuredOutputService {
             return aiModelGateway.generateEntity(prompt, type);
         } catch (AiStructuredOutputMappingException ex) {
             recordParseFailure(prompt);
+            DefaultAiModelGateway.clearRequestContext();
             throw new AiParseException(prompt.task());
+        } catch (RuntimeException ex) {
+            DefaultAiModelGateway.clearRequestContext();
+            throw ex;
         }
     }
 
