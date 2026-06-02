@@ -27,6 +27,9 @@ public class TrainingTask {
     @Column(nullable = false)
     private String status = "pending";
 
+    @Column(nullable = false)
+    private int dayIndex = 0;
+
     @OneToOne(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
     private TrainingFeedback feedback;
 
@@ -64,6 +67,9 @@ public class TrainingTask {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public int getDayIndex() { return dayIndex; }
+    public void setDayIndex(int dayIndex) { this.dayIndex = dayIndex; }
 
     public TrainingFeedback getFeedback() { return feedback; }
     public void setFeedback(TrainingFeedback feedback) { this.feedback = feedback; }

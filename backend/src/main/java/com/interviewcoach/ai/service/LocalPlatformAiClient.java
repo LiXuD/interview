@@ -150,17 +150,53 @@ public class LocalPlatformAiClient implements PlatformAiClient {
 
     private AiStructuredOutputService.TrainingPlanResult buildTrainingPlan(AiPrompt prompt) {
         return new AiStructuredOutputService.TrainingPlanResult(List.of(
+                // Day 1: 基础巩固
                 new AiStructuredOutputService.TrainingPlanTaskItem(
                         "系统设计容量规划练习",
-                        "针对系统设计短板，练习如何估算 QPS、存储和带宽需求，设计一个支持百万用户的 API 系统。"
+                        "针对系统设计短板，练习如何估算 QPS、存储和带宽需求，设计一个支持百万用户的 API 系统。",
+                        0
                 ),
                 new AiStructuredOutputService.TrainingPlanTaskItem(
                         "数据库索引优化案例分析",
-                        "针对数据库深度不足，分析一个慢查询案例，说明索引选择、覆盖索引和查询计划优化。"
+                        "针对数据库深度不足，分析一个慢查询案例，说明索引选择、覆盖索引和查询计划优化。",
+                        0
                 ),
                 new AiStructuredOutputService.TrainingPlanTaskItem(
                         "分布式一致性场景回答",
-                        "针对分布式理解薄弱，准备 CAP 理论、最终一致性、分布式锁等常见面试问题的回答。"
+                        "针对分布式理解薄弱，准备 CAP 理论、最终一致性、分布式锁等常见面试问题的回答。",
+                        0
+                ),
+                // Day 2: 进阶练习
+                new AiStructuredOutputService.TrainingPlanTaskItem(
+                        "微服务架构设计练习",
+                        "基于第一天的容量规划，设计一个完整的微服务架构，包括服务拆分、通信方式和容错策略。",
+                        1
+                ),
+                new AiStructuredOutputService.TrainingPlanTaskItem(
+                        "数据库分库分表方案设计",
+                        "基于第一天的索引优化知识，设计一个支持千万级数据的分库分表方案。",
+                        1
+                ),
+                new AiStructuredOutputService.TrainingPlanTaskItem(
+                        "分布式事务实战场景",
+                        "基于第一天的分布式一致性知识，准备 TCC、Saga 等分布式事务方案的面试回答。",
+                        1
+                ),
+                // Day 3: 综合实战
+                new AiStructuredOutputService.TrainingPlanTaskItem(
+                        "完整系统设计面试模拟",
+                        "综合前两天的练习，完成一个端到端的系统设计面试题，包括需求分析、架构设计和性能优化。",
+                        2
+                ),
+                new AiStructuredOutputService.TrainingPlanTaskItem(
+                        "项目深挖回答准备",
+                        "结合前两天的技术练习，准备如何在面试中深度讲解自己的项目经历，突出技术亮点和量化成果。",
+                        2
+                ),
+                new AiStructuredOutputService.TrainingPlanTaskItem(
+                        "技术权衡与决策回答",
+                        "准备如何在面试中展示技术决策能力，包括选型对比、风险评估和权衡取舍。",
+                        2
                 )
         ));
     }

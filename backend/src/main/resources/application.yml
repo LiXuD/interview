@@ -48,3 +48,15 @@ app:
       mode: ${IC_PLATFORM_AI_MODE:chatCompletions}
   apple:
     services-id: com.interviewcoach.app
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus
+  endpoint:
+    health:
+      show-details: never
+  metrics:
+    tags:
+      application: interview-coach

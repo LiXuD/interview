@@ -1,6 +1,6 @@
 # Interview Coach Code Wiki
 
-生成日期：2026-05-28（2026-06-01 更新 Phase 3 状态）
+生成日期：2026-05-28（2026-06-01 更新至 Phase 3 完成）
 
 本文档是项目代码级导航，用于帮助后续开发、Code Review 和问题定位。它描述当前仓库中的实际代码结构，不替代以下主约束与契约文档：
 
@@ -20,10 +20,9 @@
 
 当前实现状态：
 
-- Task 1-25 已完成：MVP 功能闭环、Post-MVP AI 质量闭环、Real AI Adaptive Coaching。
+- Task 1-33 全部完成：MVP + Post-MVP AI 质量 + Real AI Adaptive Coaching + Phase 3 持续训练伙伴与 AI 质量运营闭环。
 - Spring AI 底座迁移 Phase 2-6 已完成，AI 调用通过 `AiModelGateway` 路由到 Spring AI 或旧客户端。
-- 产品 Phase 3（Task 26-33）已批准为“持续训练伙伴与 AI 质量运营闭环”，尚未实现。
-- 当前代码仍保持 1 天训练计划、单次文字模拟面试和已有自适应训练/教练记忆能力；尚无 AI Observability、真实 AI 回归升级、多天训练计划、Progress Dashboard、Spring AI Chat Memory 短窗口替换或多轮模拟面试对比实现。
+- Phase 3 已完成：AI Observability（Micrometer metrics）、真实 AI 回归评测升级、3 天多天训练计划、能力维度深度分析、进步追踪 Dashboard、Spring AI Chat Memory 短窗口、多轮模拟面试与 focusDimension、发布硬化与记忆导入审查。
 
 代码上采用 monorepo：
 
@@ -330,12 +329,12 @@ finishAssessment
 
 ### 4.9 training
 
-训练模块基于测评短板生成 1 天训练任务、为单个任务生成反馈，并支持围绕短板的自适应多轮训练。
+训练模块基于测评短板生成 3 天训练计划（每天 2-4 个任务，共 6-12 个）、为单个任务生成反馈，并支持围绕短板的自适应多轮训练。
 
 主要文件：
 
-- `TrainingPlan`：训练计划实体。
-- `TrainingTask`：训练任务实体。
+- `TrainingPlan`：训练计划实体，含 totalDays（默认 3）、status（pending/completed）。
+- `TrainingTask`：训练任务实体，含 dayIndex（0/1/2 对应第 1/2/3 天）。
 - `TrainingFeedback`：训练反馈实体。
 - `TrainingSession`：自适应训练会话实体，含 roundIndex、minRounds、maxRounds、lastAction、summary。
 - `TrainingSessionRound`：自适应训练轮次实体，含 question、answer、action、score、feedback、problems。
@@ -348,15 +347,15 @@ finishAssessment
   - `PATCH /api/training-tasks/{id}/complete`
 - `TrainingSessionController`：
   - `POST /api/training-sessions/{id}/answers`（提交自适应训练回答）
-- `TrainingService`：生成任务、单次答题反馈、自适应训练会话管理、标记完成。
+- `TrainingService`：生成任务、单次答题反馈、自适应训练会话管理、标记完成、自动更新计划状态。
 
 生命周期：
 
 ```text
 generateTrainingPlan
   -> 基于最新 AssessmentResult
-  -> 生成 2-4 个训练任务
-  -> TrainingPlan + TrainingTask[]
+  -> 生成 6-12 个训练任务（3 天 × 2-4 个/天）
+  -> TrainingPlan(totalDays=3, status=pending) + TrainingTask[](dayIndex=0/1/2)
 
 answerTrainingTask（单次模式）
   -> generateTrainingFeedback
@@ -375,22 +374,25 @@ submitAdaptiveAnswer x2-4
 
 completeTrainingTask
   -> TrainingTask(status=completed)
+  -> 所有任务完成时自动更新 TrainingPlan(status=completed)
 ```
 
 ### 4.10 mockinterview
 
-模拟面试模块负责文字问答和 mock interview report。
+模拟面试模块负责文字问答和 mock interview report，支持多轮模拟面试和 focusDimension。
 
 主要文件：
 
-- `MockInterview`：会话实体，包含 status、targetId、user、messages。
+- `MockInterview`：会话实体，包含 status、targetId、user、messages、focusDimension。
 - `MockInterviewMessage`：消息实体，role 为 `assistant` 或 `user`。
 - `MockInterviewController`：
-  - `POST /api/mock-interviews/start`
+  - `POST /api/mock-interviews/start`（支持 focusDimension 参数）
   - `POST /api/mock-interviews/{id}/answer`
   - `POST /api/mock-interviews/{id}/finish`
   - `GET /api/mock-interviews/{id}`
-- `MockInterviewService`：生成首问、追问（注入教练记忆摘要）、结束报告。
+  - `GET /api/mock-interviews/target/{targetId}`（列出目标岗位下所有模拟面试）
+- `MockInterviewService`：生成首问（根据 focusDimension 调整开场问题方向）、追问（注入教练记忆摘要）、结束报告、列出历史面试。
+- `ChatMemory`：Spring AI `MessageWindowChatMemory`（窗口大小 12），用于模拟面试短窗口上下文管理。
 
 Prompt 上下文限制：
 
@@ -494,6 +496,7 @@ finishInterview
 | MockInterview | `POST /api/mock-interviews/{id}/answer` |
 | MockInterview | `POST /api/mock-interviews/{id}/finish` |
 | MockInterview | `GET /api/mock-interviews/{id}` |
+| MockInterview | `GET /api/mock-interviews/target/{targetId}` |
 | Report | `GET /api/reports?targetId=...` |
 | Report | `GET /api/reports/{id}` |
 | CoachingMemory | `GET /api/coaching-memories?targetId=...` |
@@ -505,6 +508,8 @@ finishInterview
 | AI Provider | `POST /api/ai-providers/models` |
 | AI Provider | `PATCH /api/ai-providers/{id}/default` |
 | AI Provider | `DELETE /api/ai-providers/{id}` |
+| DimensionAnalysis | `GET /api/dimension-analysis?targetId=...` |
+| Progress | `GET /api/progress?targetId=...` |
 
 说明：OpenAPI 中 `/api/targets`、`/api/targets/{id}`、`/api/ai-providers` 等路径下包含多个 HTTP method，因此路径数量和端点数量不同。
 
@@ -705,13 +710,13 @@ SwiftData 本地模型：
 
 能力：
 
-- 生成 1 天训练计划。
-- 展示训练任务列表。
+- 生成 3 天训练计划（每天 2-4 个任务，共 6-12 个）。
+- 按天分组展示训练任务，每天可独立展开/折叠。
 - 单个任务答题（一次性反馈）。
 - 自适应训练：点击"开始 2-4 轮自适应训练"进入多轮训练模式，AI 根据回答决定 continue/pass/switch/stop。
 - 自适应训练展示每轮问题、回答、评分、反馈和改进建议。
 - 展示训练反馈、优化答案、追问、建议复习点。
-- 标记任务完成。
+- 标记任务完成，所有任务完成后计划自动标记为 completed。
 
 ### 7.8 MockInterview
 
@@ -722,7 +727,8 @@ SwiftData 本地模型：
 
 能力：
 
-- 开始文字模拟面试。
+- 开始文字模拟面试，支持指定 focusDimension 侧重维度。
+- 同一目标岗位可进行多次模拟面试，按时间倒序列出历史面试。
 - 展示当前面试官问题。
 - 提交回答并获得下一问。
 - 结束面试并生成面试报告。
@@ -750,6 +756,7 @@ SwiftData 本地模型：
 - `AiProviderListView.swift`
 - `AiProviderCreateView.swift`
 - `PrivacyPolicyView.swift`
+- `CoachingMemoryImportView.swift`
 
 能力：
 
@@ -757,8 +764,10 @@ SwiftData 本地模型：
 - 创建 Provider 前可测试连接。
 - 切换默认 Provider。
 - 删除 Provider。
-- 查看隐私政策。
-- 删除账号。
+- 查看隐私政策（含教练记忆、重新登录与记忆导入说明）。
+- 删除账号（支持"同时删除本机教练记忆文件"选项）。
+- 登录后检测到本机未导入的教练记忆时，提供审查与导入入口。
+- 教练记忆导入支持全选/部分选择/全部拒绝。
 
 ## 8. 核心业务流程
 

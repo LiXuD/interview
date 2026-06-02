@@ -27,6 +27,12 @@ public class TrainingPlan {
     @OrderBy("createdAt ASC")
     private List<TrainingTask> tasks = new ArrayList<>();
 
+    @Column(nullable = false)
+    private int totalDays = 3;
+
+    @Column(nullable = false)
+    private String status = "pending";
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -45,6 +51,12 @@ public class TrainingPlan {
 
     public List<TrainingTask> getTasks() { return tasks; }
     public void setTasks(List<TrainingTask> tasks) { this.tasks = tasks; }
+
+    public int getTotalDays() { return totalDays; }
+    public void setTotalDays(int totalDays) { this.totalDays = totalDays; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
     public Instant getCreatedAt() { return createdAt; }
 }

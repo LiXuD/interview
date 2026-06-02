@@ -16,7 +16,7 @@
 
 MVP 只验收这条最窄闭环。只要这条路径不完整，就不算 MVP 完成。
 
-Task 1-25 全部完成：MVP 功能闭环、Post-MVP AI 质量闭环、Post-MVP Real AI Adaptive Coaching。Spring AI 底座迁移 Phase 2-6 已完成。Phase 3（Task 26-33）已批准为“持续训练伙伴与 AI 质量运营闭环”，但尚未实现。MVP 完成后的新增开发必须继续服务 AI 面试教练定位，并且只能按 `docs/product/vibecoding-development-plan.md` 中已批准的 Post-MVP 任务推进。
+Task 1-33 全部完成：MVP 功能闭环、Post-MVP AI 质量闭环、Post-MVP Real AI Adaptive Coaching、Phase 3 持续训练伙伴与 AI 质量运营闭环。Spring AI 底座迁移 Phase 2-6 已完成。MVP 完成后的新增开发必须继续服务 AI 面试教练定位，并且只能按 `docs/product/vibecoding-development-plan.md` 中已批准的 Post-MVP 任务推进。
 
 ## 2. MVP 范围
 
@@ -699,7 +699,7 @@ dev login
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **interview** (3611 symbols, 11658 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **interview** (3626 symbols, 11673 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 

@@ -7,6 +7,7 @@ import com.interviewcoach.ai.service.AiPrompt;
 import com.interviewcoach.ai.service.AiStructuredOutputMappingException;
 import com.interviewcoach.ai.service.AiStructuredOutputService;
 import com.interviewcoach.ai.service.ApiKeyEncryption;
+import com.interviewcoach.ai.service.NoOpAiMetrics;
 import com.interviewcoach.ai.service.OpenAiCompatibleClient;
 import com.interviewcoach.ai.service.PlatformAiClient;
 import com.interviewcoach.ai.service.PlatformAiProperties;
@@ -509,8 +510,15 @@ class AiStructuredOutputServiceTest {
                 "system prompt",
                 "user prompt");
         var resultDto = new AiStructuredOutputService.TrainingPlanResult(List.of(
-                new AiStructuredOutputService.TrainingPlanTaskItem("task 1", "description 1"),
-                new AiStructuredOutputService.TrainingPlanTaskItem("task 2", "description 2")));
+                new AiStructuredOutputService.TrainingPlanTaskItem("task 1", "description 1", 0),
+                new AiStructuredOutputService.TrainingPlanTaskItem("task 2", "description 2", 0),
+                new AiStructuredOutputService.TrainingPlanTaskItem("task 3", "description 3", 0),
+                new AiStructuredOutputService.TrainingPlanTaskItem("task 4", "description 4", 1),
+                new AiStructuredOutputService.TrainingPlanTaskItem("task 5", "description 5", 1),
+                new AiStructuredOutputService.TrainingPlanTaskItem("task 6", "description 6", 1),
+                new AiStructuredOutputService.TrainingPlanTaskItem("task 7", "description 7", 2),
+                new AiStructuredOutputService.TrainingPlanTaskItem("task 8", "description 8", 2),
+                new AiStructuredOutputService.TrainingPlanTaskItem("task 9", "description 9", 2)));
 
         when(providerService.findDefaultProvider(userId)).thenReturn(provider);
         when(encryption.decrypt("encrypted-key")).thenReturn("sk-user-secret");
@@ -533,7 +541,7 @@ class AiStructuredOutputServiceTest {
 
         List<AiStructuredOutputService.TrainingPlanTaskItem> result = service.generateTrainingPlan(prompt);
 
-        assertThat(result).hasSize(2);
+        assertThat(result).hasSize(9);
         verify(springAiUserProviderClient).generateEntity(
                 provider,
                 "sk-user-secret",

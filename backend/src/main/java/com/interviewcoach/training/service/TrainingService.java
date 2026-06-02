@@ -98,12 +98,14 @@ public class TrainingService {
         TrainingPlan plan = new TrainingPlan();
         plan.setUser(user);
         plan.setTargetId(targetId);
+        plan.setTotalDays(3);
 
         for (AiStructuredOutputService.TrainingPlanTaskItem item : taskItems) {
             TrainingTask task = new TrainingTask();
             task.setPlan(plan);
             task.setTitle(item.title());
             task.setDescription(item.description());
+            task.setDayIndex(item.dayIndex());
             plan.getTasks().add(task);
         }
 
@@ -171,6 +173,15 @@ public class TrainingService {
         task.setStatus(STATUS_COMPLETED);
         task.setCompletedAt(Instant.now());
         task = taskRepository.save(task);
+
+        // Check if all tasks in the plan are completed
+        TrainingPlan plan = task.getPlan();
+        boolean allCompleted = plan.getTasks().stream()
+                .allMatch(t -> STATUS_COMPLETED.equals(t.getStatus()));
+        if (allCompleted && !STATUS_COMPLETED.equals(plan.getStatus())) {
+            plan.setStatus(STATUS_COMPLETED);
+            planRepository.save(plan);
+        }
 
         return toTaskDto(task);
     }
@@ -303,16 +314,19 @@ public class TrainingService {
 
     private AiPrompt buildPlanPrompt(InterviewTarget target, AssessmentResult result, CandidateProfile profile) {
         String systemPrompt = """
-                你是 AI 技术面试教练。根据测评短板为候选人生成 1 天训练计划，包含 2-4 个任务。
+                你是 AI 技术面试教练。根据测评为候选人生成 3 天训练计划，每天 2-4 个任务，共 6-12 个任务。
                 只返回合法 JSON 对象，不返回任何其他文字。
 
                 JSON 结构必须严格如下：
-                {"tasks": [{"title": "任务标题", "description": "任务描述"}]}
+                {"tasks": [{"title": "任务标题", "description": "任务描述", "dayIndex": 0}]}
 
-                tasks 数组必须包含 2 到 4 个任务。
+                dayIndex 只能是 0、1 或 2，分别对应第 1、2、3 天。
+                每天必须包含 2 到 4 个任务。
                 每个任务必须针对一个具体短板，description 需说明练习目标和方法。
                 可结合候选人已确认的技能和经历设计更有针对性的练习。
+                后一天任务应基于前一天的训练内容递进，逐步加深难度。
                 """;
+
         StringBuilder userPrompt = new StringBuilder();
         userPrompt.append("目标岗位：\n%s\n\n岗位 JD：\n%s\n\n".formatted(target.getTitle(), target.getJd()));
         if (profile != null) {
@@ -477,6 +491,8 @@ public class TrainingService {
                 plan.getId().toString(),
                 plan.getTargetId().toString(),
                 plan.getTasks().stream().map(this::toTaskDto).toList(),
+                plan.getTotalDays(),
+                plan.getStatus(),
                 plan.getCreatedAt().toString()
         );
     }
@@ -492,7 +508,8 @@ public class TrainingService {
                 task.getDescription(),
                 task.getStatus(),
                 feedbackText,
-                task.getCompletedAt() != null ? task.getCompletedAt().toString() : null
+                task.getCompletedAt() != null ? task.getCompletedAt().toString() : null,
+                task.getDayIndex()
         );
     }
 

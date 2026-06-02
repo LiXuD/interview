@@ -201,8 +201,15 @@ class TrainingAdaptiveActionTest {
         return """
                 {
                   "tasks": [
-                    {"title": "容量规划训练", "description": "围绕容量规划进行追问"},
-                    {"title": "故障处理训练", "description": "围绕故障处理进行追问"}
+                    {"title": "容量规划训练", "description": "围绕容量规划进行追问", "dayIndex": 0},
+                    {"title": "故障处理训练", "description": "围绕故障处理进行追问", "dayIndex": 0},
+                    {"title": "数据库优化训练", "description": "围绕数据库优化进行追问", "dayIndex": 0},
+                    {"title": "分布式系统训练", "description": "围绕分布式系统进行追问", "dayIndex": 1},
+                    {"title": "微服务架构训练", "description": "围绕微服务架构进行追问", "dayIndex": 1},
+                    {"title": "性能调优训练", "description": "围绕性能调优进行追问", "dayIndex": 1},
+                    {"title": "系统设计训练", "description": "围绕系统设计进行追问", "dayIndex": 2},
+                    {"title": "项目复盘训练", "description": "围绕项目复盘进行追问", "dayIndex": 2},
+                    {"title": "综合面试训练", "description": "围绕综合面试进行追问", "dayIndex": 2}
                   ]
                 }
                 """;

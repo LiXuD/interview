@@ -159,5 +159,105 @@ public class AiAcceptanceFixtures {
             "我们现在的做法比较简单，就是在关键表上写 SQL 检查空值率和波动，" +
             "但我了解 Great Expectations 这类工具，还没用过。";
 
+    // ==================== 场景 4: 前端/全栈 ====================
+
+    public static final String FRONTEND_TITLE = "高级前端工程师 - React/TypeScript 方向";
+
+    public static final String FRONTEND_JD = """
+            岗位职责：
+            1. 负责公司核心产品的前端架构设计与开发，使用 React + TypeScript 技术栈。
+            2. 设计和实现前端状态管理方案，优化复杂表单和数据流的用户体验。
+            3. 搭建前端工程化体系，包括 CI/CD、代码规范、性能监控。
+            4. 与后端协作定义 API 契约，推动前后端分离最佳实践。
+            5. 优化首屏加载性能和运行时性能，提升 Core Web Vitals 指标。
+
+            任职要求：
+            1. 4 年以上前端开发经验，精通 React、TypeScript。
+            2. 熆悉状态管理（Redux/Zustand/MobX）和路由方案（React Router）。
+            3. 了解前端构建工具（Vite/Webpack）和 CI/CD 流程。
+            4. 有性能优化经验（Lighthouse、Bundle 分析、SSR/SSG）。
+            5. 良好的 TypeScript 类型体操能力。
+            """;
+
+    public static final String FRONTEND_SUMMARY =
+            "3 年前端开发经验，主要使用 React + TypeScript 开发 B 端管理后台。" +
+            "熟悉 Zustand 状态管理和 React Router 路由方案。" +
+            "用 Vite 做构建，有基础的性能优化意识但缺少系统化实践。";
+
+    public static final List<String> FRONTEND_SKILLS = List.of(
+            "React", "TypeScript", "Zustand", "Vite", "CSS Modules", "Git"
+    );
+
+    public static final List<String> FRONTEND_PROJECTS = List.of(
+            "B 端管理后台：使用 React + TypeScript + Zustand 开发的运营管理系统，包含复杂表单、权限控制和数据可视化",
+            "组件库封装：基于 React 封装了一套通用业务组件，包括表格、表单、弹窗等"
+    );
+
+    public static final List<String> FRONTEND_EXPERIENCE = List.of(
+            "3 年前端开发经验",
+            "1 年 B 端管理后台开发"
+    );
+
+    public static final String FRONTEND_ANSWER_STATE_MANAGEMENT =
+            "在管理后台项目中，我用 Zustand 做全局状态管理。" +
+            "相比 Redux，Zustand 的 API 更简洁，不需要 action/reducer 样板代码。" +
+            "我把 store 按业务域拆分，比如 userStore、orderStore、permissionStore。" +
+            "对于表单状态，我用 React Hook Form 管理，避免全局 store 污染。" +
+            "但我们在处理复杂联动表单时遇到了性能问题，后来用 useMemo 和 useCallback 优化了。";
+
+    public static final String FRONTEND_ANSWER_WEAK =
+            "SSR/SSG 我了解概念，知道 Next.js 可以做服务端渲染，" +
+            "但我们项目是纯 SPA，没实际用过。性能优化主要靠 Lighthouse 跑分看看。";
+
+    // ==================== 场景 5: DevOps/SRE ====================
+
+    public static final String DEVOPS_TITLE = "DevOps/SRE 工程师";
+
+    public static final String DEVOPS_JD = """
+            岗位职责：
+            1. 设计和维护公司 Kubernetes 集群，保障生产环境高可用。
+            2. 搭建 CI/CD Pipeline，实现自动化构建、测试和部署。
+            3. 设计监控告警体系（Prometheus/Grafana/ELK），实现故障快速发现和定位。
+            4. 制定 SLO/SLI，推动研发团队提升服务可靠性。
+            5. 优化基础设施成本，实施资源配额和自动伸缩策略。
+
+            任职要求：
+            1. 3 年以上 DevOps/SRE 经验。
+            2. 熟悉 Kubernetes、Docker、Helm。
+            3. 熟悉 CI/CD 工具（GitHub Actions/GitLab CI/Jenkins）。
+            4. 了解 Prometheus、Grafana、ELK 等监控工具。
+            5. 有 SLO/SLI 制定和 On-Call 经验优先。
+            """;
+
+    public static final String DEVOPS_SUMMARY =
+            "2 年运维开发经验，主要负责公司内部 Kubernetes 集群的日常维护。" +
+            "用 GitHub Actions 搭建了基本的 CI/CD 流程。" +
+            "用 Prometheus + Grafana 做了基础监控，但 SLO/SLI 体系尚未建立。";
+
+    public static final List<String> DEVOPS_SKILLS = List.of(
+            "Kubernetes", "Docker", "Helm", "GitHub Actions", "Prometheus", "Grafana", "Linux"
+    );
+
+    public static final List<String> DEVOPS_PROJECTS = List.of(
+            "Kubernetes 集群运维：负责公司 3 个 K8s 集群的日常维护，包括节点扩缩容、Helm Chart 管理和故障排查",
+            "CI/CD Pipeline：基于 GitHub Actions 搭建了从代码提交到自动部署的完整流程"
+    );
+
+    public static final List<String> DEVOPS_EXPERIENCE = List.of(
+            "2 年运维开发经验",
+            "管理过 3 个 K8s 集群"
+    );
+
+    public static final String DEVOPS_ANSWER_K8S =
+            "我们的 K8s 集群用的是 AWS EKS，3 个 master 节点分布在不同 AZ。" +
+            "工作节点用 Spot Instance 降低成本，通过 Cluster Autoscaler 自动伸缩。" +
+            "Helm Chart 按业务域组织，每个服务一个 Chart。" +
+            "部署策略用 Rolling Update，关键服务配置了 PodDisruptionBudget。" +
+            "但我们的监控还不够完善，经常是用户反馈才知道服务异常。";
+
+    public static final String DEVOPS_ANSWER_WEAK =
+            "SLO/SLI 我了解概念，知道 SLI 是指标、SLO 是目标，" +
+            "但我们团队还没有正式建立这套体系。On-Call 做过几次，主要是看告警然后排查。";
+
     private AiAcceptanceFixtures() {}
 }

@@ -388,7 +388,7 @@ class AiContentQualityTest {
         String interviewStartJson = mockMvc.perform(post("/api/mock-interviews/start")
                         .header("Authorization", "Bearer " + ctx.token)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new MockInterviewStartRequest(ctx.targetId))))
+                        .content(objectMapper.writeValueAsString(new MockInterviewStartRequest(ctx.targetId, null))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.currentQuestion").isString())
                 .andReturn().getResponse().getContentAsString();
@@ -477,6 +477,249 @@ class AiContentQualityTest {
             // 如果 candidateMatch 提到 Seata，应是在 gap/risk 的语境下，而非声称已有经验
             // 这个检查取决于 AI 的实际输出，允许提及但不允许声称掌握
         }
+    }
+
+    // ==================== 场景 4: 前端/React ====================
+
+    @Test
+    @Order(9)
+    @DisplayName("前端 React 工程师: JobBrief 应识别前端相关技能")
+    void frontendJobBriefIdentifiesReactSkills() throws Exception {
+        PipelineContext ctx = setupPipeline(AiAcceptanceFixtures.FRONTEND_TITLE,
+                AiAcceptanceFixtures.FRONTEND_JD,
+                AiAcceptanceFixtures.FRONTEND_SUMMARY,
+                AiAcceptanceFixtures.FRONTEND_SKILLS,
+                AiAcceptanceFixtures.FRONTEND_PROJECTS,
+                AiAcceptanceFixtures.FRONTEND_EXPERIENCE);
+
+        String jobBriefJson = mockMvc.perform(post("/api/job-briefs/generate")
+                        .header("Authorization", "Bearer " + ctx.token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new JobBriefGenerateRequest(ctx.targetId))))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        JobBriefDto dto = objectMapper.readValue(jobBriefJson, JobBriefDto.class);
+
+        List<String> allItems = new java.util.ArrayList<>(dto.mustHaveSkills());
+        allItems.addAll(dto.niceToHaveSkills());
+        allItems.addAll(dto.interviewTopics());
+        dto.skillMap().forEach(s -> allItems.add(s.name()));
+        String allLower = allItems.stream()
+                .map(String::toLowerCase).reduce("", (a, b) -> a + " " + b);
+
+        boolean hasFrontendRelevant = allLower.contains("react")
+                || allLower.contains("typescript")
+                || allLower.contains("前端")
+                || allLower.contains("frontend")
+                || allLower.contains("组件")
+                || allLower.contains("状态管理");
+        assertThat(hasFrontendRelevant)
+                .as("前端岗位 JobBrief 应包含至少一个前端相关关键词，实际内容: %s", allItems)
+                .isTrue();
+
+        // 验证不虚构候选人未提供的经验
+        String combined = String.join(" ", dto.candidateMatch()) + " " + String.join(" ", dto.riskAreas());
+        assertThat(combined.toLowerCase()).doesNotContain("vue");
+        assertThat(combined.toLowerCase()).doesNotContain("angular");
+    }
+
+    @Test
+    @Order(10)
+    @DisplayName("前端 React 工程师: 模拟面试追问与前端相关")
+    void frontendMockInterviewIsRelevant() throws Exception {
+        PipelineContext ctx = setupFullPipeline(AiAcceptanceFixtures.FRONTEND_TITLE,
+                AiAcceptanceFixtures.FRONTEND_JD,
+                AiAcceptanceFixtures.FRONTEND_SUMMARY,
+                AiAcceptanceFixtures.FRONTEND_SKILLS,
+                AiAcceptanceFixtures.FRONTEND_PROJECTS,
+                AiAcceptanceFixtures.FRONTEND_EXPERIENCE);
+
+        String interviewStartJson = mockMvc.perform(post("/api/mock-interviews/start")
+                        .header("Authorization", "Bearer " + ctx.token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new MockInterviewStartRequest(ctx.targetId, null))))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        String interviewId = objectMapper.readTree(interviewStartJson).get("id").asText();
+
+        // 提交回答验证追问
+        mockMvc.perform(post("/api/mock-interviews/" + interviewId + "/answer")
+                        .header("Authorization", "Bearer " + ctx.token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new MockInterviewAnswerRequest(AiAcceptanceFixtures.FRONTEND_ANSWER_STATE_MANAGEMENT))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.currentQuestion").isString());
+
+        String reportJson = mockMvc.perform(post("/api/mock-interviews/" + interviewId + "/finish")
+                        .header("Authorization", "Bearer " + ctx.token))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        MockInterviewReportDto report = objectMapper.readValue(reportJson, MockInterviewReportDto.class);
+        assertThat(report.overallScore()).isBetween(0, 100);
+        assertThat(report.dimensionScores()).isNotEmpty();
+    }
+
+    // ==================== 场景 5: DevOps/SRE ====================
+
+    @Test
+    @Order(11)
+    @DisplayName("DevOps/SRE: JobBrief 应识别基础设施相关技能")
+    void devopsJobBriefIdentifiesInfraSkills() throws Exception {
+        PipelineContext ctx = setupPipeline(AiAcceptanceFixtures.DEVOPS_TITLE,
+                AiAcceptanceFixtures.DEVOPS_JD,
+                AiAcceptanceFixtures.DEVOPS_SUMMARY,
+                AiAcceptanceFixtures.DEVOPS_SKILLS,
+                AiAcceptanceFixtures.DEVOPS_PROJECTS,
+                AiAcceptanceFixtures.DEVOPS_EXPERIENCE);
+
+        String jobBriefJson = mockMvc.perform(post("/api/job-briefs/generate")
+                        .header("Authorization", "Bearer " + ctx.token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new JobBriefGenerateRequest(ctx.targetId))))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        JobBriefDto dto = objectMapper.readValue(jobBriefJson, JobBriefDto.class);
+
+        List<String> allItems = new java.util.ArrayList<>(dto.mustHaveSkills());
+        allItems.addAll(dto.niceToHaveSkills());
+        allItems.addAll(dto.interviewTopics());
+        dto.skillMap().forEach(s -> allItems.add(s.name()));
+        String allLower = allItems.stream()
+                .map(String::toLowerCase).reduce("", (a, b) -> a + " " + b);
+
+        boolean hasDevOpsRelevant = allLower.contains("kubernetes")
+                || allLower.contains("k8s")
+                || allLower.contains("docker")
+                || allLower.contains("ci/cd")
+                || allLower.contains("prometheus")
+                || allLower.contains("监控")
+                || allLower.contains("部署")
+                || allLower.contains("集群");
+        assertThat(hasDevOpsRelevant)
+                .as("DevOps 岗位 JobBrief 应包含至少一个基础设施相关关键词，实际内容: %s", allItems)
+                .isTrue();
+    }
+
+    @Test
+    @Order(12)
+    @DisplayName("DevOps/SRE: 测评题目应与运维/SRE 岗位相关")
+    void devopsQuestionsAreJobRelevant() throws Exception {
+        PipelineContext ctx = setupPipeline(AiAcceptanceFixtures.DEVOPS_TITLE,
+                AiAcceptanceFixtures.DEVOPS_JD,
+                AiAcceptanceFixtures.DEVOPS_SUMMARY,
+                AiAcceptanceFixtures.DEVOPS_SKILLS,
+                AiAcceptanceFixtures.DEVOPS_PROJECTS,
+                AiAcceptanceFixtures.DEVOPS_EXPERIENCE);
+
+        MvcResult startResult = mockMvc.perform(post("/api/assessments/start")
+                        .header("Authorization", "Bearer " + ctx.token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new AssessmentStartRequest(ctx.targetId))))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String sessionJson = startResult.getResponse().getContentAsString();
+        String currentQ = objectMapper.readTree(sessionJson).get("currentQuestion").get("question").asText();
+
+        String qLower = currentQ.toLowerCase();
+        boolean questionRelevant = qLower.contains("kubernetes")
+                || qLower.contains("k8s")
+                || qLower.contains("docker")
+                || qLower.contains("集群")
+                || qLower.contains("部署")
+                || qLower.contains("监控")
+                || qLower.contains("ci/cd")
+                || qLower.contains("sre")
+                || qLower.contains("可用性")
+                || qLower.contains("故障");
+        assertThat(questionRelevant)
+                .as("DevOps 岗位测评第一题应与岗位相关，实际题目: %s", currentQ)
+                .isTrue();
+    }
+
+    // ==================== 通用验证：评分一致性 ====================
+
+    @Test
+    @Order(13)
+    @DisplayName("Java 支付后端: 逐题评分应有区分度且包含完整诊断")
+    void javaQuestionScoresHaveDistinction() throws Exception {
+        PipelineContext ctx = setupPipeline(AiAcceptanceFixtures.JAVA_TITLE,
+                AiAcceptanceFixtures.JAVA_JD,
+                AiAcceptanceFixtures.JAVA_SUMMARY,
+                AiAcceptanceFixtures.JAVA_SKILLS,
+                AiAcceptanceFixtures.JAVA_PROJECTS,
+                AiAcceptanceFixtures.JAVA_EXPERIENCE);
+
+        MvcResult startResult = mockMvc.perform(post("/api/assessments/start")
+                        .header("Authorization", "Bearer " + ctx.token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new AssessmentStartRequest(ctx.targetId))))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String sessionJson = startResult.getResponse().getContentAsString();
+        String sessionId = objectMapper.readTree(sessionJson).get("id").asText();
+
+        // 用不同质量的回答
+        List<String> answers = List.of(
+                AiAcceptanceFixtures.JAVA_ANSWER_ORDER_DESIGN,
+                AiAcceptanceFixtures.JAVA_ANSWER_WEAK,
+                "Spring Boot 自动配置通过 @EnableAutoConfiguration 实现，扫描 META-INF/spring.factories 加载配置类。",
+                "Redis 分布式锁用 SET key value NX EX 实现，配合 Lua 脚本保证原子释放。",
+                "支付系统设计考虑幂等性、分布式事务、资金安全和对账。"
+        );
+        for (String answer : answers) {
+            mockMvc.perform(post("/api/assessments/" + sessionId + "/answers")
+                            .header("Authorization", "Bearer " + ctx.token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(new AssessmentAnswerRequest(answer))))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.score").isNumber())
+                    .andExpect(jsonPath("$.dimension").isString())
+                    .andExpect(jsonPath("$.feedback").isString())
+                    .andExpect(jsonPath("$.answerStructure").exists())
+                    .andExpect(jsonPath("$.answerStructure.background").isString())
+                    .andExpect(jsonPath("$.answerStructure.task").isString())
+                    .andExpect(jsonPath("$.answerStructure.action").isString())
+                    .andExpect(jsonPath("$.answerStructure.result").isString())
+                    .andExpect(jsonPath("$.followUpRisks").isArray())
+                    .andExpect(jsonPath("$.contentHighlights").isArray())
+                    .andExpect(jsonPath("$.contentGaps").isArray());
+        }
+    }
+
+    // ==================== 通用验证：虚构经历检查 ====================
+
+    @Test
+    @Order(14)
+    @DisplayName("AI RAG 工程师: AI 不应虚构候选人未提供的 PyTorch/深度学习经验")
+    void aiEngineerDoesNotFabricateDeepLearning() throws Exception {
+        PipelineContext ctx = setupPipeline(AiAcceptanceFixtures.AI_TITLE,
+                AiAcceptanceFixtures.AI_JD,
+                AiAcceptanceFixtures.AI_SUMMARY,
+                AiAcceptanceFixtures.AI_SKILLS,
+                AiAcceptanceFixtures.AI_PROJECTS,
+                AiAcceptanceFixtures.AI_EXPERIENCE);
+
+        String jobBriefJson = mockMvc.perform(post("/api/job-briefs/generate")
+                        .header("Authorization", "Bearer " + ctx.token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new JobBriefGenerateRequest(ctx.targetId))))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        JobBriefDto dto = objectMapper.readValue(jobBriefJson, JobBriefDto.class);
+
+        String candidateMatchAll = String.join(" ", dto.candidateMatch()).toLowerCase();
+        // 候选人没有 PyTorch、TensorFlow、深度学习训练经验
+        assertThat(candidateMatchAll).doesNotContain("pytorch");
+        assertThat(candidateMatchAll).doesNotContain("tensorflow");
+        assertThat(candidateMatchAll).doesNotContain("深度学习训练");
     }
 
     // ==================== Pipeline Setup Helpers ====================

@@ -35,10 +35,13 @@ struct TrainingPlanView: View {
                         if let idx = tasks.firstIndex(where: { $0.id == updatedTask.id }) {
                             tasks[idx] = updatedTask
                         }
+                        let allCompleted = tasks.allSatisfy { $0.status == "completed" }
                         self.plan = TrainingPlanDTO(
                             id: plan.id,
                             targetId: plan.targetId,
                             tasks: tasks,
+                            totalDays: plan.totalDays,
+                            status: allCompleted ? "completed" : plan.status,
                             createdAt: plan.createdAt
                         )
                     }
@@ -62,7 +65,7 @@ struct TrainingPlanView: View {
                 ContentUnavailableView(
                     "训练计划",
                     systemImage: "figure.run",
-                    description: Text("基于测评结果的短板分析，AI 将生成针对性的 1 天训练任务。")
+                    description: Text("基于测评结果的短板分析，AI 将生成针对性的 3 天训练计划，每天 2-4 个任务。")
                 )
             }
 
@@ -87,23 +90,28 @@ struct TrainingPlanView: View {
                 }
             }
 
-            Section("训练任务") {
-                ForEach(plan.tasks, id: \.id) { task in
-                    Button {
-                        selectedTask = task
-                    } label: {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(task.title)
-                                    .font(.body)
-                                    .foregroundStyle(.primary)
-                                Text(task.description)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(2)
+            ForEach(0..<plan.totalDays, id: \.self) { day in
+                let dayTasks = plan.tasks.filter { $0.dayIndex == day }
+                if !dayTasks.isEmpty {
+                    Section("第 \(day + 1) 天") {
+                        ForEach(dayTasks, id: \.id) { task in
+                            Button {
+                                selectedTask = task
+                            } label: {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(task.title)
+                                            .font(.body)
+                                            .foregroundStyle(.primary)
+                                        Text(task.description)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                            .lineLimit(2)
+                                    }
+                                    Spacer()
+                                    taskStatusIcon(task.status)
+                                }
                             }
-                            Spacer()
-                            taskStatusIcon(task.status)
                         }
                     }
                 }

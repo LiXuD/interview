@@ -28,6 +28,20 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
 
+            if authService.hasUnimportedMemories {
+                Section("教练记忆") {
+                    NavigationLink {
+                        CoachingMemoryImportView(currentUserId: authService.currentUser?.id ?? "")
+                    } label: {
+                        Label("审查待导入的教练记忆", systemImage: "square.and.arrow.down")
+                    }
+                } footer: {
+                    Text("检测到本机有未导入的历史教练记忆。你可以选择导入到当前账号，或拒绝导入。")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             Section {
                 Toggle("同时删除本机教练记忆文件", isOn: $deleteLocalCoachingMemoryArchive)
 
@@ -38,7 +52,7 @@ struct SettingsView: View {
                 }
                 .disabled(authService.isLoading)
             } footer: {
-                Text("删除账号将清除服务端所有数据，包括目标岗位、画像、测评记录、训练计划、模拟面试和报告。本机教练记忆文件默认保留，只有打开上方选项才会同时删除。")
+                Text("删除账号将清除服务端所有数据，包括目标岗位、画像、测评记录、训练计划、模拟面试、报告和远端教练记忆。本机教练记忆文件默认保留，只有打开上方选项才会同时删除。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -56,16 +70,13 @@ struct SettingsView: View {
             Button("删除账号", role: .destructive) {
                 isDeleting = true
                 Task {
-                    await authService.deleteAccount()
-                    if deleteLocalCoachingMemoryArchive && !authService.isAuthenticated {
-                        CoachingMemoryArchiveLocal.deleteAll(in: modelContext)
-                    }
+                    await authService.deleteAccount(deleteLocalMemories: deleteLocalCoachingMemoryArchive)
                     isDeleting = false
                 }
             }
             Button("取消", role: .cancel) {}
         } message: {
-            Text("删除后你的所有数据将被永久清除，包括目标岗位、画像、测评、训练、模拟面试和报告。此操作不可撤销。")
+            Text("删除后你的所有数据将被永久清除，包括目标岗位、画像、测评、训练、模拟面试、报告和远端教练记忆。此操作不可撤销。")
         }
     }
 }

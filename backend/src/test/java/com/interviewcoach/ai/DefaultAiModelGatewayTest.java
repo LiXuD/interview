@@ -1,11 +1,13 @@
 package com.interviewcoach.ai;
 
 import com.interviewcoach.ai.entity.AiProvider;
+import com.interviewcoach.ai.service.AiMetrics;
 import com.interviewcoach.ai.service.AiModelGateway;
 import com.interviewcoach.ai.service.AiPrompt;
 import com.interviewcoach.ai.service.AiStructuredOutputMappingException;
 import com.interviewcoach.ai.service.ApiKeyEncryption;
 import com.interviewcoach.ai.service.DefaultAiModelGateway;
+import com.interviewcoach.ai.service.NoOpAiMetrics;
 import com.interviewcoach.ai.service.AiProviderService;
 import com.interviewcoach.ai.service.OpenAiCompatibleClient;
 import com.interviewcoach.ai.service.PlatformAiClient;
@@ -300,6 +302,7 @@ class DefaultAiModelGatewayTest {
                 encryption,
                 platformProperties,
                 springProperties,
-                springAiUserProviderClient);
+                springAiUserProviderClient,
+                new NoOpAiMetrics());
     }
 }

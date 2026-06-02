@@ -225,7 +225,7 @@ System Prompt 要求：
 
 ## 6. Task: `trainingPlan`
 
-目标：根据测评短板生成 1 天训练计划，包含 2-4 个任务。
+目标：根据测评短板生成 3 天训练计划，每天 2-4 个任务，共 6-12 个任务。
 
 输入来源：
 
@@ -236,9 +236,10 @@ System Prompt 要求：
 System Prompt 要求：
 
 - 角色：AI 技术面试教练。
-- 生成 2-4 个训练任务。
+- 生成 3 天训练计划，每天 2-4 个任务。
 - 每个任务需针对具体短板。
-- 返回 JSON 含 `tasks` 数组，每项有 `title` 和 `description`。
+- 后一天任务应基于前一天内容递进，逐步加深难度。
+- 返回 JSON 含 `tasks` 数组，每项有 `title`、`description` 和 `dayIndex`。
 
 输出结构：
 
@@ -247,7 +248,8 @@ System Prompt 要求：
   "tasks": [
     {
       "title": "系统设计容量规划练习",
-      "description": "针对系统设计短板，练习如何估算 QPS 和存储需求。"
+      "description": "针对系统设计短板，练习如何估算 QPS 和存储需求。",
+      "dayIndex": 0
     }
   ]
 }
@@ -255,13 +257,15 @@ System Prompt 要求：
 
 字段规则：
 
-- `tasks` 包含 2 到 4 个元素。
+- `tasks` 包含 6 到 12 个元素（3 天，每天 2-4 个）。
 - 每项 `title` 和 `description` 非空。
+- `dayIndex` 必须为 0、1 或 2，分别对应第 1、2、3 天。
 
 后端校验逻辑（`AiStructuredOutputService.validateTrainingPlan`）：
 
-- `tasks` 非 null 且 `size()` 在 [2, 4]。
+- `tasks` 非 null 且 `size()` 在 [6, 12]。
 - 每项 `title` 和 `description` 非空。
+- 每项 `dayIndex` 在 [0, 2]。
 
 ## 7. Task: `trainingFeedback`
 
@@ -647,3 +651,34 @@ Task 31 可以使用 Spring AI `MessageWindowChatMemory` 管理模拟面试短�
 - Task 18 之后的真实 AI 验收必须显式开启，不能污染默认 CI。
 - 涉及简历原文的测试必须确认原文不落库、不写日志、不进入返回给 iOS 的字段。
 - `candidateProfileDraft` 测试必须确认 `rawTextLength` 由后端计算，不受 AI 输出影响。
+
+### 13.1 真实 AI 回归评测集（Task 27）
+
+回归评测集覆盖以下岗位样例：
+
+| 样例 | 岗位 | 覆盖 task |
+|------|------|-----------|
+| Java 后端/支付系统 | 银行统一支付平台 Java 高级后端工程师 | JobBrief, Assessment, QuestionScore, TrainingFeedback, MockInterview, CoachingMemory |
+| AI 应用工程师/RAG Agent | AI 应用工程师 - RAG Agent 方向 | JobBrief, Assessment, TrainingFeedback |
+| 数据平台/调度数仓 | 数据平台工程师 - 调度与数仓方向 | JobBrief, Assessment, MockInterview |
+| 前端/React | 高级前端工程师 - React/TypeScript 方向 | JobBrief, MockInterview |
+| DevOps/SRE | DevOps/SRE 工程师 | JobBrief, Assessment |
+
+回归评测验证项：
+
+- **岗位相关性**：JobBrief 技能列表、面试主题必须包含岗位相关关键词。
+- **虚构经历检查**：AI 不得在 candidateMatch 中声称候选人拥有未提供的技术经验（如 Kubernetes、PyTorch、Vue）。
+- **评分区分度**：维度评分不应全部相同；强回答和弱回答应有明显分差。
+- **逐题诊断完整性**：每题评分必须包含 answerStructure（STAR+ 6 字段）、followUpRisks、contentHighlights、contentGaps。
+- **训练反馈可执行性**：feedback 长度应有实质性内容，rewrittenAnswer 应与原回答不同。
+- **模拟面试追问**：追问应与开场问题不同，报告应包含维度评分和改进建议。
+
+运行方式：
+
+```bash
+# 结构性验收（默认 CI，使用 stub AI）
+mvn test -Dtest=AiAcceptanceTest
+
+# 内容质量验收（需真实 AI）
+IC_LIVE_AI_TEST=true mvn test -Dtest=AiContentQualityTest
+```

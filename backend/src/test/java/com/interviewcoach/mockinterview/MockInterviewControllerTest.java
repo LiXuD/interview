@@ -57,7 +57,7 @@ class MockInterviewControllerTest {
         String response = mockMvc.perform(post("/api/mock-interviews/start")
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new MockInterviewStartRequest(targetId))))
+                        .content(objectMapper.writeValueAsString(new MockInterviewStartRequest(targetId, null))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").isString())
                 .andExpect(jsonPath("$.targetId").value(targetId))

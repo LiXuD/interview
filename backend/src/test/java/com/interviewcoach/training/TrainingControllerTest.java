@@ -84,9 +84,12 @@ class TrainingControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").isString())
                 .andExpect(jsonPath("$.targetId").value(targetId))
+                .andExpect(jsonPath("$.totalDays").value(3))
+                .andExpect(jsonPath("$.status").value("pending"))
                 .andExpect(jsonPath("$.tasks").isArray())
-                .andExpect(jsonPath("$.tasks.length()").value(3))
+                .andExpect(jsonPath("$.tasks.length()").value(9))
                 .andExpect(jsonPath("$.tasks[0].status").value("pending"))
+                .andExpect(jsonPath("$.tasks[0].dayIndex").value(0))
                 .andReturn().getResponse().getContentAsString();
 
         return objectMapper.readTree(planResponse).get("tasks").get(0).get("id").asText();
@@ -107,7 +110,8 @@ class TrainingControllerTest {
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.targetId").value(targetId))
-                .andExpect(jsonPath("$.tasks.length()").value(3));
+                .andExpect(jsonPath("$.totalDays").value(3))
+                .andExpect(jsonPath("$.tasks.length()").value(9));
 
         // Submit answer
         mockMvc.perform(post("/api/training-tasks/" + taskId + "/answer")
@@ -143,7 +147,7 @@ class TrainingControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new TrainingPlanGenerateRequest(targetId))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.tasks.length()").value(3))
+                .andExpect(jsonPath("$.tasks.length()").value(9))
                 .andReturn().getResponse().getContentAsString();
         String newPlanId = objectMapper.readTree(newPlanResponse).get("id").asText();
 
@@ -152,7 +156,7 @@ class TrainingControllerTest {
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(newPlanId))
-                .andExpect(jsonPath("$.tasks.length()").value(3));
+                .andExpect(jsonPath("$.tasks.length()").value(9));
     }
 
     @Test

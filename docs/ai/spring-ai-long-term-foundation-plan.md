@@ -2,7 +2,7 @@
 
 ## 1. 背景
 
-当前后端 AI 模块已完成平台默认真实 AI、OpenAI-compatible 自定义 Provider、AI 结构化输出解析、真实 AI 门禁、Task 19 live AI 验收样例集，以及 Task 18-25 全部 Post-MVP Real AI Adaptive Coaching 任务。Phase 3（Task 26-33）已批准为”持续训练伙伴与 AI 质量运营闭环”，其中 Task 26 将补齐 Spring AI Observability，Task 31 将在受控边界内引入 Chat Memory 短窗口上下文管理。
+当前后端 AI 模块已完成平台默认真实 AI、OpenAI-compatible 自定义 Provider、AI 结构化输出解析、真实 AI 门禁、Task 19 live AI 验收样例集，以及 Task 18-25 全部 Post-MVP Real AI Adaptive Coaching 任务。Phase 3（Task 26-33）”持续训练伙伴与 AI 质量运营闭环”已全部完成，包括 Spring AI Observability、真实 AI 回归评测升级、多天训练计划、能力维度分析、进步追踪 Dashboard、Chat Memory 短窗口上下文管理、多轮模拟面试和发布硬化。
 
 本方案已完成 Phase 2-6 迁移，AI 调用底座已切换到 Spring AI。当前架构为 `AiStructuredOutputService` -> `AiModelGateway` -> `SpringAiPlatformClient`/`SpringAiUserProviderClient`（chatCompletions 模式），`IC_SPRING_AI_ENABLED` 灰度开关已就绪。目标不是追求框架替换本身，而是降低长期维护成本，提升结构化输出、超时控制、观测、记忆和自适应教练能力的工程稳定性。
 
@@ -17,7 +17,7 @@
 
 ## 3. 非目标
 
-- 不回头重构已完成的 Task 18-25 业务边界；Phase 3 只按 Task 26-33 小步推进。
+- 不回头重构已完成的 Task 1-33 业务边界；后续扩展只按已批准计划小步推进。
 - 不引入 Anthropic 自定义 Provider。
 - 不让 iOS 直接调用 Spring AI 或任何大模型。
 - 不保存 AI hidden chain-of-thought。
@@ -375,7 +375,7 @@ Spring AI Chat Memory 可以用于管理短窗口对话上下文，但业务教�
 | JSON Schema 对部分模型支持不一致 | 先保持 JSON String + Jackson 校验，再逐步启用 schema |
 | Observability 暴露敏感 prompt | 默认关闭 prompt/completion 内容采集，只采集元数据 |
 | Chat Memory 与业务记忆混用 | 明确 Chat Memory 只做短窗口上下文，事实记忆仍用业务 DTO |
-| 迁移影响正在开发任务 | Task 18-25 已完成；后续只按 Phase 3 Task 26-33 小步提交 |
+| 迁移影响正在开发任务 | Task 1-33 全部完成；后续只按已批准计划小步提交 |
 
 ## 14. 推荐决策
 

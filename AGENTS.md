@@ -20,7 +20,7 @@ MVP 最窄闭环必须是：
 
 所有新增功能必须服务这条闭环。
 
-当前 MVP 功能闭环已完成。MVP 之后的新增内容必须继续服务 AI 面试教练定位，并且只能按 `docs/product/vibecoding-development-plan.md` 中已批准的 Post-MVP 任务推进。Post-MVP AI 质量闭环（Task 14-17）和 Post-MVP Real AI Adaptive Coaching（Task 18-25）已全部完成。Phase 3（Task 26-33）已批准为“持续训练伙伴与 AI 质量运营闭环”，但尚未实现。Spring AI 底座迁移 Phase 2-6 已完成，AI 调用通过 `AiModelGateway` 统一路由到 Spring AI 或旧客户端（灰度开关 `IC_SPRING_AI_ENABLED`）。
+当前 MVP 功能闭环已完成。MVP 之后的新增内容必须继续服务 AI 面试教练定位，并且只能按 `docs/product/vibecoding-development-plan.md` 中已批准的 Post-MVP 任务推进。Task 1-33 全部完成：MVP + Post-MVP AI 质量闭环 + Real AI Adaptive Coaching + Phase 3 持续训练伙伴与 AI 质量运营闭环。Spring AI 底座迁移 Phase 2-6 已完成，AI 调用通过 `AiModelGateway` 统一路由到 Spring AI 或旧客户端（灰度开关 `IC_SPRING_AI_ENABLED`）。
 
 ## 硬约束
 
@@ -135,7 +135,7 @@ Agent-Limitation: <已知局限或后续 TODO>
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **interview** (3611 symbols, 11658 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **interview** (3626 symbols, 11673 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 

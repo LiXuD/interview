@@ -24,7 +24,7 @@ Post-MVP AI 质量阶段将平台默认 AI 升级为可配置的 OpenAI-compatib
 - 用户已配置默认 Provider 时，用户 Provider 优先于平台默认 AI。
 - 平台真实 AI 启用但配置缺失时必须明确失败，不允许静默回退到本地 stub。
 - Task 18-25 阶段，开发环境也必须能连接真实 AI；测评、训练、模拟面试等核心教练路径禁止静默使用 stub。
-- Phase 3（Task 26-33）阶段在扩展多天训练、进步追踪和多轮模拟面试前，必须先补齐 AI 可观测与真实 AI 回归评测。
+- Phase 3（Task 26-33）已完成：AI 可观测与真实 AI 回归评测已补齐，多天训练、进步追踪和多轮模拟面试已实现。
 
 ### 2.1 平台默认 AI 配置
 
@@ -42,7 +42,7 @@ Post-MVP AI 质量阶段将平台默认 AI 升级为可配置的 OpenAI-compatib
 | `IC_AI_HTTP_READ_TIMEOUT_MS` | 否 | AI HTTP 读取超时，默认 `60000` 毫秒 |
 | `IC_SPRING_AI_ENABLED` | 否 | Spring AI 底座灰度开关，默认 `false`；Spring AI 底座迁移 Phase 3（已完成）起平台默认 AI 的 `chatCompletions` 模式接管调用路径 |
 
-产品 Phase 3（Task 26-33，待实现）的 Observability 只允许采集以下低风险元数据：`task`、`provider`、`providerId`、`model`、`mode`、`latency`、`success/failure`、`parseFailed`、`timeout`、估算 token usage。禁止采集 prompt、completion、简历原文、用户回答原文、API Key、Authorization Header 或完整请求头。
+Phase 3 Observability（已完成）只允许采集以下低风险元数据：`task`、`provider`、`providerId`、`model`、`mode`、`latency`、`success/failure`、`parseFailed`、`timeout`、估算 token usage。禁止采集 prompt、completion、简历原文、用户回答原文、API Key、Authorization Header 或完整请求头。
 
 安全要求：
 
@@ -158,3 +158,41 @@ app.ai.encryption-key: dGVzdC1haS1lbmNyeXB0aW9uLWtleS0zMmJ5dGVzISE=
 ## 7. 与业务模块的集成
 
 业务模块（JobBrief、Assessment、Training、MockInterview）不直接依赖 `AiProviderService`。所有 AI 调用通过 `AiStructuredOutputService` 统一封装，Provider 选择对业务模块透明。
+
+## 8. AI 调用 Observability
+
+Task 26 起，后端通过 Micrometer 记录 AI 调用指标，可通过 Spring Boot Actuator 端点查询。
+
+### 8.1 指标清单
+
+| 指标名称 | 类型 | 标签 | 说明 |
+|----------|------|------|------|
+| `ai.call.duration` | Timer | task, provider, model, mode, outcome | AI 调用延迟（纳秒） |
+| `ai.call.total` | Counter | task, provider, model, mode, outcome | AI 调用总次数 |
+| `ai.parse.failure` | Counter | task | 结构化输出解析失败次数 |
+| `ai.validation.failure` | Counter | task | 结构化输出业务校验失败次数 |
+
+### 8.2 标签值
+
+| 标签 | 取值范围 | 说明 |
+|------|----------|------|
+| `task` | jobBrief, assessmentQuestions, assessmentQuestionScore, assessmentResult, trainingPlan, trainingFeedback, adaptiveTrainingTurn, mockInterviewQuestion, mockInterviewReport, candidateProfileDraft, coachingMemory | AI 任务类型 |
+| `provider` | platformDefault, userOpenAICompatible | Provider 类型 |
+| `model` | 配置的模型名称 | 模型标识 |
+| `mode` | chatCompletions, responses | API 模式 |
+| `outcome` | success, failure | 调用结果 |
+
+### 8.3 Actuator 端点
+
+| 端点 | 说明 |
+|------|------|
+| `GET /actuator/health` | 应用健康状态 |
+| `GET /actuator/metrics` | 所有指标列表 |
+| `GET /actuator/metrics/ai.call.duration` | AI 调用延迟指标 |
+| `GET /actuator/metrics/ai.call.total` | AI 调用总次数指标 |
+
+### 8.4 安全约束
+
+- 指标标签只包含低风险元数据，禁止包含 prompt、completion、简历原文、用户回答原文、API Key、Authorization Header 或完整请求头。
+- 默认不采集 prompt/completion 内容。
+- 如需调试 prompt，必须使用本地开发开关，确保日志脱敏、默认关闭、不得提交真实数据。

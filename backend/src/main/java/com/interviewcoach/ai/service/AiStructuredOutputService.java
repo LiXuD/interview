@@ -37,12 +37,36 @@ public class AiStructuredOutputService {
 
     private final AiModelGateway aiModelGateway;
     private final ObjectMapper objectMapper;
+    private final AiMetrics aiMetrics;
 
     @Autowired
     public AiStructuredOutputService(AiModelGateway aiModelGateway,
-                                     ObjectMapper objectMapper) {
+                                     ObjectMapper objectMapper,
+                                     AiMetrics aiMetrics) {
         this.aiModelGateway = aiModelGateway;
         this.objectMapper = objectMapper;
+        this.aiMetrics = aiMetrics;
+    }
+
+    public AiStructuredOutputService(PlatformAiClient platformAiClient,
+                                     OpenAiCompatibleClient openAiClient,
+                                     AiProviderService providerService,
+                                     ApiKeyEncryption encryption,
+                                     ObjectMapper objectMapper,
+                                     PlatformAiProperties platformProperties,
+                                     SpringAiFoundationProperties springAiProperties,
+                                     SpringAiUserProviderClient springAiUserProviderClient,
+                                     AiMetrics aiMetrics) {
+        this(new DefaultAiModelGateway(
+                        platformAiClient,
+                        openAiClient,
+                        providerService,
+                        encryption,
+                        platformProperties,
+                        springAiProperties,
+                        springAiUserProviderClient,
+                        aiMetrics),
+                objectMapper, aiMetrics);
     }
 
     public AiStructuredOutputService(PlatformAiClient platformAiClient,
@@ -53,15 +77,8 @@ public class AiStructuredOutputService {
                                      PlatformAiProperties platformProperties,
                                      SpringAiFoundationProperties springAiProperties,
                                      SpringAiUserProviderClient springAiUserProviderClient) {
-        this(new DefaultAiModelGateway(
-                        platformAiClient,
-                        openAiClient,
-                        providerService,
-                        encryption,
-                        platformProperties,
-                        springAiProperties,
-                        springAiUserProviderClient),
-                objectMapper);
+        this(platformAiClient, openAiClient, providerService, encryption, objectMapper,
+                platformProperties, springAiProperties, springAiUserProviderClient, new NoOpAiMetrics());
     }
 
     public AiStructuredOutputService(PlatformAiClient platformAiClient,
@@ -70,7 +87,7 @@ public class AiStructuredOutputService {
                                      ApiKeyEncryption encryption,
                                      ObjectMapper objectMapper) {
         this(platformAiClient, openAiClient, providerService, encryption, objectMapper,
-                testPlatformProperties(), new SpringAiFoundationProperties(), null);
+                testPlatformProperties(), new SpringAiFoundationProperties(), null, new NoOpAiMetrics());
     }
 
     private static PlatformAiProperties testPlatformProperties() {
@@ -238,12 +255,19 @@ public class AiStructuredOutputService {
                 T result = objectMapper.readValue(rawJson, type);
                 validator.accept(result, prompt);
                 return result;
-            } catch (JsonProcessingException | IllegalArgumentException ex) {
+            } catch (JsonProcessingException ex) {
                 if (attempt == 1) {
+                    aiMetrics.recordParseFailure(prompt.task());
+                    throw new AiParseException(prompt.task());
+                }
+            } catch (IllegalArgumentException ex) {
+                if (attempt == 1) {
+                    aiMetrics.recordValidationFailure(prompt.task());
                     throw new AiParseException(prompt.task());
                 }
             }
         }
+        aiMetrics.recordParseFailure(prompt.task());
         throw new AiParseException(prompt.task());
     }
 
@@ -252,6 +276,7 @@ public class AiStructuredOutputService {
             validator.accept(result, prompt);
             return result;
         } catch (IllegalArgumentException ex) {
+            aiMetrics.recordValidationFailure(prompt.task());
             throw new AiParseException(prompt.task());
         }
     }
@@ -282,7 +307,7 @@ public class AiStructuredOutputService {
         }
     }
 
-    public record TrainingPlanTaskItem(String title, String description) {}
+    public record TrainingPlanTaskItem(String title, String description, int dayIndex) {}
     public record TrainingPlanResult(List<TrainingPlanTaskItem> tasks) {}
 
     public List<TrainingPlanTaskItem> generateTrainingPlan(AiPrompt prompt) {
@@ -295,12 +320,15 @@ public class AiStructuredOutputService {
     }
 
     private void validateTrainingPlan(TrainingPlanResult result) {
-        if (result.tasks() == null || result.tasks().size() < 2 || result.tasks().size() > 4) {
-            throw new IllegalArgumentException("Expected 2-4 training tasks");
+        if (result.tasks() == null || result.tasks().size() < 6 || result.tasks().size() > 12) {
+            throw new IllegalArgumentException("Expected 6-12 training tasks (3 days, 2-4 per day)");
         }
         for (TrainingPlanTaskItem task : result.tasks()) {
             requireText(task.title(), "task.title");
             requireText(task.description(), "task.description");
+            if (task.dayIndex() < 0 || task.dayIndex() > 2) {
+                throw new IllegalArgumentException("task.dayIndex must be 0, 1, or 2");
+            }
         }
     }
 
@@ -427,6 +455,7 @@ public class AiStructuredOutputService {
         try {
             return aiModelGateway.generateEntity(prompt, type);
         } catch (AiStructuredOutputMappingException ex) {
+            aiMetrics.recordParseFailure(prompt.task());
             throw new AiParseException(prompt.task());
         }
     }

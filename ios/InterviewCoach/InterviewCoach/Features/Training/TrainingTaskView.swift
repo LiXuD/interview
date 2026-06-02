@@ -226,7 +226,8 @@ struct TrainingTaskView: View {
                 description: currentTask.description,
                 status: "in_progress",
                 feedback: feedback?.feedback,
-                completedAt: nil
+                completedAt: nil,
+                dayIndex: currentTask.dayIndex
             )
             onUpdate(currentTask)
         } catch {
@@ -251,7 +252,8 @@ struct TrainingTaskView: View {
                 description: currentTask.description,
                 status: "in_progress",
                 feedback: nil,
-                completedAt: nil
+                completedAt: nil,
+                dayIndex: currentTask.dayIndex
             )
             onUpdate(currentTask)
         } catch {
@@ -282,7 +284,8 @@ struct TrainingTaskView: View {
                     description: currentTask.description,
                     status: "completed",
                     feedback: updated.summary,
-                    completedAt: Date().ISO8601Format()
+                    completedAt: Date().ISO8601Format(),
+                    dayIndex: currentTask.dayIndex
                 )
                 onUpdate(currentTask)
             }

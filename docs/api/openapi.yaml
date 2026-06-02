@@ -438,6 +438,48 @@ paths:
               schema:
                 $ref: "#/components/schemas/AssessmentSessionDto"
 
+  /api/dimension-analysis:
+    get:
+      tags:
+        - Assessment
+      summary: Analyze dimension performance across assessments and interviews
+      operationId: analyzeDimensions
+      parameters:
+        - name: targetId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Dimension analysis result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DimensionAnalysisDto"
+
+  /api/progress:
+    get:
+      tags:
+        - Progress
+      summary: Get progress dashboard for a target
+      operationId: getProgressDashboard
+      parameters:
+        - name: targetId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Progress dashboard data.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgressDashboardDto"
+
   /api/training-plans/generate:
     post:
       tags:
@@ -1480,6 +1522,145 @@ components:
           items:
             $ref: "#/components/schemas/AssessmentQuestionScoreDto"
 
+    # -- Dimension Analysis --
+    DimensionAnalysisDto:
+      type: object
+      required:
+        - targetId
+        - dimensions
+      properties:
+        targetId:
+          type: string
+          format: uuid
+        dimensions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DimensionDetailDto"
+
+    DimensionDetailDto:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: 能力维度名称
+        latestScore:
+          type: integer
+          nullable: true
+          description: 最新分数
+        trend:
+          type: string
+          enum: [improving, declining, stable, insufficient_data]
+          description: 趋势方向
+        scoreHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/DimensionScoreEntry"
+        weaknesses:
+          type: array
+          items:
+            type: string
+        evidenceSources:
+          type: array
+          items:
+            type: string
+        nextFocus:
+          type: array
+          items:
+            type: string
+
+    DimensionScoreEntry:
+      type: object
+      required:
+        - score
+        - source
+        - createdAt
+      properties:
+        score:
+          type: integer
+        source:
+          type: string
+          description: 来源类型 (assessment, mockInterview)
+        createdAt:
+          type: string
+          format: date-time
+
+    # -- Progress --
+    ProgressDashboardDto:
+      type: object
+      required:
+        - targetId
+        - scoreTrend
+        - trainingCompletion
+        - dimensionSummary
+        - recentWeaknesses
+      properties:
+        targetId:
+          type: string
+          format: uuid
+        latestAssessmentScore:
+          type: integer
+          nullable: true
+        scoreTrend:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScoreTrendEntry"
+        trainingCompletion:
+          $ref: "#/components/schemas/TrainingCompletionDto"
+        dimensionSummary:
+          type: array
+          items:
+            $ref: "#/components/schemas/DimensionSummaryDto"
+        recentWeaknesses:
+          type: array
+          items:
+            type: string
+
+    ScoreTrendEntry:
+      type: object
+      required:
+        - score
+        - source
+        - createdAt
+      properties:
+        score:
+          type: integer
+        source:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    TrainingCompletionDto:
+      type: object
+      required:
+        - totalTasks
+        - completedTasks
+        - completionRate
+      properties:
+        totalTasks:
+          type: integer
+        completedTasks:
+          type: integer
+        completionRate:
+          type: number
+          format: double
+
+    DimensionSummaryDto:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        latestScore:
+          type: integer
+          nullable: true
+        trend:
+          type: string
+          enum: [improving, declining, stable, insufficient_data]
+
     # -- Training --
     TrainingPlanGenerateRequest:
       type: object
@@ -1497,6 +1678,7 @@ components:
         - title
         - description
         - status
+        - dayIndex
       properties:
         id:
           type: string
@@ -1513,6 +1695,11 @@ components:
         completedAt:
           type: string
           format: date-time
+        dayIndex:
+          type: integer
+          minimum: 0
+          maximum: 2
+          description: 训练天数索引，0=第1天，1=第2天，2=第3天
 
     TrainingPlanDto:
       type: object
@@ -1520,6 +1707,8 @@ components:
         - id
         - targetId
         - tasks
+        - totalDays
+        - status
         - createdAt
       properties:
         id:
@@ -1532,6 +1721,13 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/TrainingTaskDto"
+        totalDays:
+          type: integer
+          description: 训练计划总天数，默认 3
+        status:
+          type: string
+          enum: [pending, in_progress, completed]
+          description: 训练计划整体状态
         createdAt:
           type: string
           format: date-time

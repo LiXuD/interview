@@ -20,7 +20,7 @@ class MockInterviewServiceTest {
     @Test
     void finishPromptUsesLatestTwelveMessages() throws Exception {
         MockInterviewService service = new MockInterviewService(
-                null, null, null, null, null, null, null, new ObjectMapper());
+                null, null, null, null, null, null, null, new ObjectMapper(), null);
         InterviewTarget target = new InterviewTarget();
         target.setTitle("Backend Engineer");
         MockInterview interview = new MockInterview();
@@ -49,7 +49,7 @@ class MockInterviewServiceTest {
     @Test
     void answerPromptIncludesCoachingContextAndSpecificFollowUpRule() throws Exception {
         MockInterviewService service = new MockInterviewService(
-                null, null, null, null, null, null, null, new ObjectMapper());
+                null, null, null, null, null, null, null, new ObjectMapper(), null);
         InterviewTarget target = new InterviewTarget();
         target.setTitle("Backend Engineer");
         setId(target, UUID.fromString("00000000-0000-0000-0000-000000000002"));

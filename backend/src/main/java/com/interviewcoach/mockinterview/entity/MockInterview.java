@@ -25,6 +25,9 @@ public class MockInterview {
     @Column(nullable = false)
     private String status = "in_progress";
 
+    @Column(name = "focus_dimension")
+    private String focusDimension;
+
     @OneToMany(mappedBy = "interview", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn(name = "sort_order")
     private List<MockInterviewMessage> messages = new ArrayList<>();
@@ -55,6 +58,9 @@ public class MockInterview {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public String getFocusDimension() { return focusDimension; }
+    public void setFocusDimension(String focusDimension) { this.focusDimension = focusDimension; }
 
     public List<MockInterviewMessage> getMessages() { return messages; }
     public void setMessages(List<MockInterviewMessage> messages) { this.messages = messages; }

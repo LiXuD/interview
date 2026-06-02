@@ -8,6 +8,7 @@ import com.interviewcoach.common.security.SecurityUtils;
 import com.interviewcoach.mockinterview.service.MockInterviewService;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -24,7 +25,13 @@ public class MockInterviewController {
     public MockInterviewSessionDto start(@RequestBody MockInterviewStartRequest request) {
         return mockInterviewService.startInterview(
                 SecurityUtils.currentUser(),
-                UUID.fromString(request.targetId()));
+                UUID.fromString(request.targetId()),
+                request.focusDimension());
+    }
+
+    @GetMapping("/target/{targetId}")
+    public List<MockInterviewSessionDto> listByTarget(@PathVariable UUID targetId) {
+        return mockInterviewService.listInterviews(targetId, SecurityUtils.currentUser().getId());
     }
 
     @PostMapping("/{id}/answer")

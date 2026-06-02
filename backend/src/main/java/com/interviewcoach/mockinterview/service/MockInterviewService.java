@@ -27,6 +27,7 @@ import com.interviewcoach.target.repository.InterviewTargetRepository;
 import com.interviewcoach.user.entity.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,6 +54,7 @@ public class MockInterviewService {
     private final AiStructuredOutputService aiService;
     private final CoachingMemoryService coachingMemoryService;
     private final ObjectMapper objectMapper;
+    private final ChatMemory chatMemory;
 
     public MockInterviewService(MockInterviewRepository interviewRepository,
                                 InterviewTargetRepository targetRepository,
@@ -61,7 +63,8 @@ public class MockInterviewService {
                                 ReportRepository reportRepository,
                                 AiStructuredOutputService aiService,
                                 CoachingMemoryService coachingMemoryService,
-                                ObjectMapper objectMapper) {
+                                ObjectMapper objectMapper,
+                                ChatMemory chatMemory) {
         this.interviewRepository = interviewRepository;
         this.targetRepository = targetRepository;
         this.profileRepository = profileRepository;
@@ -70,21 +73,23 @@ public class MockInterviewService {
         this.aiService = aiService;
         this.coachingMemoryService = coachingMemoryService;
         this.objectMapper = objectMapper;
+        this.chatMemory = chatMemory;
     }
 
     @Transactional
-    public MockInterviewSessionDto startInterview(User user, UUID targetId) {
+    public MockInterviewSessionDto startInterview(User user, UUID targetId, String focusDimension) {
         InterviewTarget target = targetRepository.findByIdAndUserId(targetId, user.getId())
                 .orElseThrow(() -> new TargetNotFoundException(targetId));
         CandidateProfile profile = profileRepository.findByTargetIdAndUserId(targetId, user.getId())
                 .orElseThrow(() -> new ProfileNotFoundException(targetId));
 
         String firstQuestion = aiService.generateMockInterviewQuestion(
-                buildStartPrompt(target, profile, buildCoachingContext(targetId, user.getId())));
+                buildStartPrompt(target, profile, buildCoachingContext(targetId, user.getId()), focusDimension));
 
         MockInterview interview = new MockInterview();
         interview.setUser(user);
         interview.setTargetId(targetId);
+        interview.setFocusDimension(focusDimension);
         addMessage(interview, ROLE_ASSISTANT, firstQuestion);
 
         interview = interviewRepository.save(interview);
@@ -261,7 +266,12 @@ public class MockInterviewService {
         appendItems(context, "禁止当事实使用的 rejected 记忆", rejected, limit);
     }
 
-    private AiPrompt buildStartPrompt(InterviewTarget target, CandidateProfile profile, String coachingContext) {
+    private AiPrompt buildStartPrompt(InterviewTarget target, CandidateProfile profile,
+                                       String coachingContext, String focusDimension) {
+        String dimensionHint = "";
+        if (focusDimension != null && !focusDimension.isBlank()) {
+            dimensionHint = "\n本次面试侧重维度：%s。开场问题应围绕该维度展开。".formatted(focusDimension);
+        }
         String systemPrompt = """
                 你是 AI 技术面试官，进行技术模拟面试。
                 只返回合法 JSON 对象，不返回任何其他文字。
@@ -273,7 +283,7 @@ public class MockInterviewService {
                 开场问题必须结合最近测评短板或可用教练记忆，不要问泛泛的自我介绍。
                 不得编造候选人未提供的项目或技术细节。
                 rejected 记忆不得当事实使用；inferred 记忆只能通过追问验证。
-                """;
+                """ + dimensionHint;
         String userPrompt = """
                 目标岗位：
                 %s
@@ -405,7 +415,16 @@ public class MockInterviewService {
                 interview.getTargetId().toString(),
                 interview.getStatus(),
                 currentQuestion,
-                conversationTurns
+                conversationTurns,
+                interview.getFocusDimension()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<MockInterviewSessionDto> listInterviews(UUID targetId, UUID userId) {
+        return interviewRepository.findByTargetIdAndUserIdOrderByCreatedAtDesc(targetId, userId)
+                .stream()
+                .map(this::toSessionDto)
+                .toList();
     }
 }

@@ -7,6 +7,7 @@ struct AppRootView: View {
   @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
   @State private var connectionState: BackendConnectionState = .checking
   @State private var showSettings = false
+  @State private var showMemoryImport = false
 
   var body: some View {
     NavigationStack {
@@ -46,6 +47,18 @@ struct AppRootView: View {
                 }
             }
           }
+          .sheet(isPresented: $showMemoryImport) {
+            NavigationStack {
+              CoachingMemoryImportView(currentUserId: authService.currentUser?.id ?? "")
+                .toolbar {
+                  ToolbarItem(placement: .topBarLeading) {
+                    Button("稍后再说") {
+                      showMemoryImport = false
+                    }
+                  }
+                }
+            }
+          }
           .fullScreenCover(isPresented: .constant(authService.isAuthenticated && !hasCompletedOnboarding)) {
             OnboardingView(hasCompletedOnboarding: $hasCompletedOnboarding)
           }
@@ -62,6 +75,11 @@ struct AppRootView: View {
     .onChange(of: authService.isAuthenticated) { _, newValue in
       if newValue {
         Task { await refreshHealth() }
+      }
+    }
+    .onChange(of: authService.hasUnimportedMemories) { _, hasMemories in
+      if hasMemories && authService.isAuthenticated {
+        showMemoryImport = true
       }
     }
   }

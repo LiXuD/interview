@@ -123,7 +123,7 @@ class AiAcceptanceTest {
                         .content(objectMapper.writeValueAsString(new TrainingPlanGenerateRequest(targetId))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.tasks").isArray())
-                .andExpect(jsonPath("$.tasks.length()").value(3))
+                .andExpect(jsonPath("$.tasks.length()").value(9))
                 .andReturn();
 
         String planJson = planResult.getResponse().getContentAsString();
@@ -146,7 +146,7 @@ class AiAcceptanceTest {
         String interviewId = mockMvc.perform(post("/api/mock-interviews/start")
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new MockInterviewStartRequest(targetId))))
+                        .content(objectMapper.writeValueAsString(new MockInterviewStartRequest(targetId, null))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("in_progress"))
                 .andExpect(jsonPath("$.currentQuestion").isString())
@@ -216,7 +216,7 @@ class AiAcceptanceTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new TrainingPlanGenerateRequest(targetId))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.tasks.length()").value(3))
+                .andExpect(jsonPath("$.tasks.length()").value(9))
                 .andReturn();
 
         String taskId = objectMapper.readTree(planResult.getResponse().getContentAsString())
@@ -276,7 +276,7 @@ class AiAcceptanceTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new TrainingPlanGenerateRequest(targetId))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.tasks.length()").value(3))
+                .andExpect(jsonPath("$.tasks.length()").value(9))
                 .andReturn();
 
         String taskId = objectMapper.readTree(planResult.getResponse().getContentAsString())
@@ -336,7 +336,7 @@ class AiAcceptanceTest {
         String interviewId = mockMvc.perform(post("/api/mock-interviews/start")
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new MockInterviewStartRequest(targetId))))
+                        .content(objectMapper.writeValueAsString(new MockInterviewStartRequest(targetId, null))))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         interviewId = objectMapper.readTree(interviewId).get("id").asText();
@@ -558,9 +558,15 @@ class AiAcceptanceTest {
         return """
                 {
                   "tasks": [
-                    {"title": "训练任务1: 补强短板A", "description": "通过案例练习掌握核心概念"},
-                    {"title": "训练任务2: 实践场景B", "description": "设计并实现一个简化方案"},
-                    {"title": "训练任务3: 深入理解C", "description": "阅读源码并总结设计模式"}
+                    {"title": "训练任务1: 补强短板A", "description": "通过案例练习掌握核心概念", "dayIndex": 0},
+                    {"title": "训练任务2: 实践场景B", "description": "设计并实现一个简化方案", "dayIndex": 0},
+                    {"title": "训练任务3: 深入理解C", "description": "阅读源码并总结设计模式", "dayIndex": 0},
+                    {"title": "训练任务4: 进阶练习D", "description": "基于第一天基础进行进阶练习", "dayIndex": 1},
+                    {"title": "训练任务5: 综合场景E", "description": "结合多个技术点设计完整方案", "dayIndex": 1},
+                    {"title": "训练任务6: 深度分析F", "description": "深入分析技术选型和权衡", "dayIndex": 1},
+                    {"title": "训练任务7: 系统设计G", "description": "完成端到端系统设计练习", "dayIndex": 2},
+                    {"title": "训练任务8: 项目复盘H", "description": "结合项目经验准备面试回答", "dayIndex": 2},
+                    {"title": "训练任务9: 综合面试I", "description": "模拟完整面试场景练习", "dayIndex": 2}
                   ]
                 }
                 """;

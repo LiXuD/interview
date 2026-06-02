@@ -31,6 +31,7 @@ public class DefaultAiModelGateway implements AiModelGateway {
     private final PlatformAiProperties platformProperties;
     private final SpringAiFoundationProperties springAiProperties;
     private final SpringAiUserProviderClient springAiUserProviderClient;
+    private final AiMetrics aiMetrics;
 
     public DefaultAiModelGateway(PlatformAiClient platformAiClient,
                                  OpenAiCompatibleClient openAiClient,
@@ -38,7 +39,8 @@ public class DefaultAiModelGateway implements AiModelGateway {
                                  ApiKeyEncryption encryption,
                                  PlatformAiProperties platformProperties,
                                  SpringAiFoundationProperties springAiProperties,
-                                 SpringAiUserProviderClient springAiUserProviderClient) {
+                                 SpringAiUserProviderClient springAiUserProviderClient,
+                                 AiMetrics aiMetrics) {
         this.platformAiClient = platformAiClient;
         this.openAiClient = openAiClient;
         this.providerService = providerService;
@@ -46,31 +48,75 @@ public class DefaultAiModelGateway implements AiModelGateway {
         this.platformProperties = platformProperties;
         this.springAiProperties = springAiProperties;
         this.springAiUserProviderClient = springAiUserProviderClient;
+        this.aiMetrics = aiMetrics;
     }
 
     @Override
     public String generateJson(AiPrompt prompt) {
+        long startNanos = aiMetrics.startTimerNanos();
         AiProvider provider = currentUserProvider();
-        if (provider != null) {
-            return generateJsonFromUserProvider(provider, prompt);
+        try {
+            if (provider != null) {
+                String result = generateJsonFromUserProvider(provider, prompt);
+                recordSuccess(startNanos, prompt, "userOpenAICompatible",
+                        provider.getModel(), provider.getOpenaiApiMode());
+                return result;
+            }
+            if (requiresRealAi(prompt)) {
+                throw new AiProviderCallFailedException(
+                        "Real AI is required for coaching task: " + prompt.task(), null);
+            }
+            String result = platformAiClient.generateJson(prompt);
+            recordSuccess(startNanos, prompt, "platformDefault",
+                    platformProperties.getModel(), platformProperties.getMode());
+            return result;
+        } catch (Exception ex) {
+            String prov = provider != null ? "userOpenAICompatible" : "platformDefault";
+            String model = provider != null ? provider.getModel() : platformProperties.getModel();
+            String mode = provider != null ? provider.getOpenaiApiMode() : platformProperties.getMode();
+            recordFailure(startNanos, prompt, prov, model, mode);
+            throw ex;
         }
-        if (requiresRealAi(prompt)) {
-            throw new AiProviderCallFailedException(
-                    "Real AI is required for coaching task: " + prompt.task(), null);
-        }
-        return platformAiClient.generateJson(prompt);
     }
 
     @Override
     public <T> T generateEntity(AiPrompt prompt, Class<T> responseType) {
+        long startNanos = aiMetrics.startTimerNanos();
         AiProvider provider = currentUserProvider();
-        if (provider != null) {
-            if (!usesSpringAiUserProvider(provider)) {
+        try {
+            if (provider != null) {
+                if (!usesSpringAiUserProvider(provider)) {
+                    return null;
+                }
+                T result = generateEntityFromUserProvider(provider, prompt, responseType);
+                recordSuccess(startNanos, prompt, "userOpenAICompatible",
+                        provider.getModel(), provider.getOpenaiApiMode());
+                return result;
+            }
+            T result = generateEntityFromPlatformProvider(prompt, responseType);
+            if (result == null) {
                 return null;
             }
-            return generateEntityFromUserProvider(provider, prompt, responseType);
+            recordSuccess(startNanos, prompt, "platformDefault",
+                    platformProperties.getModel(), platformProperties.getMode());
+            return result;
+        } catch (Exception ex) {
+            String prov = provider != null ? "userOpenAICompatible" : "platformDefault";
+            String model = provider != null ? provider.getModel() : platformProperties.getModel();
+            String mode = provider != null ? provider.getOpenaiApiMode() : platformProperties.getMode();
+            recordFailure(startNanos, prompt, prov, model, mode);
+            throw ex;
         }
-        return generateEntityFromPlatformProvider(prompt, responseType);
+    }
+
+    private void recordSuccess(long startNanos, AiPrompt prompt,
+                                String provider, String model, String mode) {
+        aiMetrics.recordCall(startNanos, prompt.task(), provider, model, mode, "success");
+    }
+
+    private void recordFailure(long startNanos, AiPrompt prompt,
+                                String provider, String model, String mode) {
+        aiMetrics.recordCall(startNanos, prompt.task(), provider, model, mode, "failure");
     }
 
     private String generateJsonFromUserProvider(AiProvider provider, AiPrompt prompt) {

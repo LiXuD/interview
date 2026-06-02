@@ -11,12 +11,15 @@ struct TrainingTaskDTO: Decodable, Equatable, Identifiable {
   let status: String
   let feedback: String?
   let completedAt: String?
+  let dayIndex: Int
 }
 
 struct TrainingPlanDTO: Decodable, Equatable {
   let id: String
   let targetId: String
   let tasks: [TrainingTaskDTO]
+  let totalDays: Int
+  let status: String
   let createdAt: String
 }
 
