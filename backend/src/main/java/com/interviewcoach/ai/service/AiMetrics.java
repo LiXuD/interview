@@ -94,6 +94,17 @@ public class AiMetrics {
                 .increment();
     }
 
+    public void recordRetry(String task, String provider, String model, String mode) {
+        Counter.builder("ai.call.retry")
+                .description("AI call transient retries")
+                .tag("task", safeTag(task))
+                .tag("provider", safeTag(provider))
+                .tag("model", safeTag(model))
+                .tag("mode", safeTag(mode))
+                .register(registry)
+                .increment();
+    }
+
     public void recordTokenUsage(String task, String provider, String model, int estimatedTokens) {
         Counter.builder("ai.token.usage")
                 .description("Estimated AI token usage")

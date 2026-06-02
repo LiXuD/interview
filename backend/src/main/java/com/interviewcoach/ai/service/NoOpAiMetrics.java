@@ -45,6 +45,11 @@ public class NoOpAiMetrics extends AiMetrics {
     }
 
     @Override
+    public void recordRetry(String task, String provider, String model, String mode) {
+        // no-op
+    }
+
+    @Override
     public void recordTokenUsage(String task, String provider, String model, int estimatedTokens) {
         // no-op
     }

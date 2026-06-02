@@ -99,7 +99,8 @@ public class AiStructuredOutputService {
     public JobBriefDto generateJobBrief(AiPrompt prompt) {
         JobBriefDto structuredResult = generateStructuredFromSpringProvider(prompt, JobBriefDto.class);
         if (structuredResult != null) {
-            return validateStructured(prompt, structuredResult, (dto, p) -> validateJobBrief(dto));
+            JobBriefDto validated = validateStructured(prompt, structuredResult, (dto, p) -> validateJobBrief(dto));
+            if (validated != null) return validated;
         }
         return generateAndValidate(prompt, JobBriefDto.class, (dto, p) -> validateJobBrief(dto));
     }
@@ -136,7 +137,8 @@ public class AiStructuredOutputService {
     public List<AssessmentQuestionDto> generateAssessmentQuestions(AiPrompt prompt) {
         AssessmentQuestionsResult structuredResult = generateStructuredFromSpringProvider(prompt, AssessmentQuestionsResult.class);
         if (structuredResult != null) {
-            return validateStructured(prompt, structuredResult, (r, p) -> validateQuestions(r.questions())).questions();
+            AssessmentQuestionsResult validated = validateStructured(prompt, structuredResult, (r, p) -> validateQuestions(r.questions()));
+            if (validated != null) return validated.questions();
         }
         AssessmentQuestionsResult result = generateAndValidate(prompt, AssessmentQuestionsResult.class, (r, p) -> validateQuestions(r.questions()));
         return result.questions();
@@ -145,7 +147,8 @@ public class AiStructuredOutputService {
     public AssessmentQuestionScoreDto generateQuestionScore(AiPrompt prompt) {
         AssessmentQuestionScoreDto structuredResult = generateStructuredFromSpringProvider(prompt, AssessmentQuestionScoreDto.class);
         if (structuredResult != null) {
-            return validateStructured(prompt, structuredResult, (dto, p) -> validateQuestionScore(dto));
+            AssessmentQuestionScoreDto validated = validateStructured(prompt, structuredResult, (dto, p) -> validateQuestionScore(dto));
+            if (validated != null) return validated;
         }
         return generateAndValidate(prompt, AssessmentQuestionScoreDto.class, (dto, p) -> validateQuestionScore(dto));
     }
@@ -197,7 +200,8 @@ public class AiStructuredOutputService {
     public AssessmentResultDto generateAssessmentResult(AiPrompt prompt) {
         AssessmentResultDto structuredResult = generateStructuredFromSpringProvider(prompt, AssessmentResultDto.class);
         if (structuredResult != null) {
-            return validateStructured(prompt, structuredResult, (dto, p) -> validateAssessmentResult(dto));
+            AssessmentResultDto validated = validateStructured(prompt, structuredResult, (dto, p) -> validateAssessmentResult(dto));
+            if (validated != null) return validated;
         }
         return generateAndValidate(prompt, AssessmentResultDto.class, (dto, p) -> validateAssessmentResult(dto));
     }
@@ -282,7 +286,7 @@ public class AiStructuredOutputService {
             return result;
         } catch (IllegalArgumentException ex) {
             recordValidationFailure(prompt);
-            throw new AiParseException(prompt.task());
+            return null;
         } finally {
             DefaultAiModelGateway.clearRequestContext();
         }
@@ -353,7 +357,8 @@ public class AiStructuredOutputService {
     public List<TrainingPlanTaskItem> generateTrainingPlan(AiPrompt prompt) {
         TrainingPlanResult structuredResult = generateStructuredFromSpringProvider(prompt, TrainingPlanResult.class);
         if (structuredResult != null) {
-            return validateStructured(prompt, structuredResult, (r, p) -> validateTrainingPlan(r)).tasks();
+            TrainingPlanResult validated = validateStructured(prompt, structuredResult, (r, p) -> validateTrainingPlan(r));
+            if (validated != null) return validated.tasks();
         }
         TrainingPlanResult result = generateAndValidate(prompt, TrainingPlanResult.class, (r, p) -> validateTrainingPlan(r));
         return result.tasks();
@@ -382,7 +387,8 @@ public class AiStructuredOutputService {
     public TrainingFeedbackDto generateTrainingFeedback(AiPrompt prompt) {
         TrainingFeedbackDto structuredResult = generateStructuredFromSpringProvider(prompt, TrainingFeedbackDto.class);
         if (structuredResult != null) {
-            return validateStructured(prompt, structuredResult, (dto, p) -> validateTrainingFeedback(dto));
+            TrainingFeedbackDto validated = validateStructured(prompt, structuredResult, (dto, p) -> validateTrainingFeedback(dto));
+            if (validated != null) return validated;
         }
         return generateAndValidate(prompt, TrainingFeedbackDto.class, (dto, p) -> validateTrainingFeedback(dto));
     }
@@ -390,7 +396,8 @@ public class AiStructuredOutputService {
     public AdaptiveTrainingTurnDto generateAdaptiveTrainingTurn(AiPrompt prompt) {
         AdaptiveTrainingTurnDto structuredResult = generateStructuredFromSpringProvider(prompt, AdaptiveTrainingTurnDto.class);
         if (structuredResult != null) {
-            return validateStructured(prompt, structuredResult, (dto, p) -> validateAdaptiveTrainingTurn(dto));
+            AdaptiveTrainingTurnDto validated = validateStructured(prompt, structuredResult, (dto, p) -> validateAdaptiveTrainingTurn(dto));
+            if (validated != null) return validated;
         }
         return generateAndValidate(prompt, AdaptiveTrainingTurnDto.class, (dto, p) -> validateAdaptiveTrainingTurn(dto));
     }
@@ -435,7 +442,8 @@ public class AiStructuredOutputService {
     public String generateMockInterviewQuestion(AiPrompt prompt) {
         MockInterviewQuestionResult structuredResult = generateStructuredFromSpringProvider(prompt, MockInterviewQuestionResult.class);
         if (structuredResult != null) {
-            return validateStructured(prompt, structuredResult, (r, p) -> validateMockInterviewQuestion(r)).question();
+            MockInterviewQuestionResult validated = validateStructured(prompt, structuredResult, (r, p) -> validateMockInterviewQuestion(r));
+            if (validated != null) return validated.question();
         }
         MockInterviewQuestionResult result = generateAndValidate(prompt, MockInterviewQuestionResult.class, (r, p) -> validateMockInterviewQuestion(r));
         return result.question();
@@ -451,7 +459,8 @@ public class AiStructuredOutputService {
     public MockInterviewReportDto generateMockInterviewReport(AiPrompt prompt) {
         MockInterviewReportDto structuredResult = generateStructuredFromSpringProvider(prompt, MockInterviewReportDto.class);
         if (structuredResult != null) {
-            return validateStructured(prompt, structuredResult, (dto, p) -> validateMockInterviewReport(dto));
+            MockInterviewReportDto validated = validateStructured(prompt, structuredResult, (dto, p) -> validateMockInterviewReport(dto));
+            if (validated != null) return validated;
         }
         return generateAndValidate(prompt, MockInterviewReportDto.class, (dto, p) -> validateMockInterviewReport(dto));
     }
@@ -485,9 +494,13 @@ public class AiStructuredOutputService {
      */
     public CandidateProfileDraftDto generateCandidateProfileDraft(AiPrompt prompt, int rawTextLength) {
         CandidateProfileDraftDto structuredResult = generateStructuredFromSpringProvider(prompt, CandidateProfileDraftDto.class);
-        CandidateProfileDraftDto aiResult = structuredResult != null
-                ? validateStructured(prompt, structuredResult, (dto, p) -> validateCandidateProfileDraft(dto))
-                : generateAndValidate(prompt, CandidateProfileDraftDto.class, (dto, p) -> validateCandidateProfileDraft(dto));
+        CandidateProfileDraftDto aiResult = null;
+        if (structuredResult != null) {
+            aiResult = validateStructured(prompt, structuredResult, (dto, p) -> validateCandidateProfileDraft(dto));
+        }
+        if (aiResult == null) {
+            aiResult = generateAndValidate(prompt, CandidateProfileDraftDto.class, (dto, p) -> validateCandidateProfileDraft(dto));
+        }
         validateCandidateProfileDraft(aiResult);
         return new CandidateProfileDraftDto(
                 aiResult.summary(),
@@ -504,7 +517,7 @@ public class AiStructuredOutputService {
         } catch (AiStructuredOutputMappingException ex) {
             recordParseFailure(prompt);
             DefaultAiModelGateway.clearRequestContext();
-            throw new AiParseException(prompt.task());
+            return null;
         } catch (RuntimeException ex) {
             DefaultAiModelGateway.clearRequestContext();
             throw ex;
@@ -524,7 +537,8 @@ public class AiStructuredOutputService {
     public CoachingMemoryDto generateCoachingMemory(AiPrompt prompt) {
         CoachingMemoryDto structuredResult = generateStructuredFromSpringProvider(prompt, CoachingMemoryDto.class);
         if (structuredResult != null) {
-            return validateStructured(prompt, structuredResult, (dto, p) -> validateCoachingMemory(dto));
+            CoachingMemoryDto validated = validateStructured(prompt, structuredResult, (dto, p) -> validateCoachingMemory(dto));
+            if (validated != null) return validated;
         }
         return generateAndValidate(prompt, CoachingMemoryDto.class, (dto, p) -> validateCoachingMemory(dto));
     }

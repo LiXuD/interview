@@ -9,7 +9,9 @@ import org.springframework.stereotype.Service;
 
 import java.net.SocketTimeoutException;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
 @Service
 public class DefaultAiModelGateway implements AiModelGateway {
@@ -24,6 +26,55 @@ public class DefaultAiModelGateway implements AiModelGateway {
 
     public static void clearRequestContext() {
         REQUEST_CONTEXT.remove();
+    }
+
+    private static final int MAX_TRANSIENT_RETRIES = 3;
+    private static final long BASE_RETRY_DELAY_MS = 1000;
+
+    private <T> T withTransientRetry(AiPrompt prompt, Supplier<T> call) {
+        var ctx = REQUEST_CONTEXT.get();
+        String provider = ctx != null ? ctx.provider() : "unknown";
+        String model = ctx != null ? ctx.model() : "unknown";
+        String mode = ctx != null ? ctx.mode() : "unknown";
+        for (int attempt = 0; attempt < MAX_TRANSIENT_RETRIES; attempt++) {
+            try {
+                return call.get();
+            } catch (Exception ex) {
+                if (attempt < MAX_TRANSIENT_RETRIES - 1 && isTransientFailure(ex)) {
+                    aiMetrics.recordRetry(prompt.task(), provider, model, mode);
+                    long delay = BASE_RETRY_DELAY_MS * (1L << attempt)
+                            + ThreadLocalRandom.current().nextLong(500);
+                    try {
+                        Thread.sleep(delay);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw ex;
+                    }
+                    continue;
+                }
+                throw ex;
+            }
+        }
+        throw new IllegalStateException("retry loop exhausted without returning or throwing");
+    }
+
+    private static boolean isTransientFailure(Throwable ex) {
+        for (Throwable t = ex; t != null; t = t.getCause()) {
+            if (t instanceof TimeoutException || t instanceof SocketTimeoutException) return true;
+            String name = t.getClass().getSimpleName();
+            if (name.contains("ResourceAccessException")) return true;
+            if (name.contains("Connection") && name.contains("Exception")) return true;
+            if (name.contains("HttpStatusCodeException")) {
+                String msg = t.getMessage();
+                if (msg != null && (msg.contains("429") || msg.contains("502")
+                        || msg.contains("503") || msg.contains("504"))) {
+                    return true;
+                }
+            }
+            String msg = t.getMessage();
+            if (msg != null && msg.toLowerCase().contains("timeout")) return true;
+        }
+        return false;
     }
 
     private static final Set<String> REAL_AI_REQUIRED_TASKS = Set.of(
@@ -80,16 +131,16 @@ public class DefaultAiModelGateway implements AiModelGateway {
         AiProvider provider = resolveAndSetRequestContext();
         var ctx = REQUEST_CONTEXT.get();
         try {
-            if (provider != null) {
-                String result = generateJsonFromUserProvider(provider, prompt);
-                recordSuccess(startNanos, prompt, ctx.provider(), ctx.model(), ctx.mode());
-                return result;
-            }
-            if (requiresRealAi(prompt)) {
-                throw new AiProviderCallFailedException(
-                        "Real AI is required for coaching task: " + prompt.task(), null);
-            }
-            String result = platformAiClient.generateJson(prompt);
+            String result = withTransientRetry(prompt, () -> {
+                if (provider != null) {
+                    return generateJsonFromUserProvider(provider, prompt);
+                }
+                if (requiresRealAi(prompt)) {
+                    throw new AiProviderCallFailedException(
+                            "Real AI is required for coaching task: " + prompt.task(), null);
+                }
+                return platformAiClient.generateJson(prompt);
+            });
             recordSuccess(startNanos, prompt, ctx.provider(), ctx.model(), ctx.mode());
             return result;
         } catch (Exception ex) {
@@ -104,15 +155,15 @@ public class DefaultAiModelGateway implements AiModelGateway {
         AiProvider provider = resolveAndSetRequestContext();
         var ctx = REQUEST_CONTEXT.get();
         try {
-            if (provider != null) {
-                if (!usesSpringAiUserProvider(provider)) {
-                    return null;
+            T result = withTransientRetry(prompt, () -> {
+                if (provider != null) {
+                    if (!usesSpringAiUserProvider(provider)) {
+                        return null;
+                    }
+                    return generateEntityFromUserProvider(provider, prompt, responseType);
                 }
-                T result = generateEntityFromUserProvider(provider, prompt, responseType);
-                recordSuccess(startNanos, prompt, ctx.provider(), ctx.model(), ctx.mode());
-                return result;
-            }
-            T result = generateEntityFromPlatformProvider(prompt, responseType);
+                return generateEntityFromPlatformProvider(prompt, responseType);
+            });
             if (result == null) {
                 return null;
             }
