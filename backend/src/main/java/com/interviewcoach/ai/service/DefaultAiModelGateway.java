@@ -61,18 +61,24 @@ public class DefaultAiModelGateway implements AiModelGateway {
         this.aiMetrics = aiMetrics;
     }
 
-    @Override
-    public String generateJson(AiPrompt prompt) {
-        long startNanos = aiMetrics.startTimerNanos();
+    private AiProvider resolveAndSetRequestContext() {
         AiProvider provider = currentUserProvider();
         String prov = provider != null ? "userOpenAICompatible" : "platformDefault";
         String model = provider != null ? provider.getModel() : platformProperties.getModel();
         String mode = provider != null ? provider.getOpenaiApiMode() : platformProperties.getMode();
         REQUEST_CONTEXT.set(new AiRequestContext(prov, model, mode));
+        return provider;
+    }
+
+    @Override
+    public String generateJson(AiPrompt prompt) {
+        long startNanos = aiMetrics.startTimerNanos();
+        AiProvider provider = resolveAndSetRequestContext();
+        var ctx = REQUEST_CONTEXT.get();
         try {
             if (provider != null) {
                 String result = generateJsonFromUserProvider(provider, prompt);
-                recordSuccess(startNanos, prompt, prov, model, mode);
+                recordSuccess(startNanos, prompt, ctx.provider(), ctx.model(), ctx.mode());
                 return result;
             }
             if (requiresRealAi(prompt)) {
@@ -80,10 +86,10 @@ public class DefaultAiModelGateway implements AiModelGateway {
                         "Real AI is required for coaching task: " + prompt.task(), null);
             }
             String result = platformAiClient.generateJson(prompt);
-            recordSuccess(startNanos, prompt, prov, model, mode);
+            recordSuccess(startNanos, prompt, ctx.provider(), ctx.model(), ctx.mode());
             return result;
         } catch (Exception ex) {
-            recordFailure(startNanos, prompt, prov, model, mode, ex);
+            recordFailure(startNanos, prompt, ctx.provider(), ctx.model(), ctx.mode(), ex);
             throw ex;
         } finally {
             REQUEST_CONTEXT.remove();
@@ -93,28 +99,25 @@ public class DefaultAiModelGateway implements AiModelGateway {
     @Override
     public <T> T generateEntity(AiPrompt prompt, Class<T> responseType) {
         long startNanos = aiMetrics.startTimerNanos();
-        AiProvider provider = currentUserProvider();
-        String prov = provider != null ? "userOpenAICompatible" : "platformDefault";
-        String model = provider != null ? provider.getModel() : platformProperties.getModel();
-        String mode = provider != null ? provider.getOpenaiApiMode() : platformProperties.getMode();
-        REQUEST_CONTEXT.set(new AiRequestContext(prov, model, mode));
+        AiProvider provider = resolveAndSetRequestContext();
+        var ctx = REQUEST_CONTEXT.get();
         try {
             if (provider != null) {
                 if (!usesSpringAiUserProvider(provider)) {
                     return null;
                 }
                 T result = generateEntityFromUserProvider(provider, prompt, responseType);
-                recordSuccess(startNanos, prompt, prov, model, mode);
+                recordSuccess(startNanos, prompt, ctx.provider(), ctx.model(), ctx.mode());
                 return result;
             }
             T result = generateEntityFromPlatformProvider(prompt, responseType);
             if (result == null) {
                 return null;
             }
-            recordSuccess(startNanos, prompt, prov, model, mode);
+            recordSuccess(startNanos, prompt, ctx.provider(), ctx.model(), ctx.mode());
             return result;
         } catch (Exception ex) {
-            recordFailure(startNanos, prompt, prov, model, mode, ex);
+            recordFailure(startNanos, prompt, ctx.provider(), ctx.model(), ctx.mode(), ex);
             throw ex;
         } finally {
             REQUEST_CONTEXT.remove();

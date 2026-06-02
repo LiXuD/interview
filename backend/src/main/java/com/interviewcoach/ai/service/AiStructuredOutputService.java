@@ -494,11 +494,7 @@ public class AiStructuredOutputService {
 
     private <T> T generateStructuredFromSpringProvider(AiPrompt prompt, Class<T> type) {
         try {
-            T result = aiModelGateway.generateEntity(prompt, type);
-            if (result != null) {
-                recordTokenUsageIfPossible(prompt, result.toString());
-            }
-            return result;
+            return aiModelGateway.generateEntity(prompt, type);
         } catch (AiStructuredOutputMappingException ex) {
             recordParseFailure(prompt);
             throw new AiParseException(prompt.task());

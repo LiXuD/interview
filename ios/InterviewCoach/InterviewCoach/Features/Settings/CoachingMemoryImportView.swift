@@ -78,7 +78,10 @@ struct CoachingMemoryImportView: View {
         .navigationTitle("教练记忆导入")
         .navigationBarTitleDisplayMode(.inline)
         .loadingOverlay(isLoading: isImporting)
-        .alert("导入错误", isPresented: .constant(importError != nil)) {
+        .alert("导入错误", isPresented: Binding(
+            get: { importError != nil },
+            set: { if !$0 { importError = nil } }
+        )) {
             Button("确定") { importError = nil }
         } message: {
             Text(importError ?? "")
