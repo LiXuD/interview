@@ -101,6 +101,9 @@ public class DimensionAnalysisService {
             extractFromCoachingMemory(memory, dimensionName, weaknesses, evidenceSources, nextFocus);
         }
 
+        // Sort by createdAt descending so index 0 is the global latest across all sources
+        scoreHistory.sort((a, b) -> b.createdAt().compareTo(a.createdAt()));
+
         // Calculate latest score and trend (scoreHistory is in descending createdAt order)
         Integer latestScore = scoreHistory.isEmpty() ? null : scoreHistory.get(0).score();
         String trend = calculateTrend(scoreHistory);

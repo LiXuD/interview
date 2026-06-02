@@ -1018,6 +1018,40 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /api/coaching-memories/import:
+    post:
+      tags:
+        - CoachingMemory
+      summary: Import coaching memories from local archive
+      operationId: importCoachingMemories
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CoachingMemoryImportRequest"
+      responses:
+        "200":
+          description: Imported coaching memory.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoachingMemoryDto"
+        "400":
+          description: Invalid import request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   securitySchemes:
     bearerAuth:
@@ -2145,6 +2179,7 @@ components:
             - assessment
             - training
             - mockInterview
+            - localArchiveImport
         sourceId:
           type: string
           format: uuid
@@ -2223,3 +2258,17 @@ components:
         content:
           type: string
           minLength: 1
+
+    CoachingMemoryImportRequest:
+      type: object
+      required:
+        - targetId
+        - summaries
+      properties:
+        targetId:
+          type: string
+          format: uuid
+        summaries:
+          type: array
+          items:
+            type: string

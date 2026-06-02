@@ -35,7 +35,6 @@ struct SettingsView: View {
                     } label: {
                         Label("审查待导入的教练记忆", systemImage: "square.and.arrow.down")
                     }
-                } footer: {
                     Text("检测到本机有未导入的历史教练记忆。你可以选择导入到当前账号，或拒绝导入。")
                         .font(.caption)
                         .foregroundStyle(.secondary)

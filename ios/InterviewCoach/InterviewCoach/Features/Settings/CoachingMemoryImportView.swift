@@ -9,6 +9,7 @@ struct CoachingMemoryImportView: View {
     @Query private var allArchives: [CoachingMemoryArchiveLocal]
     @State private var selectedIds: Set<String> = []
     @State private var isImporting = false
+    @State private var importError: String?
 
     private var pendingArchives: [CoachingMemoryArchiveLocal] {
         allArchives.filter { $0.importConfirmedAt == nil }
@@ -77,6 +78,11 @@ struct CoachingMemoryImportView: View {
         .navigationTitle("教练记忆导入")
         .navigationBarTitleDisplayMode(.inline)
         .loadingOverlay(isLoading: isImporting)
+        .alert("导入错误", isPresented: .constant(importError != nil)) {
+            Button("确定") { importError = nil }
+        } message: {
+            Text(importError ?? "")
+        }
     }
 
     private func toggleSelection(_ id: String) {
@@ -89,28 +95,42 @@ struct CoachingMemoryImportView: View {
 
     private func importSelected() {
         isImporting = true
+        importError = nil
         let selected = pendingArchives.filter { selectedIds.contains($0.archiveId) }
-        let summaries = selected.map(\.summary)
-        let targetId = selected.first?.targetId ?? ""
+        let grouped = Dictionary(grouping: selected, by: \.targetId)
 
         Task {
-            do {
-                let _: CoachingMemoryDTO = try await APIClient.shared.request(
-                    "POST",
-                    path: "/api/coaching-memories/import",
-                    body: CoachingMemoryImportRequestDTO(targetId: targetId, summaries: summaries)
-                )
-                let now = ISO8601DateFormatter().string(from: Date())
-                for archive in selected {
-                    archive.userId = currentUserId
-                    archive.importConfirmedAt = now
+            var importedIds: Set<String> = []
+            var firstError: String?
+            for (targetId, archives) in grouped {
+                let summaries = archives.map(\.summary)
+                do {
+                    let _: CoachingMemoryDTO = try await APIClient.shared.request(
+                        "POST",
+                        path: "/api/coaching-memories/import",
+                        body: CoachingMemoryImportRequestDTO(targetId: targetId, summaries: summaries)
+                    )
+                    for archive in archives {
+                        importedIds.insert(archive.archiveId)
+                    }
+                } catch {
+                    if firstError == nil {
+                        firstError = "部分导入失败: \(error.localizedDescription)"
+                    }
                 }
-                try? modelContext.save()
-            } catch {
-                // Import failed — keep archives as pending
             }
+            let now = ISO8601DateFormatter().string(from: Date())
+            for archive in selected where importedIds.contains(archive.archiveId) {
+                archive.userId = currentUserId
+                archive.importConfirmedAt = now
+            }
+            try? modelContext.save()
             isImporting = false
-            dismiss()
+            if firstError != nil {
+                importError = firstError
+            } else {
+                dismiss()
+            }
         }
     }
 

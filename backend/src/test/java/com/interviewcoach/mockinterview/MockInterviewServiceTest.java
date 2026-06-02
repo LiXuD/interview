@@ -34,10 +34,13 @@ class MockInterviewServiceTest {
             interview.getMessages().add(message);
         }
 
+        // buildFinishPrompt now receives pre-sliced messages (last 12)
+        List<MockInterviewMessage> last12 = interview.getMessages().subList(3, 15);
         Method method = MockInterviewService.class.getDeclaredMethod(
-                "buildFinishPrompt", InterviewTarget.class, MockInterview.class);
+                "buildFinishPrompt", InterviewTarget.class, String.class, List.class);
         method.setAccessible(true);
-        AiPrompt prompt = (AiPrompt) method.invoke(service, target, interview);
+        AiPrompt prompt = (AiPrompt) method.invoke(service, target,
+                interview.getId().toString(), last12);
 
         assertFalse(prompt.userPrompt().contains("msg-01"));
         assertFalse(prompt.userPrompt().contains("msg-02"));

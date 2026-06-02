@@ -25,7 +25,27 @@ public class NoOpAiMetrics extends AiMetrics {
     }
 
     @Override
+    public void recordParseFailure(String task, String provider, String model, String mode) {
+        // no-op
+    }
+
+    @Override
     public void recordValidationFailure(String task) {
+        // no-op
+    }
+
+    @Override
+    public void recordValidationFailure(String task, String provider, String model, String mode) {
+        // no-op
+    }
+
+    @Override
+    public void recordTimeout(String task, String provider, String model, String mode) {
+        // no-op
+    }
+
+    @Override
+    public void recordTokenUsage(String task, String provider, String model, int estimatedTokens) {
         // no-op
     }
 }

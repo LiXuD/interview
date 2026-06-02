@@ -14,7 +14,7 @@ struct MockInterviewView: View {
     private let dimensions: [(String, String)] = [
         ("", "不指定"),
         ("technicalDepth", "技术深度"),
-        ("projectSpecificity", "项目 specificity"),
+        ("projectSpecificity", "项目具体性"),
         ("systemThinking", "系统思维"),
         ("tradeoffAwareness", "权衡意识"),
         ("failureHandling", "故障处理"),

@@ -155,6 +155,8 @@ public class DefaultAiModelGateway implements AiModelGateway {
         try {
             return springAiUserProviderClient.generateEntity(provider, apiKey, prompt, responseType);
         } catch (AiStructuredOutputMappingException ex) {
+            aiMetrics.recordParseFailure(prompt.task(), "userOpenAICompatible",
+                    provider.getModel(), provider.getOpenaiApiMode());
             throw ex;
         } catch (Exception ex) {
             throw customProviderFailed(provider, prompt, ex);
@@ -168,6 +170,8 @@ public class DefaultAiModelGateway implements AiModelGateway {
         try {
             return platformAiClient.generateEntity(prompt, responseType);
         } catch (AiStructuredOutputMappingException ex) {
+            aiMetrics.recordParseFailure(prompt.task(), "platformDefault",
+                    platformProperties.getModel(), platformProperties.getMode());
             throw ex;
         } catch (Exception ex) {
             throw new AiProviderCallFailedException(

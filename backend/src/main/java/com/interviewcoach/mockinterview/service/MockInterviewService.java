@@ -111,6 +111,7 @@ public class MockInterviewService {
                 .orElseThrow(() -> new TargetNotFoundException(targetId));
 
         String conversationId = interviewId.toString();
+        ensureChatMemoryPopulated(conversationId, interview.getMessages());
         chatMemory.add(conversationId, List.of(new UserMessage(answer)));
         List<Message> memoryContext = chatMemory.get(conversationId);
         MockInterview interviewRef = interview;
@@ -135,8 +136,16 @@ public class MockInterviewService {
         InterviewTarget target = targetRepository.findById(interview.getTargetId())
                 .orElseThrow(() -> new TargetNotFoundException(interview.getTargetId()));
 
+        String conversationId = interviewId.toString();
+        ensureChatMemoryPopulated(conversationId, interview.getMessages());
+        List<Message> memoryContext = chatMemory.get(conversationId);
+        MockInterview interviewRef = interview;
+        List<MockInterviewMessage> reportMessages = memoryContext.stream()
+                .map(m -> toMockMessage(interviewRef, m))
+                .toList();
+
         MockInterviewReportDto aiResult = aiService.generateMockInterviewReport(
-                buildFinishPrompt(target, interview));
+                buildFinishPrompt(target, interview.getId().toString(), reportMessages));
 
         // 用后端实体 ID 回填 mockInterviewId，防止 AI 返回错误 ID
         MockInterviewReportDto reportDto = new MockInterviewReportDto(
@@ -350,12 +359,19 @@ public class MockInterviewService {
         return new AiPrompt(AiPrompt.TASK_MOCK_INTERVIEW_QUESTION, target.getId().toString(), systemPrompt, userPrompt);
     }
 
-    private AiPrompt buildFinishPrompt(InterviewTarget target, MockInterview interview) {
-        List<MockInterviewMessage> allMessages = interview.getMessages();
-        List<MockInterviewMessage> reportMessages = allMessages.size() <= MAX_CONTEXT_MESSAGES
-                ? allMessages
-                : allMessages.subList(allMessages.size() - MAX_CONTEXT_MESSAGES, allMessages.size());
+    private void ensureChatMemoryPopulated(String conversationId, List<MockInterviewMessage> persistedMessages) {
+        if (!chatMemory.get(conversationId).isEmpty()) {
+            return;
+        }
+        List<Message> messages = persistedMessages.stream()
+                .<Message>map(m -> ROLE_USER.equals(m.getRole())
+                        ? new UserMessage(m.getContent())
+                        : new AssistantMessage(m.getContent()))
+                .toList();
+        chatMemory.add(conversationId, messages);
+    }
 
+    private AiPrompt buildFinishPrompt(InterviewTarget target, String interviewId, List<MockInterviewMessage> reportMessages) {
         String systemPrompt = """
                 你是 AI 技术面试教练，对模拟面试进行复盘评估。
                 只返回合法 JSON 对象，不返回任何其他文字。
@@ -392,8 +408,8 @@ public class MockInterviewService {
 
                 面试对话：
                 %s
-                """.formatted(interview.getId().toString(), target.getTitle(), formatConversation(reportMessages));
-        return new AiPrompt(AiPrompt.TASK_MOCK_INTERVIEW_REPORT, interview.getId().toString(), systemPrompt, userPrompt);
+                """.formatted(interviewId, target.getTitle(), formatConversation(reportMessages));
+        return new AiPrompt(AiPrompt.TASK_MOCK_INTERVIEW_REPORT, interviewId, systemPrompt, userPrompt);
     }
 
     private void createReport(MockInterview interview, MockInterviewReportDto reportDto) {

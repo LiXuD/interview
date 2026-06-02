@@ -104,7 +104,7 @@ struct DimensionAnalysisView: View {
     private func dimensionDisplayName(_ name: String) -> String {
         switch name {
         case "technicalDepth": return "技术深度"
-        case "projectSpecificity": return "项目 specificity"
+        case "projectSpecificity": return "项目具体性"
         case "systemThinking": return "系统思维"
         case "tradeoffAwareness": return "权衡意识"
         case "failureHandling": return "故障处理"
