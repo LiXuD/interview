@@ -1,6 +1,6 @@
 # Interview Coach Code Wiki
 
-生成日期：2026-05-28（2026-06-01 更新至 Phase 3 完成）
+生成日期：2026-05-28（2026-06-03 更新至 AI 瞬时失败修复与结构化输出重试增强）
 
 本文档是项目代码级导航，用于帮助后续开发、Code Review 和问题定位。它描述当前仓库中的实际代码结构，不替代以下主约束与契约文档：
 
@@ -240,8 +240,18 @@ AI 模块是后端唯一允许接触模型原始响应的地方。
 - `SpringAiFoundationConfig` / `SpringAiFoundationProperties`：Spring AI 配置类。
 - `SpringAiCallContext`：advisor params 附加低风险调用上下文（task/provider/model/requestId），禁止包含 prompt、completion、API Key 或简历原文。
 - `AiHttpProperties`：AI HTTP 超时配置（`IC_AI_HTTP_CONNECT_TIMEOUT_MS` / `IC_AI_HTTP_READ_TIMEOUT_MS`）。
+- `AiMetrics`：Micrometer 计数器 + 计时器（ai.call.duration/total、ai.parse.failure、ai.validation.failure、ai.timeout、ai.call.retry、ai.token.usage）。
+- `NoOpAiMetrics`：测试/离线环境空实现。
+- `AiExceptionClassifier`：瞬时失败分类（instanceof HttpStatusCodeException + RestClientResponseException）。
+- `AiStrings`：安全字符串工具类。
 
 Spring AI 灰度开关 `IC_SPRING_AI_ENABLED` 默认 `false`，关闭时所有行为与迁移前一致。开启后平台和用户的 `chatCompletions` 模式走 Spring AI 路径，`responses` 模式仍走旧客户端。typed DTO 路径（`ChatClient.call().entity()`）获取强类型结果后仍经过 `AiStructuredOutputService` 二次业务校验。
+
+AI 调用可靠性（2026-06-03 增强）：
+
+- 瞬时失败检测使用 `instanceof HttpStatusCodeException` + `RestClientResponseException`，正确识别 502/429/503/504。
+- 结构化输出解析失败时，第二次尝试发送"只修复 JSON 语法"的 repair prompt。
+- live AI smoke 测试采用 per-step 3 次重试，容忍 AI 瞬时失败。
 
 AI 输出规则：
 

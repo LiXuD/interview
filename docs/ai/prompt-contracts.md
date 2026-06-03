@@ -584,11 +584,11 @@ Task 25 的模拟面试追问必须：
 
 ## 12. Phase 3 持续训练伙伴与 AI 质量运营契约
 
-Task 26-33 已批准为 Phase 3，尚未实现。实现前必须同步 `docs/api/openapi.yaml`、后端 DTO、iOS DTO 和本文件。
+Task 26-33 已全部完成（2026-06-01）。以下为实现后的契约记录。
 
 ### 12.1 真实 AI 回归评测升级
 
-Task 27 的 live AI 回归样例必须覆盖：
+Task 27 的 live AI 回归样例已覆盖：
 
 - `jobBrief`
 - `assessmentQuestions`
@@ -613,7 +613,7 @@ Task 27 的 live AI 回归样例必须覆盖：
 
 ### 12.2 多天训练计划
 
-Task 28 的 `trainingPlan` 输出需要从 1 天扩展为默认 3 天，但仍必须保持受控训练计划：
+Task 28 的 `trainingPlan` 输出已从 1 天扩展为默认 3 天，保持受控训练计划：
 
 - 默认 3 天。
 - 每天 2-4 个任务。
@@ -623,7 +623,7 @@ Task 28 的 `trainingPlan` 输出需要从 1 天扩展为默认 3 天，但仍�
 
 ### 12.3 能力维度分析与进步追踪
 
-Task 29-30 的进步分析只允许基于结构化事实：
+Task 29-30 的进步分析只基于结构化事实：
 
 - 7 个固定能力维度。
 - AssessmentResult / AssessmentQuestionScore。
@@ -635,7 +635,7 @@ Task 29-30 的进步分析只允许基于结构化事实：
 
 ### 12.4 Chat Memory 短窗口上下文
 
-Task 31 可以使用 Spring AI `MessageWindowChatMemory` 管理模拟面试短窗口上下文，但必须遵守：
+Task 31 已使用 Spring AI `MessageWindowChatMemory`（窗口大小 12）管理模拟面试短窗口上下文，遵守：
 
 - 窗口等价于最近 6 轮、最多 12 条 message。
 - Chat Memory 不承载业务长期教练记忆。

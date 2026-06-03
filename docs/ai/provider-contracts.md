@@ -169,8 +169,11 @@ Task 26 起，后端通过 Micrometer 记录 AI 调用指标，可通过 Spring 
 |----------|------|------|------|
 | `ai.call.duration` | Timer | task, provider, model, mode, outcome | AI 调用延迟（纳秒） |
 | `ai.call.total` | Counter | task, provider, model, mode, outcome | AI 调用总次数 |
-| `ai.parse.failure` | Counter | task | 结构化输出解析失败次数 |
-| `ai.validation.failure` | Counter | task | 结构化输出业务校验失败次数 |
+| `ai.parse.failure` | Counter | task, provider, model, mode | 结构化输出解析失败次数 |
+| `ai.validation.failure` | Counter | task, provider, model, mode | 结构化输出业务校验失败次数 |
+| `ai.timeout` | Counter | task, provider, model, mode | AI 调用超时次数 |
+| `ai.call.retry` | Counter | task, provider, model, mode | AI 瞬时失败重试次数 |
+| `ai.token.usage` | Counter | task, provider, model | 估算 token 使用量 |
 
 ### 8.2 标签值
 
