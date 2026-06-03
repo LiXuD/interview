@@ -9,6 +9,8 @@ import com.interviewcoach.common.api.AssessmentQuestionDto;
 import com.interviewcoach.common.api.AssessmentQuestionScoreDto;
 import com.interviewcoach.common.api.AssessmentResultDto;
 import com.interviewcoach.common.api.CandidateProfileDraftDto;
+import com.interviewcoach.common.api.AgentDecisionDto;
+import com.interviewcoach.common.api.AgentToolCallDto;
 import com.interviewcoach.common.api.CoachingMemoryDto;
 import com.interviewcoach.common.api.CoachingMemoryItemDto;
 import com.interviewcoach.common.api.DimensionScore;
@@ -41,6 +43,7 @@ public class LocalPlatformAiClient implements PlatformAiClient {
                 case AiPrompt.TASK_MOCK_INTERVIEW_REPORT -> objectMapper.writeValueAsString(buildMockInterviewReport(prompt));
                 case AiPrompt.TASK_CANDIDATE_PROFILE_DRAFT -> objectMapper.writeValueAsString(buildCandidateProfileDraft(prompt));
                 case AiPrompt.TASK_COACHING_MEMORY -> objectMapper.writeValueAsString(buildCoachingMemory(prompt));
+                case AiPrompt.TASK_AGENT_DECISION -> objectMapper.writeValueAsString(buildAgentDecision(prompt));
                 default -> throw new IllegalStateException("Unknown task: " + prompt.task());
             };
         } catch (JsonProcessingException ex) {
@@ -296,5 +299,20 @@ public class LocalPlatformAiClient implements PlatformAiClient {
 
     private CoachingMemoryItemDto memoryItem(String content, String source, String confidence) {
         return new CoachingMemoryItemDto(content, source, confidence);
+    }
+
+    private AgentDecisionDto buildAgentDecision(AiPrompt prompt) {
+        return new AgentDecisionDto(
+                "帮助候选人完成面试准备闭环",
+                List.of("系统设计", "技术深度"),
+                "建议先完成测评，再根据短板生成训练计划",
+                "当前处于初始阶段，需要先建立基线测评结果",
+                List.of(
+                        new AgentToolCallDto("startAssessment", "测评是建立能力基线的必要步骤"),
+                        new AgentToolCallDto("generateTrainingPlan", "基于测评结果生成针对性训练计划")
+                ),
+                false,
+                false
+        );
     }
 }

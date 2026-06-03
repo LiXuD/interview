@@ -643,7 +643,73 @@ Task 31 已使用 Spring AI `MessageWindowChatMemory`（窗口大小 12）管理
 - 不保存简历原文、API Key、AI hidden chain-of-thought。
 - 不因为引入 Chat Memory 而放宽 MockInterview Prompt 上下文限制。
 
-## 13. 测试要求
+## 13. Task: `agentDecision`
+
+目标：在业务事件（测评完成、训练完成、模拟面试完成、记忆纠错等）发生后，由 `InterviewCoachAgentRunner` 调用云端 AI 生成教练 Agent 的下一步决策。
+
+输入来源：
+
+- `InterviewCoachAgent` 当前状态（currentStage、currentGoal、activeFocusDimensions、lastDecisionSummary）。
+- `ProgressDashboardDto` 进度概览（最新测评分数、训练完成率、维度评分趋势、近期短板）。
+- `CoachingMemoryDto` 最新教练记忆（强项、短板、待验证声明、建议重点）。
+- `InterviewTarget` 目标岗位标题。
+- `CoachEvent` 触发事件名称。
+
+System Prompt 要求：
+
+- 定义白名单工具列表：`startAssessment`、`generateTrainingPlan`、`startAdaptiveTraining`、`startMockInterview`、`analyzeProgress`、`updateCoachingMemory`。
+- 要求只返回合法 JSON，不返回 Markdown 或解释文字。
+- 约束 `toolCalls` 中的 `toolName` 必须是白名单工具之一。
+- 约束 `focusDimensions` 最多 3 个优先改善维度。
+- 约束 `rationaleSummary` 为可展示给用户的简短理由，不输出思维链。
+
+输出 DTO：`AgentDecisionDto`
+
+```json
+{
+  "currentGoal": "string",
+  "focusDimensions": ["string"],
+  "recommendedAction": "string",
+  "rationaleSummary": "string",
+  "toolCalls": [{"toolName": "string", "reason": "string"}],
+  "memoryUpdateRequired": false,
+  "planAdjustmentRequired": false
+}
+```
+
+校验规则：
+
+- `currentGoal` 非空文本。
+- `focusDimensions` 非空列表。
+- `recommendedAction` 非空文本。
+- `rationaleSummary` 非空文本。
+- `toolCalls` 列表中每项 `toolName` 和 `reason` 非空。
+- `toolName` 必须在白名单内。
+
+失败策略：
+
+- 结构化输出解析失败时最多重试 1 次；仍失败返回 `AI_PARSE_FAILED`。
+- 工具不在白名单内时抛出 `IllegalStateException`，Agent 状态不更新。
+- Agent 失败不回滚已完成的业务事实（测评、训练、模拟面试）。
+
+### 13.1 AI 调用收拢
+
+`agentDecision` 将以下决策统一到单次 AI 调用中：
+
+- **下一步推荐**（`recommendedAction`）：替代各业务 Service 各自推断下一步。
+- **记忆更新判断**（`memoryUpdateRequired`）：替代各业务 Service 各自判断是否生成教练记忆。
+- **计划调整判断**（`planAdjustmentRequired`）：替代各业务 Service 各自判断是否调整训练计划。
+- **重点维度**（`focusDimensions`）：替代各业务 Service 各自推断当前关注维度。
+
+收拢约束：
+
+- Agent 复用已持久化的 `CoachingMemory`、`ProgressDashboard`、`InterviewTarget` 摘要，不重新请求原始数据。
+- 确定性检查（如任务是否完成、测评是否达标）由代码完成，不调用模型重复计算。
+- Agent 每次运行最多 1 次模型调用、3 次工具调用。
+- Agent 调用预算由 `InterviewCoachAgentRunner` 常量控制，超出预算直接拒绝。
+- Agent 事件 metrics 只记录 event、stage、outcome、latency，不记录 prompt、completion 或用户原文。
+
+## 14. 测试要求
 
 - 每个 AI task 必须有结构化输出解析测试。
 - 每个 AI task 必须覆盖非法 JSON 和缺失必填字段。
@@ -659,7 +725,7 @@ Task 31 已使用 Spring AI `MessageWindowChatMemory`（窗口大小 12）管理
 
 | 样例 | 岗位 | 覆盖 task |
 |------|------|-----------|
-| Java 后端/支付系统 | 银行统一支付平台 Java 高级后端工程师 | JobBrief, Assessment, QuestionScore, TrainingFeedback, MockInterview, CoachingMemory |
+| Java 后端/支付系统 | 银行统一支付平台 Java 高级后端工程师 | JobBrief, Assessment, QuestionScore, TrainingFeedback, MockInterview, CoachingMemory, AgentDecision |
 | AI 应用工程师/RAG Agent | AI 应用工程师 - RAG Agent 方向 | JobBrief, Assessment, TrainingFeedback |
 | 数据平台/调度数仓 | 数据平台工程师 - 调度与数仓方向 | JobBrief, Assessment, MockInterview |
 | 前端/React | 高级前端工程师 - React/TypeScript 方向 | JobBrief, MockInterview |
@@ -673,6 +739,9 @@ Task 31 已使用 Spring AI `MessageWindowChatMemory`（窗口大小 12）管理
 - **逐题诊断完整性**：每题评分必须包含 answerStructure（STAR+ 6 字段）、followUpRisks、contentHighlights、contentGaps。
 - **训练反馈可执行性**：feedback 长度应有实质性内容，rewrittenAnswer 应与原回答不同。
 - **模拟面试追问**：追问应与开场问题不同，报告应包含维度评分和改进建议。
+- **Agent 决策完整性**：AgentDecision 必须包含 currentGoal、focusDimensions（1-3 个）、recommendedAction、rationaleSummary、toolCalls（白名单内）。
+- **Agent 事件一致性**：测评完成后 Agent stage 应为 assessment，训练完成后应为 training，模拟面试完成后应为 mockInterview。
+- **Agent 工具白名单**：toolCalls 中的 toolName 必须在 6 个白名单工具内。
 
 运行方式：
 

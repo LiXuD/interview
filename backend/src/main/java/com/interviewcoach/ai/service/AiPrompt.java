@@ -13,4 +13,5 @@ public record AiPrompt(String task, String targetId, String systemPrompt, String
     public static final String TASK_MOCK_INTERVIEW_REPORT = "mockInterviewReport";
     public static final String TASK_CANDIDATE_PROFILE_DRAFT = "candidateProfileDraft";
     public static final String TASK_COACHING_MEMORY = "coachingMemory";
+    public static final String TASK_AGENT_DECISION = "agentDecision";
 }

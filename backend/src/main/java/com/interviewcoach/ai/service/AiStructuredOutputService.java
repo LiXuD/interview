@@ -2,6 +2,8 @@ package com.interviewcoach.ai.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.interviewcoach.common.api.AgentDecisionDto;
+import com.interviewcoach.common.api.AgentToolCallDto;
 import com.interviewcoach.common.api.AnswerStructureDto;
 import com.interviewcoach.common.api.AdaptiveTrainingTurnDto;
 import com.interviewcoach.common.api.AssessmentDimensionName;
@@ -621,6 +623,36 @@ public class AiStructuredOutputService {
             if (!VALID_MEMORY_CONFIDENCE.contains(item.confidence())) {
                 throw new IllegalArgumentException("invalid memory confidence: " + item.confidence());
             }
+        }
+    }
+
+    private static final Set<String> VALID_AGENT_STAGES = Set.of(
+            "targetSetup", "profileConfirmation", "assessment", "training", "mockInterview", "review");
+
+    public AgentDecisionDto generateAgentDecision(AiPrompt prompt) {
+        AgentDecisionDto structuredResult = generateStructuredFromSpringProvider(prompt, AgentDecisionDto.class);
+        if (structuredResult != null) {
+            AgentDecisionDto validated = validateStructured(prompt, structuredResult, (dto, p) -> validateAgentDecision(dto));
+            if (validated != null) return validated;
+        }
+        return generateAndValidate(prompt, AgentDecisionDto.class, (dto, p) -> validateAgentDecision(dto));
+    }
+
+    private void validateAgentDecision(AgentDecisionDto dto) {
+        if (dto == null) {
+            throw new IllegalArgumentException("AgentDecision is null");
+        }
+        requireText(dto.currentGoal(), "currentGoal");
+        requireList(dto.focusDimensions(), "focusDimensions");
+        requireText(dto.recommendedAction(), "recommendedAction");
+        requireText(dto.rationaleSummary(), "rationaleSummary");
+        requireList(dto.toolCalls(), "toolCalls");
+        for (AgentToolCallDto toolCall : dto.toolCalls()) {
+            if (toolCall == null) {
+                throw new IllegalArgumentException("toolCalls contains null item");
+            }
+            requireText(toolCall.toolName(), "toolCall.toolName");
+            requireText(toolCall.reason(), "toolCall.reason");
         }
     }
 }

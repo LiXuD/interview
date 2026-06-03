@@ -85,7 +85,8 @@ public class DefaultAiModelGateway implements AiModelGateway {
             AiPrompt.TASK_ADAPTIVE_TRAINING_TURN,
             AiPrompt.TASK_MOCK_INTERVIEW_QUESTION,
             AiPrompt.TASK_MOCK_INTERVIEW_REPORT,
-            AiPrompt.TASK_COACHING_MEMORY
+            AiPrompt.TASK_COACHING_MEMORY,
+            AiPrompt.TASK_AGENT_DECISION
     );
 
     private final PlatformAiClient platformAiClient;
