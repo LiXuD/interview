@@ -1,5 +1,6 @@
 package com.interviewcoach.auth.service;
 
+import com.interviewcoach.agent.repository.AgentRepository;
 import com.interviewcoach.ai.repository.AiProviderRepository;
 import com.interviewcoach.assessment.repository.AssessmentResultRepository;
 import com.interviewcoach.assessment.repository.AssessmentSessionRepository;
@@ -42,6 +43,7 @@ public class AuthService {
     private final MockInterviewRepository mockInterviewRepository;
     private final AiProviderRepository aiProviderRepository;
     private final CoachingMemoryRepository coachingMemoryRepository;
+    private final AgentRepository agentRepository;
 
     public AuthService(UserRepository userRepository, JwtTokenProvider jwtTokenProvider,
                        AppleTokenVerifier appleTokenVerifier,
@@ -54,7 +56,8 @@ public class AuthService {
                        TrainingPlanRepository trainingPlanRepository,
                        MockInterviewRepository mockInterviewRepository,
                        AiProviderRepository aiProviderRepository,
-                       CoachingMemoryRepository coachingMemoryRepository) {
+                       CoachingMemoryRepository coachingMemoryRepository,
+                       AgentRepository agentRepository) {
         this.userRepository = userRepository;
         this.jwtTokenProvider = jwtTokenProvider;
         this.appleTokenVerifier = appleTokenVerifier;
@@ -68,6 +71,7 @@ public class AuthService {
         this.mockInterviewRepository = mockInterviewRepository;
         this.aiProviderRepository = aiProviderRepository;
         this.coachingMemoryRepository = coachingMemoryRepository;
+        this.agentRepository = agentRepository;
     }
 
     @Transactional
@@ -132,6 +136,7 @@ public class AuthService {
         trainingPlanRepository.deleteByUserId(userId);
         aiProviderRepository.deleteByUserId(userId);
         jobBriefRepository.deleteByUserId(userId);
+        agentRepository.deleteByUserId(userId);
         profileRepository.deleteByUserId(userId);
         targetRepository.deleteByUserId(userId);
         userRepository.deleteById(userId);

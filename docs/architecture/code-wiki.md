@@ -114,7 +114,8 @@ backend/src/main/java/com/interviewcoach/
 ├── training/       # 1 天训练计划与训练反馈
 ├── mockinterview/  # 文字模拟面试
 ├── coachingmemory/ # 教练记忆、用户纠错
-└── report/         # 统一报告
+├── report/         # 统一报告
+└── agent/          # 持续存在的面试教练 Agent
 ```
 
 ### 3.1 后端分层约定
@@ -470,6 +471,32 @@ finishInterview
 
 注意：`Report.content` 存储的是后端已解析并重新序列化后的 DTO JSON，不是模型原始文本。
 
+### 4.13 agent
+
+持续存在的面试教练 Agent 模块。为每个用户的每个目标岗位维护一个持久化 Agent 实体，跨越测评、训练、模拟面试和复盘生命周期。
+
+主要文件：
+
+- `InterviewCoachAgent`：Agent 实体，含 userId、targetId（唯一约束）、status、currentStage、currentGoal、activeFocusDimensions、nextRecommendedAction、lastEventType、lastDecisionSummary、lastRunAt、version（乐观锁）。
+- `AgentRepository`：按 targetId+userId 查询、按 userId/targetId 删除。
+- `AgentService`：getOrCreateByTarget（首次访问自动创建）、toDto。
+- `InterviewCoachAgentRunner`：事件驱动 Agent 运行器。接收 `CoachEvent`，加载 Agent 上下文（进度、教练记忆），构造 Prompt 调用 AI 生成 `AgentDecisionDto`，校验工具白名单，更新 Agent 状态。白名单工具：`startAssessment`、`generateTrainingPlan`、`startAdaptiveTraining`、`startMockInterview`、`analyzeProgress`、`updateCoachingMemory`。
+- `CoachEvent`：枚举，包含 TARGET_CREATED、RESUME_SUMMARY_CONFIRMED、ASSESSMENT_COMPLETED、TRAINING_TASK_COMPLETED、TRAINING_SESSION_COMPLETED、MOCK_INTERVIEW_COMPLETED、MEMORY_CORRECTED、APP_SESSION_STARTED。
+- `AgentController`：
+  - `GET /api/targets/{targetId}/coach-agent`
+
+状态枚举：
+
+- `status`：active、paused、completed
+- `currentStage`：targetSetup、profileConfirmation、assessment、training、mockInterview、review
+
+约束：
+
+- `userId + targetId` 唯一，防止重复创建。
+- 使用 `@Version` 乐观锁防止并发覆盖。
+- Agent 随账号删除（cascade in AuthService）和目标删除（cascade in InterviewTargetService）自动清理。
+- Agent 不保存简历原文、用户回答原文、API Key 或 hidden chain-of-thought。
+
 ## 5. API 地图
 
 当前 OpenAPI 包含 30+ 个路径：
@@ -520,6 +547,7 @@ finishInterview
 | AI Provider | `DELETE /api/ai-providers/{id}` |
 | DimensionAnalysis | `GET /api/dimension-analysis?targetId=...` |
 | Progress | `GET /api/progress?targetId=...` |
+| CoachAgent | `GET /api/targets/{targetId}/coach-agent` |
 
 说明：OpenAPI 中 `/api/targets`、`/api/targets/{id}`、`/api/ai-providers` 等路径下包含多个 HTTP method，因此路径数量和端点数量不同。
 
@@ -888,7 +916,8 @@ User
   │     ├── MockInterview
   │     │     └── MockInterviewMessage
   │     ├── Report
-  │     └── CoachingMemory
+  │     ├── CoachingMemory
+  │     └── InterviewCoachAgent
   └── AiProvider
 ```
 

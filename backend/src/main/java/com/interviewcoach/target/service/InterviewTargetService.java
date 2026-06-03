@@ -2,6 +2,7 @@ package com.interviewcoach.target.service;
 
 import com.interviewcoach.assessment.repository.AssessmentResultRepository;
 import com.interviewcoach.assessment.repository.AssessmentSessionRepository;
+import com.interviewcoach.agent.repository.AgentRepository;
 import com.interviewcoach.coachingmemory.repository.CoachingMemoryRepository;
 import com.interviewcoach.common.api.InterviewTargetCreateRequest;
 import com.interviewcoach.common.api.InterviewTargetDto;
@@ -37,6 +38,7 @@ public class InterviewTargetService {
     private final TrainingPlanRepository trainingPlanRepository;
     private final MockInterviewRepository mockInterviewRepository;
     private final CoachingMemoryRepository coachingMemoryRepository;
+    private final AgentRepository agentRepository;
 
     public InterviewTargetService(InterviewTargetRepository targetRepository,
                                   CandidateProfileRepository profileRepository,
@@ -46,7 +48,8 @@ public class InterviewTargetService {
                                   ReportRepository reportRepository,
                                   TrainingPlanRepository trainingPlanRepository,
                                   MockInterviewRepository mockInterviewRepository,
-                                  CoachingMemoryRepository coachingMemoryRepository) {
+                                  CoachingMemoryRepository coachingMemoryRepository,
+                                  AgentRepository agentRepository) {
         this.targetRepository = targetRepository;
         this.profileRepository = profileRepository;
         this.jobBriefRepository = jobBriefRepository;
@@ -56,6 +59,7 @@ public class InterviewTargetService {
         this.trainingPlanRepository = trainingPlanRepository;
         this.mockInterviewRepository = mockInterviewRepository;
         this.coachingMemoryRepository = coachingMemoryRepository;
+        this.agentRepository = agentRepository;
     }
 
     @Transactional
@@ -113,6 +117,7 @@ public class InterviewTargetService {
         mockInterviewRepository.deleteByTargetId(targetId);
         trainingPlanRepository.deleteByTargetId(targetId);
         jobBriefRepository.deleteByTargetId(targetId);
+        agentRepository.deleteByTargetId(targetId);
         coachingMemoryRepository.deleteByTargetId(targetId);
         profileRepository.deleteByTargetId(targetId);
         targetRepository.delete(target);

@@ -69,6 +69,12 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("COACHING_MEMORY_NOT_FOUND", ex.getMessage(), generateRequestId()));
     }
 
+    @ExceptionHandler(AgentNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleAgentNotFound(AgentNotFoundException ex) {
+        return ResponseEntity.status(404)
+                .body(new ErrorResponse("AGENT_NOT_FOUND", ex.getMessage(), generateRequestId()));
+    }
+
     @ExceptionHandler(AiProviderCallFailedException.class)
     public ResponseEntity<ErrorResponse> handleAiProviderCallFailed(AiProviderCallFailedException ex) {
         return ResponseEntity.status(502)

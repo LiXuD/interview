@@ -1052,6 +1052,39 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /api/targets/{targetId}/coach-agent:
+    get:
+      tags:
+        - CoachAgent
+      summary: Get or create the persistent coach agent for a target
+      operationId: getCoachAgent
+      parameters:
+        - name: targetId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Coach agent state for the target.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoachAgentDto"
+        "401":
+          description: Not authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Target not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   securitySchemes:
     bearerAuth:
@@ -2272,3 +2305,50 @@ components:
           type: array
           items:
             type: string
+
+    CoachAgentDto:
+      type: object
+      required:
+        - id
+        - targetId
+        - status
+        - currentStage
+        - activeFocusDimensions
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        targetId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [active, paused, completed]
+        currentStage:
+          type: string
+          enum: [targetSetup, profileConfirmation, assessment, training, mockInterview, review]
+        currentGoal:
+          type: string
+          nullable: true
+        activeFocusDimensions:
+          type: array
+          items:
+            type: string
+        nextRecommendedAction:
+          type: string
+          nullable: true
+        lastEventType:
+          type: string
+          nullable: true
+        lastDecisionSummary:
+          type: string
+          nullable: true
+        lastRunAt:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
