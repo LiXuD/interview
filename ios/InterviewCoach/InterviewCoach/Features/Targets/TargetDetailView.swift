@@ -21,6 +21,7 @@ struct TargetDetailView: View {
     @State private var showReports = false
     @State private var showDimensionAnalysis = false
     @State private var showProgressDashboard = false
+    @State private var showCoachAgent = false
     @State private var isLoading = false
     @State private var errorMessage: String?
 
@@ -101,6 +102,11 @@ struct TargetDetailView: View {
                     } label: {
                         Label("进步追踪", systemImage: "chart.line.uptrend.xyaxis")
                     }
+                    Button {
+                        showCoachAgent = true
+                    } label: {
+                        Label("AI 教练", systemImage: "brain.head.profile")
+                    }
                 }
             }
 
@@ -169,6 +175,9 @@ struct TargetDetailView: View {
         }
         .sheet(isPresented: $showProgressDashboard) {
             ProgressDashboardView(targetId: currentTarget.id, targetTitle: currentTarget.title)
+        }
+        .sheet(isPresented: $showCoachAgent) {
+            CoachAgentView(targetId: currentTarget.id, targetTitle: currentTarget.title)
         }
         .loadingOverlay(isLoading: isLoading)
     }
