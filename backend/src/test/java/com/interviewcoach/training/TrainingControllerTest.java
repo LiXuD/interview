@@ -10,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -126,6 +127,11 @@ class TrainingControllerTest {
                 .andExpect(jsonPath("$.rewrittenAnswer").isString())
                 .andExpect(jsonPath("$.followUpQuestion").isString())
                 .andExpect(jsonPath("$.recommendedReviewPoints").isArray());
+
+        mockMvc.perform(get("/api/coaching-memories/target/" + targetId)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.sourceType == 'training')].sourceId").value(hasItem(taskId)));
 
         // Complete task
         mockMvc.perform(patch("/api/training-tasks/" + taskId + "/complete")

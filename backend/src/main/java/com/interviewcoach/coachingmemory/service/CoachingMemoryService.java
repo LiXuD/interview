@@ -19,6 +19,7 @@ import com.interviewcoach.target.entity.InterviewTarget;
 import com.interviewcoach.target.repository.InterviewTargetRepository;
 import com.interviewcoach.user.entity.User;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -72,13 +73,14 @@ public class CoachingMemoryService {
         return generateAndSave(user, target, "assessment", sessionId, prompt);
     }
 
-    @Transactional
-    public CoachingMemoryDto generateFromTraining(User user, UUID targetId,
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public CoachingMemoryDto generateFromTraining(UUID userId, UUID targetId,
+                                                  UUID taskId,
                                                   TrainingFeedbackDto feedbackDto,
                                                   String taskTitle) {
-        InterviewTarget target = findTarget(targetId, user.getId());
+        InterviewTarget target = findTarget(targetId, userId);
         AiPrompt prompt = buildTrainingPrompt(target, feedbackDto, taskTitle);
-        return generateAndSave(user, target, "training", UUID.fromString(feedbackDto.taskId()), prompt);
+        return generateAndSave(target.getUser(), target, "training", taskId, prompt);
     }
 
     @Transactional

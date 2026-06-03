@@ -332,7 +332,7 @@ public class AssessmentService {
                 每个字段格式为 "状态: 简短评语"，状态只能是 present、partial 或 missing。
 
                 followUpRisks 列出真实面试官可能追问的薄弱点，至少 1 条。
-                contentHighlights 列出回答中的具体亮点。
+                contentHighlights 列出回答中的具体亮点；如果回答没有任何有效亮点，必须返回空数组，禁止虚构优点。
                 contentGaps 列出回答中的内容缺失或不足。
                 """.formatted(questionIndex);
         String userPrompt = """

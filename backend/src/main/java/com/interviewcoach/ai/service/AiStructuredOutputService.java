@@ -169,7 +169,7 @@ public class AiStructuredOutputService {
         requireText(dto.improvedExample(), "improvedExample");
         validateAnswerStructure(dto.answerStructure());
         requireNonEmptyTextList(dto.followUpRisks(), "followUpRisks");
-        requireNonEmptyTextList(dto.contentHighlights(), "contentHighlights");
+        requireList(dto.contentHighlights(), "contentHighlights");
         requireNonEmptyTextList(dto.contentGaps(), "contentGaps");
     }
 
@@ -188,6 +188,9 @@ public class AiStructuredOutputService {
     private void requireStructureStatus(String value, String field) {
         requireText(value, field);
         int separatorIndex = value.indexOf(':');
+        if (separatorIndex < 0) {
+            separatorIndex = value.indexOf('：');
+        }
         if (separatorIndex <= 0) {
             throw new IllegalArgumentException(field + " must start with status");
         }
@@ -252,10 +255,15 @@ public class AiStructuredOutputService {
         }
     }
 
-    private static final String REPAIR_SYSTEM_SUFFIX = """
+    private static final String JSON_REPAIR_SYSTEM_SUFFIX = """
 
             你之前的回复无法被解析为合法 JSON。请只修复 JSON 格式问题，不要新增、删除或修改任何业务内容。
             直接输出修复后的 JSON，不要包含任何解释或 markdown 格式。""";
+
+    private static final String VALIDATION_REPAIR_SYSTEM_SUFFIX = """
+
+            你之前的 JSON 不满足业务字段约束。请根据原始任务要求修复缺失、无效或不符合约束的业务字段。
+            直接输出修复后的完整 JSON，不要包含任何解释或 markdown 格式。""";
 
     private <T> T generateAndValidate(AiPrompt prompt, Class<T> type, BiConsumer<T, AiPrompt> validator) {
         try {
@@ -295,13 +303,20 @@ public class AiStructuredOutputService {
     }
 
     private AiPrompt repairPrompt(AiPrompt original, String malformedJson, String validationError) {
-        String repairInstruction = validationError != null
-                ? "你之前的回复存在以下问题：" + validationError + "。请修复后重新输出。"
-                : "你之前的回复无法被解析为合法 JSON。请只修复 JSON 格式问题。";
-        String userPrompt = repairInstruction + "\n\n你之前的回复：\n" + malformedJson
-                + "\n\n请直接输出修复后的完整 JSON，不要包含任何解释或 markdown 格式。";
+        if (validationError == null) {
+            String userPrompt = "你之前的回复无法被解析为合法 JSON。请只修复 JSON 格式问题。"
+                    + "\n\n你之前的回复：\n" + malformedJson
+                    + "\n\n请直接输出修复后的完整 JSON，不要包含任何解释或 markdown 格式。";
+            return new AiPrompt(original.task(), original.targetId(),
+                    original.systemPrompt() + JSON_REPAIR_SYSTEM_SUFFIX, userPrompt);
+        }
+
+        String userPrompt = "原始任务要求：\n" + original.userPrompt()
+                + "\n\n你之前的回复：\n" + malformedJson
+                + "\n\n校验失败原因：" + validationError
+                + "\n\n请修复业务字段后直接输出完整 JSON，不要包含任何解释或 markdown 格式。";
         return new AiPrompt(original.task(), original.targetId(),
-                original.systemPrompt() + REPAIR_SYSTEM_SUFFIX, userPrompt);
+                original.systemPrompt() + VALIDATION_REPAIR_SYSTEM_SUFFIX, userPrompt);
     }
 
     private <T> T validateStructured(AiPrompt prompt, T result, BiConsumer<T, AiPrompt> validator) {
@@ -412,9 +427,11 @@ public class AiStructuredOutputService {
         TrainingFeedbackDto structuredResult = generateStructuredFromSpringProvider(prompt, TrainingFeedbackDto.class);
         if (structuredResult != null) {
             TrainingFeedbackDto validated = validateStructured(prompt, structuredResult, (dto, p) -> validateTrainingFeedback(dto));
-            if (validated != null) return validated;
+            if (validated != null) return withBackendTaskId(validated, prompt.targetId());
         }
-        return generateAndValidate(prompt, TrainingFeedbackDto.class, (dto, p) -> validateTrainingFeedback(dto));
+        TrainingFeedbackDto generated = generateAndValidate(
+                prompt, TrainingFeedbackDto.class, (dto, p) -> validateTrainingFeedback(dto));
+        return withBackendTaskId(generated, prompt.targetId());
     }
 
     public AdaptiveTrainingTurnDto generateAdaptiveTrainingTurn(AiPrompt prompt) {
@@ -438,6 +455,17 @@ public class AiStructuredOutputService {
         requireText(dto.followUpQuestion(), "followUpQuestion");
         requireList(dto.problems(), "problems");
         requireList(dto.recommendedReviewPoints(), "recommendedReviewPoints");
+    }
+
+    private TrainingFeedbackDto withBackendTaskId(TrainingFeedbackDto dto, String taskId) {
+        return new TrainingFeedbackDto(
+                taskId,
+                dto.score(),
+                dto.feedback(),
+                dto.problems(),
+                dto.rewrittenAnswer(),
+                dto.followUpQuestion(),
+                dto.recommendedReviewPoints());
     }
 
     private void validateAdaptiveTrainingTurn(AdaptiveTrainingTurnDto dto) {

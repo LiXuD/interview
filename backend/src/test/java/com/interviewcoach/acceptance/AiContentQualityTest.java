@@ -161,7 +161,7 @@ class AiContentQualityTest {
                             .header("Authorization", "Bearer " + ctx.token)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(new AssessmentAnswerRequest(answer))))
-                    .andReturn(); // tolerate AI parse failures
+                    .andExpect(status().isOk());
         }
 
         MvcResult finishResult = mockMvc.perform(post("/api/assessments/" + sessionId + "/finish")
@@ -683,32 +683,28 @@ class AiContentQualityTest {
                 "Redis 分布式锁用 SET key value NX EX 实现，配合 Lua 脚本保证原子释放。",
                 "支付系统设计考虑幂等性、分布式事务、资金安全和对账。"
         );
-        int successfulScores = 0;
         for (String answer : answers) {
             MvcResult answerResult = mockMvc.perform(post("/api/assessments/" + sessionId + "/answers")
                             .header("Authorization", "Bearer " + ctx.token)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(new AssessmentAnswerRequest(answer))))
+                    .andExpect(status().isOk())
                     .andReturn();
-            if (answerResult.getResponse().getStatus() == 200) {
-                String answerJson = answerResult.getResponse().getContentAsString();
-                var tree = objectMapper.readTree(answerJson);
-                var scores = tree.get("questionScores");
-                if (scores != null && scores.isArray() && !scores.isEmpty()) {
-                    var lastScore = scores.get(scores.size() - 1);
-                    assertThat(lastScore.get("score").asInt()).isBetween(0, 100);
-                    assertThat(lastScore.get("dimension").asText()).isNotBlank();
-                    assertThat(lastScore.get("feedback").asText()).isNotBlank();
-                    assertThat(lastScore.get("answerStructure")).isNotNull();
-                    assertThat(lastScore.get("followUpRisks").isArray()).isTrue();
-                    assertThat(lastScore.get("contentHighlights").isArray()).isTrue();
-                    assertThat(lastScore.get("contentGaps").isArray()).isTrue();
-                    successfulScores++;
-                }
-            }
+            String answerJson = answerResult.getResponse().getContentAsString();
+            var tree = objectMapper.readTree(answerJson);
+            var scores = tree.get("questionScores");
+            assertThat(scores).isNotNull();
+            assertThat(scores.isArray()).isTrue();
+            assertThat(scores.isEmpty()).isFalse();
+            var lastScore = scores.get(scores.size() - 1);
+            assertThat(lastScore.get("score").asInt()).isBetween(0, 100);
+            assertThat(lastScore.get("dimension").asText()).isNotBlank();
+            assertThat(lastScore.get("feedback").asText()).isNotBlank();
+            assertThat(lastScore.get("answerStructure")).isNotNull();
+            assertThat(lastScore.get("followUpRisks").isArray()).isTrue();
+            assertThat(lastScore.get("contentHighlights").isArray()).isTrue();
+            assertThat(lastScore.get("contentGaps").isArray()).isTrue();
         }
-        assumeTrue(successfulScores >= 2,
-                "跳过: 仅 " + successfulScores + " 道题评分成功（AI 模型波动）");
     }
 
     // ==================== 通用验证：虚构经历检查 ====================
@@ -770,18 +766,15 @@ class AiContentQualityTest {
                         .header("Authorization", "Bearer " + ctx.token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new JobBriefGenerateRequest(ctx.targetId))))
-                .andReturn(); // tolerate AI failures
+                .andExpect(status().isOk());
 
         // 完成 Assessment
         MvcResult assessStartResult = mockMvc.perform(post("/api/assessments/start")
                         .header("Authorization", "Bearer " + ctx.token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new AssessmentStartRequest(ctx.targetId))))
+                .andExpect(status().isOk())
                 .andReturn();
-        if (assessStartResult.getResponse().getStatus() != 200) {
-            ctx.assessmentCompleted = true;
-            return ctx;
-        }
         String sessionJson = assessStartResult.getResponse().getContentAsString();
         String sessionId = objectMapper.readTree(sessionJson).get("id").asText();
 
@@ -791,12 +784,12 @@ class AiContentQualityTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(
                                     new AssessmentAnswerRequest("Answer " + i))))
-                    .andReturn(); // tolerate AI parse failures
+                    .andExpect(status().isOk());
         }
 
         mockMvc.perform(post("/api/assessments/" + sessionId + "/finish")
                         .header("Authorization", "Bearer " + ctx.token))
-                .andReturn(); // tolerate AI parse failures
+                .andExpect(status().isOk());
 
         ctx.assessmentCompleted = true;
         return ctx;
@@ -822,9 +815,9 @@ class AiContentQualityTest {
     }
 
     private void assumeAiOk(MvcResult result, String taskName) {
-        org.junit.jupiter.api.Assumptions.assumeTrue(
-                result.getResponse().getStatus() == 200,
-                "跳过: " + taskName + " 失败（AI 模型波动, status=" + result.getResponse().getStatus() + "）");
+        assertThat(result.getResponse().getStatus())
+                .as(taskName + " status")
+                .isEqualTo(200);
     }
 
     private void confirmProfile(String token, String targetId, String summary,

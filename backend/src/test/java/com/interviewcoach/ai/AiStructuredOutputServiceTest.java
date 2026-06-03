@@ -1331,6 +1331,62 @@ class AiStructuredOutputServiceTest {
     }
 
     @Test
+    void questionScoreAllowsEmptyContentHighlightsForWeakAnswer() {
+        PlatformAiClient client = prompt -> """
+                {
+                  "questionIndex": 0,
+                  "score": 20,
+                  "dimension": "technicalDepth",
+                  "feedback": "回答没有提供可评分的技术内容",
+                  "problems": ["未回答题目"],
+                  "improvedExample": "应说明具体方案、权衡和结果",
+                  "answerStructure": {
+                    "background": "missing: 缺少背景",
+                    "task": "missing: 缺少任务",
+                    "action": "missing: 缺少行动",
+                    "result": "missing: 缺少结果",
+                    "tradeoff": "missing: 缺少权衡",
+                    "review": "missing: 缺少复盘"
+                  },
+                  "followUpRisks": ["面试官会追问具体方案"],
+                  "contentHighlights": [],
+                  "contentGaps": ["没有有效技术内容"]
+                }
+                """;
+        AssessmentQuestionScoreDto result = serviceWith(client).generateQuestionScore(
+                new AiPrompt(AiPrompt.TASK_ASSESSMENT_QUESTION_SCORE, "assessment-1", "system", "user"));
+        assertThat(result.contentHighlights()).isEmpty();
+    }
+
+    @Test
+    void questionScoreAcceptsFullWidthStructureSeparator() {
+        PlatformAiClient client = prompt -> """
+                {
+                  "questionIndex": 0,
+                  "score": 70,
+                  "dimension": "technicalDepth",
+                  "feedback": "反馈",
+                  "problems": ["缺少指标"],
+                  "improvedExample": "改进示例",
+                  "answerStructure": {
+                    "background": "present：背景清楚",
+                    "task": "partial：任务不够具体",
+                    "action": "present：行动明确",
+                    "result": "missing：缺少结果",
+                    "tradeoff": "missing：缺少权衡",
+                    "review": "missing：缺少复盘"
+                  },
+                  "followUpRisks": ["追问指标"],
+                  "contentHighlights": ["结构清晰"],
+                  "contentGaps": ["缺少权衡"]
+                }
+                """;
+        AssessmentQuestionScoreDto result = serviceWith(client).generateQuestionScore(
+                new AiPrompt(AiPrompt.TASK_ASSESSMENT_QUESTION_SCORE, "assessment-1", "system", "user"));
+        assertThat(result.score()).isEqualTo(70);
+    }
+
+    @Test
     void questionScoreRejectsInvalidJson() {
         PlatformAiClient client = prompt -> "not-json";
         AiParseException ex = assertThrows(AiParseException.class, () -> serviceWith(client).generateQuestionScore(
@@ -1399,7 +1455,7 @@ class AiStructuredOutputServiceTest {
     // --- trainingFeedback ---
 
     @Test
-    void trainingFeedbackAcceptsMismatchedTaskId() {
+    void trainingFeedbackUsesBackendTaskIdWhenModelReturnsMismatch() {
         PlatformAiClient client = prompt -> """
                 {
                   "taskId": "wrong-task-id",
@@ -1413,6 +1469,7 @@ class AiStructuredOutputServiceTest {
                 """;
         var result = serviceWith(client).generateTrainingFeedback(
                 new AiPrompt("trainingFeedback", "expected-task-id", "system", "user"));
+        assertEquals("expected-task-id", result.taskId());
         assertEquals(70, result.score());
         assertEquals("Good answer but needs more detail", result.feedback());
     }
@@ -1652,6 +1709,7 @@ class AiStructuredOutputServiceTest {
         assertEquals("Repaired question", result);
         assertEquals(2, callCount[0]);
         assertThat(capturedRepairPrompt[0].systemPrompt()).contains("修复");
+        assertThat(capturedRepairPrompt[0].systemPrompt()).contains("不要新增、删除或修改任何业务内容");
         assertThat(capturedRepairPrompt[0].userPrompt()).contains("not valid json");
         assertThat(capturedRepairPrompt[0].userPrompt()).contains("修复");
     }
@@ -1679,6 +1737,8 @@ class AiStructuredOutputServiceTest {
         String result = serviceWith(client).generateMockInterviewQuestion(
                 new AiPrompt("mockInterviewQuestion", null, "system prompt", "user prompt"));
         assertEquals("Fixed question", result);
+        assertThat(capturedRepairPrompt[0].systemPrompt()).contains("业务字段");
+        assertThat(capturedRepairPrompt[0].systemPrompt()).doesNotContain("不要新增、删除或修改任何业务内容");
         assertThat(capturedRepairPrompt[0].userPrompt()).contains("question is required");
     }
 

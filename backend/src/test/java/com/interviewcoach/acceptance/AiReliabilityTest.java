@@ -34,6 +34,7 @@ class AiReliabilityTest {
     @TestConfiguration
     static class RetryTestConfig {
         private static final AtomicInteger generateJsonCalls = new AtomicInteger(0);
+        private static volatile boolean returnInvalidJson;
 
         @Bean
         @Primary
@@ -41,6 +42,10 @@ class AiReliabilityTest {
             return new PlatformAiClient() {
                 @Override
                 public String generateJson(AiPrompt prompt) {
+                    if (returnInvalidJson) {
+                        generateJsonCalls.incrementAndGet();
+                        return "not-json";
+                    }
                     int call = generateJsonCalls.incrementAndGet();
                     if (call == 1) {
                         throw new org.springframework.web.client.HttpServerErrorException(
@@ -74,6 +79,11 @@ class AiReliabilityTest {
 
         static void resetCallCount() {
             generateJsonCalls.set(0);
+            returnInvalidJson = false;
+        }
+
+        static void useInvalidJson() {
+            returnInvalidJson = true;
         }
     }
 
@@ -113,17 +123,16 @@ class AiReliabilityTest {
     @Test
     @DisplayName("parse failure 应记录 ai.parse.failure 指标")
     void parseFailureRecordsMetric() {
-        // LocalPlatformAiClient 返回有效 JSON，正常路径不触发 parse failure。
-        // 验证正常调用不产生 parse failure 指标。
+        RetryTestConfig.useInvalidJson();
         AiPrompt prompt = new AiPrompt(
                 AiPrompt.TASK_JOB_BRIEF, "test-target-parse",
                 "你是面试教练", "生成岗位画像");
-        JobBriefDto result = aiService.generateJobBrief(prompt);
-        assertThat(result).isNotNull();
+        assertThatThrownBy(() -> aiService.generateJobBrief(prompt))
+                .isInstanceOf(AiParseException.class);
 
         Counter parseCounter = meterRegistry.find("ai.parse.failure").counter();
-        double parseCount = parseCounter != null ? parseCounter.count() : 0;
-        assertThat(parseCount).isEqualTo(0);
+        assertThat(parseCounter).isNotNull();
+        assertThat(parseCounter.count()).isEqualTo(1);
     }
 
     @Test

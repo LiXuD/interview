@@ -511,9 +511,10 @@ Task 23 的测评结果必须支持逐题诊断。`assessmentQuestionScore` 任�
 字段约束：
 
 - `answerStructure` 诊断 STAR+ 结构（背景 background、任务 task、行动 action、结果 result、权衡 tradeoff、复盘 review）。
-- 每个 `answerStructure` 字段格式为 `"状态: 简短评语"`，状态只能是 `present`、`partial` 或 `missing`。
+- 每个 `answerStructure` 字段格式为 `"状态: 简短评语"`，允许使用半角 `:` 或全角 `：`，状态只能是 `present`、`partial` 或 `missing`。
 - `followUpRisks` 至少 1 条，列出真实面试官可能追问的薄弱点。
-- `contentHighlights` 和 `contentGaps` 为非空列表。
+- `contentHighlights` 必须是列表；当回答没有任何有效亮点时允许为空，禁止为了满足格式虚构优点。
+- `contentGaps` 为非空列表。
 - `improvedExample` 必须基于候选人已确认的真实经历改写，禁止编造新项目。
 - 聚合总分、维度分、主要短板和下一步训练建议由 `assessmentResult` 任务在汇总所有逐题诊断后输出。
 

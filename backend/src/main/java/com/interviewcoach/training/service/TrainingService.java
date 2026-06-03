@@ -153,7 +153,7 @@ public class TrainingService {
 
         try {
             coachingMemoryService.generateFromTraining(
-                    task.getPlan().getUser(), task.getPlan().getTargetId(), aiResult, task.getTitle());
+                    task.getPlan().getUser().getId(), task.getPlan().getTargetId(), taskId, aiResult, task.getTitle());
         } catch (Exception ex) {
             log.warn("Failed to generate coaching memory for training task {}", taskId, ex);
         }
@@ -295,7 +295,7 @@ public class TrainingService {
                     firstNonBlank(aiTurn.nextQuestion(), ""),
                     CollectionUtils.copyList(aiTurn.recommendedReviewPoints()));
             coachingMemoryService.generateFromTraining(
-                    task.getPlan().getUser(), task.getPlan().getTargetId(), memoryFeedback, task.getTitle());
+                    task.getPlan().getUser().getId(), task.getPlan().getTargetId(), task.getId(), memoryFeedback, task.getTitle());
         } catch (Exception ex) {
             log.warn("Failed to generate coaching memory for adaptive training task {}", task.getId(), ex);
         }

@@ -25,7 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * 核心闭环 (JobBrief -> Assessment -> TrainingPlan -> TrainingFeedback) 为硬门禁：
  * 每一步必须成功，不允许平均成功率稀释。
  *
- * MockInterview 单独测试，允许偶发失败。
+ * MockInterview 同样属于核心教练链路，start、answer、finish 均必须成功。
  *
  * 运行方式：
  *   cd backend && set -a; source .env; set +a; mvn -q -Dtest=AiLiveSmokeTest test
@@ -143,7 +143,7 @@ class AiLiveSmokeTest {
 
     @Test
     @Order(2)
-    @DisplayName("MockInterview 冒烟: start -> answer -> finish 允许偶发失败")
+    @DisplayName("MockInterview 冒烟: start -> answer -> finish 必须成功")
     void mockInterviewSmokeTest() throws Exception {
         String token = loginAndGetToken("smoke_mock_user");
         String targetId = createTarget(token, "Java Backend",
@@ -158,12 +158,8 @@ class AiLiveSmokeTest {
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new MockInterviewStartRequest(targetId, null))))
+                .andExpect(status().isOk())
                 .andReturn();
-
-        if (interviewResult.getResponse().getStatus() != 200) {
-            // MockInterview 允许偶发失败（AI 模型波动）
-            return;
-        }
 
         String interviewId = objectMapper.readTree(interviewResult.getResponse().getContentAsString())
                 .get("id").asText();
@@ -173,19 +169,18 @@ class AiLiveSmokeTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new MockInterviewAnswerRequest("我使用Redis缓存热点数据"))))
+                .andExpect(status().isOk())
                 .andReturn();
-        if (answerResult.getResponse().getStatus() != 200) {
-            return;
-        }
+        assertThat(answerResult.getResponse().getContentAsString()).isNotBlank();
 
         MvcResult reportResult = mockMvc.perform(post("/api/mock-interviews/" + interviewId + "/finish")
                         .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
                 .andReturn();
-        if (reportResult.getResponse().getStatus() == 200) {
-            MockInterviewReportDto report = objectMapper.readValue(
-                    reportResult.getResponse().getContentAsString(), MockInterviewReportDto.class);
-            assertThat(report.overallScore()).as("MockInterviewReport.overallScore").isBetween(0, 100);
-        }
+        MockInterviewReportDto report = objectMapper.readValue(
+                reportResult.getResponse().getContentAsString(), MockInterviewReportDto.class);
+        assertThat(report.overallScore()).as("MockInterviewReport.overallScore").isBetween(0, 100);
+        assertThat(report.summary()).as("MockInterviewReport.summary").isNotBlank();
     }
 
     private String loginAndGetToken(String username) throws Exception {
