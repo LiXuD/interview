@@ -25,9 +25,10 @@ MVP Provider 范围：
 | Post-MVP AI 质量 | Task 14-17 | 全部完成 |
 | Post-MVP Real AI Adaptive Coaching | Task 18-25 | 全部完成 |
 | Phase 3 持续训练伙伴与 AI 质量运营闭环 | Task 26-33 | 全部完成 |
+| Phase 4 持续存在的面试教练 Agent | Task 34-41 | 已批准，待实施 |
 | Spring AI 底座迁移 | Phase 2-6 | 已完成 |
 
-所有 33 个 Task 和 Spring AI 底座迁移 Phase 2-6 均已完成。后续新增开发必须继续服务 AI 面试教练定位，按已批准的计划推进。
+Task 1-33 和 Spring AI 底座迁移 Phase 2-6 均已完成。Phase 4 Task 34-41 已批准，后续新增开发必须继续服务 AI 面试教练定位，按已批准的计划推进。
 
 ---
 
@@ -1449,7 +1450,254 @@ Spring AI 可观测性
 
 ---
 
-## 7. 最终 MVP 验收路径
+## 7. Phase 4: 持续存在的面试教练 Agent（已批准，待实施）
+
+Phase 3 已完成持续训练伙伴与 AI 质量运营闭环，但当前测评、训练、模拟面试和教练记忆仍由各业务 Service 分别决定 AI 调用和下一步行为。Phase 4 的目标是建立持续存在的 `InterviewCoachAgent`，让每个用户在每个目标岗位下拥有同一个长期教练，并由 Agent 统一维护当前目标、重点维度和下一步行动。
+
+详细设计见：
+
+- `docs/superpowers/specs/2026-06-03-interview-coach-agent-design.md`
+
+阶段目标：
+
+```text
+Agent 身份与状态
+-> 事件驱动决策
+-> 业务事件接入
+-> 下一步推荐统一
+-> 受控工具编排
+-> AI 调用与记忆更新收拢
+-> iOS 持续教练入口
+-> 真实 AI 验收与发布硬化
+```
+
+阶段硬约束：
+
+- `InterviewCoachAgent` 必须按 `userId + targetId` 持续存在并隔离，禁止跨用户访问。
+- Agent 必须使用后端云端真实 AI 作为推理引擎，不引入本地模型，iOS 禁止直连模型。
+- Agent 必须是事件驱动的受控 Agent，禁止无限自主循环、未知工具调用和无预算模型调用。
+- Agent 只保存当前目标、重点维度、下一步行动和结构化决策摘要，禁止保存 hidden chain-of-thought。
+- 业务事实继续由 Assessment、Training、MockInterview、Report 等模块承载；Agent 禁止复制完整历史。
+- 长期可信理解继续由 `CoachingMemory` 承载，`inferred` 不能当事实，`rejected` 禁止重新进入上下文。
+- Agent 不保存简历原文、用户回答原文、API Key、Authorization Header、完整请求头或 prompt/completion。
+- 所有模型输出必须在后端解析为强类型 DTO，禁止把 AI 原始字符串返回给 iOS。
+- Agent 失败不得回滚已经完成的业务事实，必须支持独立重试或恢复。
+- Phase 4 产品能力验收必须显式使用真实 AI；stub、mock 和默认 CI 不能作为 Agent 产品体验验收依据。
+- Phase 4 仍必须服务 AI 面试教练定位，禁止扩展为通用聊天助手、题库、课程系统、招聘投递或企业端。
+
+### Task 34: Agent 身份、状态与查询 API
+
+目标：让每个用户的每个目标岗位拥有一个可持久化、可查询、持续存在的 `InterviewCoachAgent`。
+
+范围：
+
+- 新增后端 `agent` 模块和 `InterviewCoachAgent` 实体。
+- `userId + targetId` 唯一，保存状态、当前阶段、当前目标、重点维度、下一步行动、最近决策摘要和运行时间。
+- 使用乐观锁或等价机制避免并发覆盖。
+- 提供按目标岗位查询 Agent 状态的强类型 API。
+- Agent 随账号远端数据删除。
+
+文件边界：
+
+- `backend/src/main/java/com/interviewcoach/agent`
+- `docs/api/openapi.yaml`
+- `backend/src/test`
+
+验收：
+
+- 同一用户同一目标岗位只存在一个 Agent。
+- 用户不能访问其他用户的 Agent。
+- Agent 状态跨请求持久化，不随一次 API 请求结束而销毁。
+- API 返回 camelCase 强类型 DTO，不包含隐私原文或 AI 原始字符串。
+
+### Task 35: CoachEvent、AgentDecision 与事件运行器
+
+目标：建立事件驱动的 Agent 决策入口，让云端真实 AI 基于当前状态输出结构化下一步决策。
+
+范围：
+
+- 定义 `CoachEvent`、`AgentDecision` 和 `InterviewCoachAgentRunner`。
+- 支持目标创建、摘要确认、测评完成、训练完成、模拟面试完成、记忆纠错和 App 会话开始等事件类型。
+- Runner 加载必要的 Agent、CoachingMemory、Progress 和业务事实摘要。
+- 确定性状态检查由代码完成，需要判断时通过 `AiModelGateway` 调用云端真实 AI。
+- Agent 决策失败不得回滚已完成业务事实。
+
+文件边界：
+
+- `backend/src/main/java/com/interviewcoach/agent`
+- `backend/src/main/java/com/interviewcoach/ai`
+- `docs/ai/prompt-contracts.md`
+- `backend/src/test`
+
+验收：
+
+- AgentDecision 能稳定解析为强类型 DTO。
+- Agent 决策明确包含当前目标、重点维度、下一步行动和简短理由摘要。
+- Agent 不保存或返回 hidden chain-of-thought。
+- Agent 失败可独立定位和重试，不破坏业务事实。
+
+### Task 36: 核心业务事件接入
+
+目标：让 Agent 在用户关键行为完成后持续更新，而不是由各业务模块彼此独立地扮演教练。
+
+范围：
+
+- 接入测评完成、训练任务或训练会话完成、模拟面试完成、记忆纠错事件。
+- 事件必须幂等，重复提交不得重复污染 Agent 状态。
+- 保持现有业务 API 和业务事实生命周期不变。
+- 事件接入期间不得一次性删除现有 AI 调用，先保持行为兼容。
+
+文件边界：
+
+- `backend/src/main/java/com/interviewcoach/assessment`
+- `backend/src/main/java/com/interviewcoach/training`
+- `backend/src/main/java/com/interviewcoach/mockinterview`
+- `backend/src/main/java/com/interviewcoach/coachingmemory`
+- `backend/src/main/java/com/interviewcoach/agent`
+- `backend/src/test`
+
+验收：
+
+- 完成关键业务行为后，Agent 状态会基于最新事实更新。
+- 重复事件不会产生重复 Agent 状态变更。
+- Agent 失败不会导致测评、训练或模拟面试完成操作失败。
+- 原有 Report 和 TrainingFeedback 生命周期不改变。
+
+### Task 37: 下一步推荐统一
+
+目标：让用户看到由同一个持续教练给出的下一步行动，而不是由不同页面各自推断下一步。
+
+范围：
+
+- Agent 统一输出 `nextRecommendedAction`、`currentGoal` 和 `activeFocusDimensions`。
+- 推荐动作只能指向已有受控业务能力，例如测评、训练、模拟面试、进步追踪或复盘。
+- 现有业务页面逐步读取 Agent 推荐，不自行构造冲突建议。
+- 推荐理由只使用结构化事实摘要和可信记忆。
+
+文件边界：
+
+- `backend/src/main/java/com/interviewcoach/agent`
+- `ios/InterviewCoach/InterviewCoach/Core/API/DTO`
+- `docs/api/openapi.yaml`
+- `backend/src/test`
+
+验收：
+
+- 同一目标岗位下的下一步推荐来源统一。
+- 推荐动作与用户当前阶段和已有业务事实一致。
+- `rejected` 记忆不会驱动推荐。
+- 推荐不扩展为计划外业务能力。
+
+### Task 38: 白名单工具编排与调用预算
+
+目标：让 Agent 能受控编排已有教练能力，同时限制成本、延迟和行为边界。
+
+范围：
+
+- 定义 Assessment、TrainingPlan、AdaptiveTraining、MockInterview、ProgressAnalysis、CoachingMemory 等白名单工具契约。
+- AgentDecision 只能请求已注册工具。
+- 每次 Agent 运行设置模型调用次数、工具调用次数、超时和重试预算。
+- 记录低风险工具调用和模型调用 metrics。
+- 禁止模型直接执行数据库写入、任意 HTTP 请求或未知工具。
+
+文件边界：
+
+- `backend/src/main/java/com/interviewcoach/agent`
+- `backend/src/main/java/com/interviewcoach/ai`
+- `docs/ai/provider-contracts.md`
+- `backend/src/test`
+
+验收：
+
+- 未知工具调用被拒绝并可观测。
+- Agent 不会无限循环调用模型或工具。
+- 工具调用失败不会破坏已有业务事实。
+- metrics 不包含 prompt、completion、用户原文或敏感凭据。
+
+### Task 39: AI 调用、记忆更新与计划调整收拢
+
+目标：减少各业务 Service 无意识重复调用 AI，让模型调用围绕同一个持续教练目标进行。
+
+范围：
+
+- 识别并逐步收拢业务结果生成后重复发生的下一步建议、记忆更新和训练计划调整。
+- 复用已持久化的岗位画像、能力画像、进度和可信教练记忆摘要。
+- 确定性检查由代码完成，不调用模型重复计算。
+- 保留必要的独立质量校验和结构化解析重试。
+- 每次迁移只处理一个小业务切片，保持现有闭环可运行。
+
+文件边界：
+
+- `backend/src/main/java/com/interviewcoach/agent`
+- `backend/src/main/java/com/interviewcoach/assessment`
+- `backend/src/main/java/com/interviewcoach/training`
+- `backend/src/main/java/com/interviewcoach/mockinterview`
+- `backend/src/main/java/com/interviewcoach/coachingmemory`
+- `backend/src/test`
+
+验收：
+
+- Agent 决策能够统一回答是否更新记忆、是否调整计划和下一步行动。
+- 不再为相同事实无意识重复生成冲突建议。
+- 模型调用次数、重试和结构化修复次数可查询。
+- 真实 AI 输出质量不因调用收拢而下降。
+
+### Task 40: iOS 持续教练入口
+
+目标：让用户直接感知同一个面试教练在持续理解目标、跟踪表现并给出下一步行动。
+
+范围：
+
+- 新增 `Features/CoachAgent`。
+- 展示当前教练目标、重点能力维度、下一步推荐行动和最近决策摘要。
+- 推荐动作可进入已有测评、训练、模拟面试、进步追踪或复盘页面。
+- 提供空状态、加载状态、错误状态和 Agent 暂不可用状态。
+- 不实现通用聊天页，不展示内部 Prompt、Provider、工具调用或 metrics。
+
+文件边界：
+
+- `ios/InterviewCoach/InterviewCoach/Features/CoachAgent`
+- `ios/InterviewCoach/InterviewCoach/Core/API/DTO`
+- `docs/api/openapi.yaml`
+
+验收：
+
+- 用户重新打开 App 后仍能看到目标岗位对应的持续教练状态。
+- Agent 推荐动作可进入正确的已有业务流程。
+- 页面不展示 AI 原始字符串或内部实现信息。
+- UI 不扩展为计划外聊天、题库或课程系统。
+
+### Task 41: Agent 真实 AI 回归、隐私与发布硬化
+
+目标：验证持续存在的 Agent 在真实云端 AI 下能够稳定、可信地指导用户，并符合隐私与发布要求。
+
+范围：
+
+- 扩展 live AI smoke 和 `AiContentQualityTest`，覆盖 AgentDecision、关键事件和下一步推荐。
+- 验证测评、训练、模拟面试和记忆纠错后的 Agent 行为。
+- 验证 `inferred`、`rejected`、隐私字段和跨用户隔离约束。
+- 验证 Agent 调用预算、失败恢复、metrics 和结构化解析定位。
+- 更新 Prompt、Provider、隐私和发布文档。
+
+文件边界：
+
+- `backend/src/test`
+- `docs/ai/prompt-contracts.md`
+- `docs/ai/provider-contracts.md`
+- `docs/privacy/data-policy.md`
+- `README.md`
+
+验收：
+
+- 真实 AI 能基于最新可信事实给出合理的下一步教练行动。
+- Agent 不虚构用户经历，不重新使用 `rejected` 内容。
+- Agent 输出结构化解析稳定，失败可定位到 event、task、provider 和失败类型。
+- Agent 状态、日志和 metrics 不包含隐私原文或敏感凭据。
+- 未完成 live AI 验收时，禁止宣称 Agent 已可面向客户。
+
+---
+
+## 8. 最终 MVP 验收路径
 
 Task1-12 的最终验收仍按 MVP 功能闭环执行；Task13 是 TestFlight 提审前置认证任务，不改变 MVP 功能闭环验收路径。
 
@@ -1476,7 +1724,7 @@ dev login
 
 只要这条路径不完整，就不算 MVP 完成。
 
-## 8. 每次任务完成输出
+## 9. 每次任务完成输出
 
 每次实现后必须回复：
 
