@@ -19,6 +19,8 @@ struct TargetDetailView: View {
     @State private var showTraining = false
     @State private var showMockInterview = false
     @State private var showReports = false
+    @State private var showDimensionAnalysis = false
+    @State private var showProgressDashboard = false
     @State private var isLoading = false
     @State private var errorMessage: String?
 
@@ -89,6 +91,16 @@ struct TargetDetailView: View {
                     } label: {
                         Label("历史报告", systemImage: "doc.text")
                     }
+                    Button {
+                        showDimensionAnalysis = true
+                    } label: {
+                        Label("能力维度分析", systemImage: "chart.bar")
+                    }
+                    Button {
+                        showProgressDashboard = true
+                    } label: {
+                        Label("进步追踪", systemImage: "chart.line.uptrend.xyaxis")
+                    }
                 }
             }
 
@@ -151,6 +163,12 @@ struct TargetDetailView: View {
         }
         .sheet(isPresented: $showReports) {
             ReportListView(targetId: currentTarget.id)
+        }
+        .sheet(isPresented: $showDimensionAnalysis) {
+            DimensionAnalysisView(targetId: currentTarget.id)
+        }
+        .sheet(isPresented: $showProgressDashboard) {
+            ProgressDashboardView(targetId: currentTarget.id, targetTitle: currentTarget.title)
         }
         .loadingOverlay(isLoading: isLoading)
     }
