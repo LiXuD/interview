@@ -1,5 +1,7 @@
 package com.interviewcoach.coachingmemory.service;
 
+import com.interviewcoach.agent.entity.CoachEvent;
+import com.interviewcoach.agent.service.InterviewCoachAgentRunner;
 import com.interviewcoach.ai.service.AiPrompt;
 import com.interviewcoach.ai.service.AiStructuredOutputService;
 import com.interviewcoach.coachingmemory.entity.CoachingMemory;
@@ -18,6 +20,9 @@ import com.interviewcoach.common.util.CollectionUtils;
 import com.interviewcoach.target.entity.InterviewTarget;
 import com.interviewcoach.target.repository.InterviewTargetRepository;
 import com.interviewcoach.user.entity.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +33,7 @@ import java.util.UUID;
 @Service
 public class CoachingMemoryService {
 
+    private static final Logger log = LoggerFactory.getLogger(CoachingMemoryService.class);
     private static final String SYSTEM_PROMPT_TEMPLATE = """
             你是 AI 技术面试教练。根据候选人的%s生成结构化教练记忆。
             只返回合法 JSON 对象，不返回任何其他文字。
@@ -53,13 +59,16 @@ public class CoachingMemoryService {
     private final AiStructuredOutputService aiService;
     private final CoachingMemoryRepository memoryRepository;
     private final InterviewTargetRepository targetRepository;
+    private final InterviewCoachAgentRunner agentRunner;
 
     public CoachingMemoryService(AiStructuredOutputService aiService,
                                  CoachingMemoryRepository memoryRepository,
-                                 InterviewTargetRepository targetRepository) {
+                                 InterviewTargetRepository targetRepository,
+                                 @Lazy InterviewCoachAgentRunner agentRunner) {
         this.aiService = aiService;
         this.memoryRepository = memoryRepository;
         this.targetRepository = targetRepository;
+        this.agentRunner = agentRunner;
     }
 
     @Transactional
@@ -120,7 +129,11 @@ public class CoachingMemoryService {
         item.setContent(request.content().trim());
         item.setSource(request.source());
         item.setConfidence("high");
-        return toDto(memoryRepository.save(memory));
+        CoachingMemoryDto result = toDto(memoryRepository.save(memory));
+
+        fireAgentEvent(CoachEvent.MEMORY_CORRECTED, memory.getTarget().getId(), userId);
+
+        return result;
     }
 
     @Transactional
@@ -358,5 +371,13 @@ public class CoachingMemoryService {
         return CollectionUtils.copyList(items).stream()
                 .map(item -> new CoachingMemoryItemDto(item.getContent(), item.getSource(), item.getConfidence()))
                 .toList();
+    }
+
+    private void fireAgentEvent(CoachEvent event, UUID targetId, UUID userId) {
+        try {
+            agentRunner.handleEvent(event, targetId, userId);
+        } catch (Exception ex) {
+            log.warn("Agent event {} failed for targetId={}: {}", event.name(), targetId, ex.getMessage());
+        }
     }
 }

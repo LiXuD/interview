@@ -32,7 +32,7 @@ class MockInterviewServiceTest {
     @Test
     void finishPromptUsesLatestTwelveMessages() throws Exception {
         MockInterviewService service = new MockInterviewService(
-                null, null, null, null, null, null, null, new ObjectMapper(), null);
+                null, null, null, null, null, null, null, null, new ObjectMapper(), null);
         InterviewTarget target = new InterviewTarget();
         target.setTitle("Backend Engineer");
         MockInterview interview = new MockInterview();
@@ -64,7 +64,7 @@ class MockInterviewServiceTest {
     @Test
     void answerPromptIncludesCoachingContextAndSpecificFollowUpRule() throws Exception {
         MockInterviewService service = new MockInterviewService(
-                null, null, null, null, null, null, null, new ObjectMapper(), null);
+                null, null, null, null, null, null, null, null, new ObjectMapper(), null);
         InterviewTarget target = new InterviewTarget();
         target.setTitle("Backend Engineer");
         setId(target, UUID.fromString("00000000-0000-0000-0000-000000000002"));
@@ -121,7 +121,7 @@ class MockInterviewServiceTest {
 
         MockInterviewService service = new MockInterviewService(
                 interviewRepository, targetRepository, null, null, null,
-                aiService, null, new ObjectMapper(), chatMemory);
+                aiService, null, null, new ObjectMapper(), chatMemory);
 
         service.submitAnswer(interviewId, userId, "我会用压测数据校准估算。");
 

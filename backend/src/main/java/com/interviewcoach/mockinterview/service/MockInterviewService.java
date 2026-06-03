@@ -6,6 +6,8 @@ import com.interviewcoach.ai.service.AiPrompt;
 import com.interviewcoach.ai.service.AiStructuredOutputService;
 import com.interviewcoach.assessment.entity.AssessmentResult;
 import com.interviewcoach.assessment.repository.AssessmentResultRepository;
+import com.interviewcoach.agent.entity.CoachEvent;
+import com.interviewcoach.agent.service.InterviewCoachAgentRunner;
 import com.interviewcoach.coachingmemory.service.CoachingMemoryService;
 import com.interviewcoach.common.api.CoachingMemoryDto;
 import com.interviewcoach.common.api.CoachingMemoryItemDto;
@@ -55,6 +57,7 @@ public class MockInterviewService {
     private final ReportRepository reportRepository;
     private final AiStructuredOutputService aiService;
     private final CoachingMemoryService coachingMemoryService;
+    private final InterviewCoachAgentRunner agentRunner;
     private final ObjectMapper objectMapper;
     private final ChatMemory chatMemory;
 
@@ -65,6 +68,7 @@ public class MockInterviewService {
                                 ReportRepository reportRepository,
                                 AiStructuredOutputService aiService,
                                 CoachingMemoryService coachingMemoryService,
+                                InterviewCoachAgentRunner agentRunner,
                                 ObjectMapper objectMapper,
                                 ChatMemory chatMemory) {
         this.interviewRepository = interviewRepository;
@@ -74,6 +78,7 @@ public class MockInterviewService {
         this.reportRepository = reportRepository;
         this.aiService = aiService;
         this.coachingMemoryService = coachingMemoryService;
+        this.agentRunner = agentRunner;
         this.objectMapper = objectMapper;
         this.chatMemory = chatMemory;
     }
@@ -171,6 +176,8 @@ public class MockInterviewService {
         } catch (Exception ex) {
             log.warn("Failed to generate coaching memory for mock interview {}", interviewId, ex);
         }
+
+        fireAgentEvent(CoachEvent.MOCK_INTERVIEW_COMPLETED, interview.getTargetId(), userId);
 
         return reportDto;
     }
@@ -453,5 +460,13 @@ public class MockInterviewService {
                 .stream()
                 .map(this::toSessionDto)
                 .toList();
+    }
+
+    private void fireAgentEvent(CoachEvent event, UUID targetId, UUID userId) {
+        try {
+            agentRunner.handleEvent(event, targetId, userId);
+        } catch (Exception ex) {
+            log.warn("Agent event {} failed for targetId={}: {}", event.name(), targetId, ex.getMessage());
+        }
     }
 }

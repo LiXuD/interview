@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewcoach.ai.service.AiPrompt;
 import com.interviewcoach.ai.service.AiStructuredOutputService;
+import com.interviewcoach.agent.entity.CoachEvent;
+import com.interviewcoach.agent.service.InterviewCoachAgentRunner;
 import com.interviewcoach.coachingmemory.service.CoachingMemoryService;
 import com.interviewcoach.common.api.AnswerStructureDto;
 import com.interviewcoach.common.util.CollectionUtils;
@@ -58,6 +60,7 @@ public class AssessmentService {
     private final CandidateProfileRepository profileRepository;
     private final AiStructuredOutputService aiService;
     private final CoachingMemoryService coachingMemoryService;
+    private final InterviewCoachAgentRunner agentRunner;
     private final ObjectMapper objectMapper;
 
     public AssessmentService(AssessmentSessionRepository sessionRepository,
@@ -67,6 +70,7 @@ public class AssessmentService {
                              CandidateProfileRepository profileRepository,
                              AiStructuredOutputService aiService,
                              CoachingMemoryService coachingMemoryService,
+                             InterviewCoachAgentRunner agentRunner,
                              ObjectMapper objectMapper) {
         this.sessionRepository = sessionRepository;
         this.resultRepository = resultRepository;
@@ -75,6 +79,7 @@ public class AssessmentService {
         this.profileRepository = profileRepository;
         this.aiService = aiService;
         this.coachingMemoryService = coachingMemoryService;
+        this.agentRunner = agentRunner;
         this.objectMapper = objectMapper;
     }
 
@@ -188,6 +193,8 @@ public class AssessmentService {
         } catch (Exception ex) {
             log.warn("Failed to generate coaching memory for assessment {}", sessionId, ex);
         }
+
+        fireAgentEvent(CoachEvent.ASSESSMENT_COMPLETED, session.getTarget().getId(), session.getUser().getId());
 
         return resultDto;
     }
@@ -436,6 +443,14 @@ public class AssessmentService {
 
     private String emptyIfNull(String value) {
         return value == null ? "" : value;
+    }
+
+    private void fireAgentEvent(CoachEvent event, UUID targetId, UUID userId) {
+        try {
+            agentRunner.handleEvent(event, targetId, userId);
+        } catch (Exception ex) {
+            log.warn("Agent event {} failed for targetId={}: {}", event.name(), targetId, ex.getMessage());
+        }
     }
 
 }
