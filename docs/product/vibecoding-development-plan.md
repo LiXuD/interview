@@ -1500,6 +1500,9 @@ Agent 身份与状态
 文件边界：
 
 - `backend/src/main/java/com/interviewcoach/agent`
+- `backend/src/main/java/com/interviewcoach/target`
+- `backend/src/main/java/com/interviewcoach/auth`
+- `backend/src/main/java/com/interviewcoach/common/api`
 - `docs/api/openapi.yaml`
 - `backend/src/test`
 
@@ -1517,15 +1520,19 @@ Agent 身份与状态
 范围：
 
 - 定义 `CoachEvent`、`AgentDecision` 和 `InterviewCoachAgentRunner`。
+- `CoachEvent` 必须在业务事务中持久化并支持幂等、失败状态和独立重试，禁止只使用不可恢复的内存事件。
 - 支持目标创建、摘要确认、测评完成、训练完成、模拟面试完成、记忆纠错和 App 会话开始等事件类型。
 - Runner 加载必要的 Agent、CoachingMemory、Progress 和业务事实摘要。
 - 确定性状态检查由代码完成，需要判断时通过 `AiModelGateway` 调用云端真实 AI。
+- 异步事件处理必须为所属用户建立临时受限执行上下文，确保使用正确用户的云端 Provider。
 - Agent 决策失败不得回滚已完成业务事实。
 
 文件边界：
 
 - `backend/src/main/java/com/interviewcoach/agent`
 - `backend/src/main/java/com/interviewcoach/ai`
+- `backend/src/main/java/com/interviewcoach/common/api`
+- `backend/src/main/resources/application.yml`
 - `docs/ai/prompt-contracts.md`
 - `backend/src/test`
 
@@ -1542,13 +1549,15 @@ Agent 身份与状态
 
 范围：
 
-- 接入测评完成、训练任务或训练会话完成、模拟面试完成、记忆纠错事件。
+- 接入目标创建、摘要确认、测评完成、训练任务或训练会话完成、模拟面试完成、记忆纠错事件。
 - 事件必须幂等，重复提交不得重复污染 Agent 状态。
 - 保持现有业务 API 和业务事实生命周期不变。
 - 事件接入期间不得一次性删除现有 AI 调用，先保持行为兼容。
 
 文件边界：
 
+- `backend/src/main/java/com/interviewcoach/target`
+- `backend/src/main/java/com/interviewcoach/profile`
 - `backend/src/main/java/com/interviewcoach/assessment`
 - `backend/src/main/java/com/interviewcoach/training`
 - `backend/src/main/java/com/interviewcoach/mockinterview`
@@ -1604,6 +1613,7 @@ Agent 身份与状态
 
 - `backend/src/main/java/com/interviewcoach/agent`
 - `backend/src/main/java/com/interviewcoach/ai`
+- `backend/src/main/resources/application.yml`
 - `docs/ai/provider-contracts.md`
 - `backend/src/test`
 
@@ -1621,6 +1631,7 @@ Agent 身份与状态
 范围：
 
 - 识别并逐步收拢业务结果生成后重复发生的下一步建议、记忆更新和训练计划调整。
+- 最终 Agent 决策可以携带经过后端校验的结构化记忆更新和后续待办训练任务调整，禁止直接修改已完成或进行中的任务。
 - 复用已持久化的岗位画像、能力画像、进度和可信教练记忆摘要。
 - 确定性检查由代码完成，不调用模型重复计算。
 - 保留必要的独立质量校验和结构化解析重试。
@@ -1633,6 +1644,8 @@ Agent 身份与状态
 - `backend/src/main/java/com/interviewcoach/training`
 - `backend/src/main/java/com/interviewcoach/mockinterview`
 - `backend/src/main/java/com/interviewcoach/coachingmemory`
+- `backend/src/main/java/com/interviewcoach/common/api`
+- `docs/ai/prompt-contracts.md`
 - `backend/src/test`
 
 验收：
@@ -1658,6 +1671,7 @@ Agent 身份与状态
 
 - `ios/InterviewCoach/InterviewCoach/Features/CoachAgent`
 - `ios/InterviewCoach/InterviewCoach/Core/API/DTO`
+- `ios/InterviewCoach/InterviewCoach.xcodeproj/project.pbxproj`
 - `docs/api/openapi.yaml`
 
 验收：

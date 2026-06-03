@@ -161,7 +161,8 @@ APP_SESSION_STARTED
 
 ```text
 业务行为完成
--> 发布 CoachEvent
+-> 在同一业务事务中持久化幂等 CoachEvent
+-> 业务事务提交后异步调度
 -> InterviewCoachAgentRunner 加载 Agent
 -> 加载必要的 CoachingMemory、Progress 与业务事实摘要
 -> 代码执行确定性状态检查
@@ -172,6 +173,8 @@ APP_SESSION_STARTED
 ```
 
 Agent 失败不能回滚已经完成的测评、训练或模拟面试事实。Agent 决策应允许独立重试。
+
+`CoachEvent` 只保存用户、目标、事件类型、来源类型、来源 ID、幂等键和处理状态等低风险元数据，不保存用户回答原文、简历原文、Prompt 或 Completion。事件处理线程不依赖原始 HTTP 请求的 `SecurityContext`，必须根据事件所属用户建立临时受限执行上下文，确保 `AiModelGateway` 仍选择正确用户的云端 Provider，并在调用完成后清理上下文。
 
 ## 7. 受控工具
 
@@ -196,6 +199,8 @@ CoachingMemoryTool
 - `CoachingMemoryTool`：读取必要可信摘要或请求记忆更新。
 
 第一阶段不允许模型直接执行数据库写入、构造任意 HTTP 请求或访问未知工具。
+
+受控工具编排最多允许两次模型决策：第一次决策可以请求有限数量的只读工具，第二次决策接收低风险结构化工具摘要并输出最终行动。第二次决策禁止继续请求工具，避免无限自主循环。
 
 ## 8. 与现有模块的关系
 
@@ -312,4 +317,3 @@ Phase 4 按小任务逐步推进：
 8. 真实 AI 回归、隐私与发布硬化。
 
 每个任务必须保持已有业务闭环可运行，不一次性替换全部 AI 调用。
-
