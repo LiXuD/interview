@@ -115,6 +115,10 @@ public class AiMetrics {
                 .increment(estimatedTokens);
     }
 
+    public MeterRegistry meterRegistry() {
+        return registry;
+    }
+
     private static String safeTag(String value) {
         return value == null || value.isBlank() ? "unknown" : value;
     }

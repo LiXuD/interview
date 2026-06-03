@@ -174,12 +174,15 @@ Task 26 起，后端通过 Micrometer 记录 AI 调用指标，可通过 Spring 
 | `ai.timeout` | Counter | task, provider, model, mode | AI 调用超时次数 |
 | `ai.call.retry` | Counter | task, provider, model, mode | AI 瞬时失败重试次数 |
 | `ai.token.usage` | Counter | task, provider, model | 估算 token 使用量 |
+| `agent.event.duration` | Timer | event, outcome | Agent 事件处理延迟（纳秒） |
+| `agent.event.total` | Counter | event, outcome | Agent 事件总次数 |
 
 ### 8.2 标签值
 
 | 标签 | 取值范围 | 说明 |
 |------|----------|------|
-| `task` | jobBrief, assessmentQuestions, assessmentQuestionScore, assessmentResult, trainingPlan, trainingFeedback, adaptiveTrainingTurn, mockInterviewQuestion, mockInterviewReport, candidateProfileDraft, coachingMemory | AI 任务类型 |
+| `task` | jobBrief, assessmentQuestions, assessmentQuestionScore, assessmentResult, trainingPlan, trainingFeedback, adaptiveTrainingTurn, mockInterviewQuestion, mockInterviewReport, candidateProfileDraft, coachingMemory, agentDecision | AI 任务类型 |
+| `event` | TARGET_CREATED, RESUME_SUMMARY_CONFIRMED, ASSESSMENT_COMPLETED, TRAINING_TASK_COMPLETED, TRAINING_SESSION_COMPLETED, MOCK_INTERVIEW_COMPLETED, MEMORY_CORRECTED, APP_SESSION_STARTED | Agent 触发事件 |
 | `provider` | platformDefault, userOpenAICompatible | Provider 类型 |
 | `model` | 配置的模型名称 | 模型标识 |
 | `mode` | chatCompletions, responses | API 模式 |
