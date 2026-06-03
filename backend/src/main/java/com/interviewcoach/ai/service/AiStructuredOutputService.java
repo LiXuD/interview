@@ -252,21 +252,35 @@ public class AiStructuredOutputService {
         }
     }
 
+    private static final String REPAIR_SYSTEM_SUFFIX = """
+
+            你之前的回复无法被解析为合法 JSON。请只修复 JSON 格式问题，不要新增、删除或修改任何业务内容。
+            直接输出修复后的 JSON，不要包含任何解释或 markdown 格式。""";
+
     private <T> T generateAndValidate(AiPrompt prompt, Class<T> type, BiConsumer<T, AiPrompt> validator) {
         try {
+            String malformedJson = null;
+            String validationError = null;
             for (int attempt = 0; attempt < 2; attempt++) {
-                String rawJson = generateFromProvider(prompt);
+                AiPrompt actualPrompt = (attempt == 1 && malformedJson != null)
+                        ? repairPrompt(prompt, malformedJson, validationError)
+                        : prompt;
+                String rawJson = generateFromProvider(actualPrompt);
                 recordTokenUsageIfPossible(prompt, rawJson);
                 try {
                     T result = objectMapper.readValue(rawJson, type);
                     validator.accept(result, prompt);
                     return result;
                 } catch (JsonProcessingException ex) {
+                    malformedJson = rawJson;
+                    validationError = null;
                     if (attempt == 1) {
                         recordParseFailure(prompt);
                         throw new AiParseException(prompt.task());
                     }
                 } catch (IllegalArgumentException ex) {
+                    malformedJson = rawJson;
+                    validationError = ex.getMessage();
                     if (attempt == 1) {
                         recordValidationFailure(prompt);
                         throw new AiParseException(prompt.task());
@@ -278,6 +292,16 @@ public class AiStructuredOutputService {
         } finally {
             DefaultAiModelGateway.clearRequestContext();
         }
+    }
+
+    private AiPrompt repairPrompt(AiPrompt original, String malformedJson, String validationError) {
+        String repairInstruction = validationError != null
+                ? "你之前的回复存在以下问题：" + validationError + "。请修复后重新输出。"
+                : "你之前的回复无法被解析为合法 JSON。请只修复 JSON 格式问题。";
+        String userPrompt = repairInstruction + "\n\n你之前的回复：\n" + malformedJson
+                + "\n\n请直接输出修复后的完整 JSON，不要包含任何解释或 markdown 格式。";
+        return new AiPrompt(original.task(), original.targetId(),
+                original.systemPrompt() + REPAIR_SYSTEM_SUFFIX, userPrompt);
     }
 
     private <T> T validateStructured(AiPrompt prompt, T result, BiConsumer<T, AiPrompt> validator) {

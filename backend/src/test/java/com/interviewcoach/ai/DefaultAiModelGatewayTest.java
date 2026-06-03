@@ -19,13 +19,20 @@ import com.interviewcoach.common.api.CandidateProfileDraftDto;
 import com.interviewcoach.common.error.AiProviderCallFailedException;
 import com.interviewcoach.user.entity.User;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 
+import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -304,5 +311,69 @@ class DefaultAiModelGatewayTest {
                 springProperties,
                 springAiUserProviderClient,
                 new NoOpAiMetrics());
+    }
+
+    private boolean invokeIsTransientFailure(Throwable ex) {
+        return ReflectionTestUtils.invokeMethod(DefaultAiModelGateway.class, "isTransientFailure", ex);
+    }
+
+    @Test
+    @DisplayName("isTransientFailure: HttpServerErrorException 502 应为瞬时失败")
+    void httpServerError502IsTransient() {
+        HttpServerErrorException ex = new HttpServerErrorException(
+                HttpStatusCode.valueOf(502), "Bad Gateway", "{}".getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+        assertThat(invokeIsTransientFailure(ex)).isTrue();
+    }
+
+    @Test
+    @DisplayName("isTransientFailure: HttpServerErrorException 503 应为瞬时失败")
+    void httpServerError503IsTransient() {
+        HttpServerErrorException ex = new HttpServerErrorException(
+                HttpStatusCode.valueOf(503), "Service Unavailable", "{}".getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+        assertThat(invokeIsTransientFailure(ex)).isTrue();
+    }
+
+    @Test
+    @DisplayName("isTransientFailure: HttpServerErrorException 429 应为瞬时失败")
+    void httpServerError429IsTransient() {
+        HttpServerErrorException ex = new HttpServerErrorException(
+                HttpStatusCode.valueOf(429), "Too Many Requests", "{}".getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+        assertThat(invokeIsTransientFailure(ex)).isTrue();
+    }
+
+    @Test
+    @DisplayName("isTransientFailure: HttpClientErrorException 400 不应为瞬时失败")
+    void httpClientError400IsNotTransient() {
+        HttpServerErrorException ex = new HttpServerErrorException(
+                HttpStatusCode.valueOf(400), "Bad Request", "{}".getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+        assertThat(invokeIsTransientFailure(ex)).isFalse();
+    }
+
+    @Test
+    @DisplayName("isTransientFailure: TimeoutException 应为瞬时失败")
+    void timeoutExceptionIsTransient() {
+        assertThat(invokeIsTransientFailure(new TimeoutException("request timed out"))).isTrue();
+    }
+
+    @Test
+    @DisplayName("isTransientFailure: SocketTimeoutException 应为瞬时失败")
+    void socketTimeoutIsTransient() {
+        assertThat(invokeIsTransientFailure(new SocketTimeoutException("read timed out"))).isTrue();
+    }
+
+    @Test
+    @DisplayName("isTransientFailure: ResourceAccessException 应为瞬时失败")
+    void resourceAccessExceptionIsTransient() {
+        ResourceAccessException ex = new ResourceAccessException("I/O error", new SocketTimeoutException());
+        assertThat(invokeIsTransientFailure(ex)).isTrue();
+    }
+
+    @Test
+    @DisplayName("isTransientFailure: 嵌套 502 应为瞬时失败")
+    void nested502IsTransient() {
+        HttpServerErrorException cause = new HttpServerErrorException(
+                HttpStatusCode.valueOf(502), "Bad Gateway", "{}".getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+        RuntimeException wrapper = new RuntimeException("wrapped", cause);
+        assertThat(invokeIsTransientFailure(wrapper)).isTrue();
     }
 }

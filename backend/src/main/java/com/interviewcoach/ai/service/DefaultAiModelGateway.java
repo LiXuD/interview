@@ -7,6 +7,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import org.springframework.web.client.HttpStatusCodeException;
+
 import java.net.SocketTimeoutException;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
@@ -61,16 +63,13 @@ public class DefaultAiModelGateway implements AiModelGateway {
     private static boolean isTransientFailure(Throwable ex) {
         for (Throwable t = ex; t != null; t = t.getCause()) {
             if (t instanceof TimeoutException || t instanceof SocketTimeoutException) return true;
+            if (t instanceof HttpStatusCodeException hsce) {
+                int code = hsce.getStatusCode().value();
+                if (code == 429 || code >= 500) return true;
+            }
             String name = t.getClass().getSimpleName();
             if (name.contains("ResourceAccessException")) return true;
             if (name.contains("Connection") && name.contains("Exception")) return true;
-            if (name.contains("HttpStatusCodeException")) {
-                String msg = t.getMessage();
-                if (msg != null && (msg.contains("429") || msg.contains("502")
-                        || msg.contains("503") || msg.contains("504"))) {
-                    return true;
-                }
-            }
             String msg = t.getMessage();
             if (msg != null && msg.toLowerCase().contains("timeout")) return true;
         }

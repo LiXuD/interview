@@ -1631,6 +1631,57 @@ class AiStructuredOutputServiceTest {
         assertEquals(2, callCount[0], "Should have retried once");
     }
 
+    @Test
+    void repairPromptIncludesMalformedJsonAndFixInstructions() {
+        AiPrompt[] capturedRepairPrompt = {null};
+        int[] callCount = {0};
+        PlatformAiClient client = prompt -> {
+            callCount[0]++;
+            if (callCount[0] == 1) {
+                return "not valid json";
+            }
+            capturedRepairPrompt[0] = prompt;
+            return """
+                    {
+                      "question": "Repaired question"
+                    }
+                    """;
+        };
+        String result = serviceWith(client).generateMockInterviewQuestion(
+                new AiPrompt("mockInterviewQuestion", null, "system prompt", "user prompt"));
+        assertEquals("Repaired question", result);
+        assertEquals(2, callCount[0]);
+        assertThat(capturedRepairPrompt[0].systemPrompt()).contains("修复");
+        assertThat(capturedRepairPrompt[0].userPrompt()).contains("not valid json");
+        assertThat(capturedRepairPrompt[0].userPrompt()).contains("修复");
+    }
+
+    @Test
+    void repairPromptIncludesValidationErrorMessage() {
+        AiPrompt[] capturedRepairPrompt = {null};
+        int[] callCount = {0};
+        PlatformAiClient client = prompt -> {
+            callCount[0]++;
+            if (callCount[0] == 1) {
+                return """
+                        {
+                          "question": ""
+                        }
+                        """;
+            }
+            capturedRepairPrompt[0] = prompt;
+            return """
+                    {
+                      "question": "Fixed question"
+                    }
+                    """;
+        };
+        String result = serviceWith(client).generateMockInterviewQuestion(
+                new AiPrompt("mockInterviewQuestion", null, "system prompt", "user prompt"));
+        assertEquals("Fixed question", result);
+        assertThat(capturedRepairPrompt[0].userPrompt()).contains("question is required");
+    }
+
     private static class CapturingAiMetrics extends AiMetrics {
         private String tokenTask;
         private String tokenProvider;

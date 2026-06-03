@@ -17,14 +17,15 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Task 26/27: 真实 AI 冒烟测试 — 验证核心 AI task 的端到端链路可达性。
  *
- * 比 AiContentQualityTest 更轻量：只验证结构正确性，不断言内容质量。
- * 允许 AI 偶发解析失败（模型波动），只断言基础设施和链路可达。
+ * 核心闭环 (JobBrief -> Assessment -> TrainingPlan -> TrainingFeedback) 为硬门禁：
+ * 每一步必须成功，不允许平均成功率稀释。
+ *
+ * MockInterview 单独测试，允许偶发失败。
  *
  * 运行方式：
  *   cd backend && set -a; source .env; set +a; mvn -q -Dtest=AiLiveSmokeTest test
@@ -34,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("live-ai-test")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@Timeout(value = 300, unit = TimeUnit.SECONDS)
+@Timeout(value = 600, unit = TimeUnit.SECONDS)
 class AiLiveSmokeTest {
 
     private static final boolean LIVE_AI_ENABLED =
@@ -61,147 +62,130 @@ class AiLiveSmokeTest {
 
     @Test
     @Order(1)
-    @DisplayName("冒烟: 端到端链路可达性 — 基础设施 + AI task 成功率")
-    void fullPipelineSmokeTest() throws Exception {
-        // 1. 登录（非 AI，必须成功）
-        String token = loginAndGetToken("smoke_user");
-
-        // 2. 创建目标岗位（非 AI，必须成功）
+    @DisplayName("核心闭环门禁: JobBrief -> Assessment -> TrainingPlan -> TrainingFeedback 必须全部成功")
+    void corePipelineSmokeTest() throws Exception {
+        String token = loginAndGetToken("smoke_core_user");
         String targetId = createTarget(token, "Java Backend",
                 "熟悉 Java/Spring Boot/MySQL/Redis");
-
-        // 3. 确认候选人摘要（非 AI，必须成功）
         confirmProfile(token, targetId,
                 "5年Java后端开发经验，熟悉Spring Boot和微服务架构",
                 java.util.List.of("Java", "Spring Boot", "MySQL", "Redis"),
                 java.util.List.of("支付系统重构，日均处理百万级交易"),
                 java.util.List.of("某互联网公司 后端工程师 3年"));
 
-        int aiTasksAttempted = 0;
-        int aiTasksSucceeded = 0;
-
-        // 4. JobBrief
-        aiTasksAttempted++;
+        // 1. JobBrief — 必须成功
         MvcResult jobBriefResult = mockMvc.perform(post("/api/job-briefs/generate")
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new JobBriefGenerateRequest(targetId))))
+                .andExpect(status().isOk())
                 .andReturn();
-        if (jobBriefResult.getResponse().getStatus() == 200) {
-            JobBriefDto jobBrief = objectMapper.readValue(
-                    jobBriefResult.getResponse().getContentAsString(), JobBriefDto.class);
-            assertThat(jobBrief.roleSummary()).isNotBlank();
-            aiTasksSucceeded++;
-        }
+        JobBriefDto jobBrief = objectMapper.readValue(
+                jobBriefResult.getResponse().getContentAsString(), JobBriefDto.class);
+        assertThat(jobBrief.roleSummary()).as("JobBrief.roleSummary").isNotBlank();
+        assertThat(jobBrief.mustHaveSkills()).as("JobBrief.mustHaveSkills").isNotEmpty();
 
-        // 5. Assessment: start + 5 answers + finish
-        aiTasksAttempted++;
+        // 2. Assessment: start — 必须成功
         MvcResult startResult = mockMvc.perform(post("/api/assessments/start")
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new AssessmentStartRequest(targetId))))
+                .andExpect(status().isOk())
                 .andReturn();
-        if (startResult.getResponse().getStatus() == 200) {
-            aiTasksSucceeded++;
-        }
-        String sessionId = null;
-        if (startResult.getResponse().getStatus() == 200) {
-            sessionId = objectMapper.readTree(startResult.getResponse().getContentAsString()).get("id").asText();
-        }
+        String sessionId = objectMapper.readTree(startResult.getResponse().getContentAsString())
+                .get("id").asText();
 
-        int successfulScores = 0;
-        if (sessionId != null) {
-            for (int i = 0; i < 5; i++) {
-                aiTasksAttempted++;
-                MvcResult answerResult = mockMvc.perform(post("/api/assessments/" + sessionId + "/answers")
-                                .header("Authorization", "Bearer " + token)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(
-                                        new AssessmentAnswerRequest("回答第" + (i + 1) + "题"))))
-                        .andReturn();
-                if (answerResult.getResponse().getStatus() == 200) {
-                    aiTasksSucceeded++;
-                    successfulScores++;
-                }
-            }
-
-            aiTasksAttempted++;
-            MvcResult finishResult = mockMvc.perform(post("/api/assessments/" + sessionId + "/finish")
-                            .header("Authorization", "Bearer " + token))
+        // 3. Assessment: 5 题评分 — 全部必须成功
+        for (int i = 0; i < 5; i++) {
+            MvcResult answerResult = mockMvc.perform(post("/api/assessments/" + sessionId + "/answers")
+                            .header("Authorization", "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(
+                                    new AssessmentAnswerRequest("回答第" + (i + 1) + "题"))))
                     .andReturn();
-            if (finishResult.getResponse().getStatus() == 200) {
-                aiTasksSucceeded++;
-            }
+            assertThat(answerResult.getResponse().getStatus())
+                    .as("Assessment answer %d status", i + 1)
+                    .isEqualTo(200);
         }
 
-        // 6. TrainingPlan
-        aiTasksAttempted++;
+        // 4. Assessment: finish — 必须成功
+        MvcResult finishResult = mockMvc.perform(post("/api/assessments/" + sessionId + "/finish")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
+        AssessmentResultDto assessmentResult = objectMapper.readValue(
+                finishResult.getResponse().getContentAsString(), AssessmentResultDto.class);
+        assertThat(assessmentResult.totalScore()).as("AssessmentResult.totalScore").isBetween(0, 100);
+
+        // 5. TrainingPlan — 必须成功（依赖 Assessment 完成）
         MvcResult planResult = mockMvc.perform(post("/api/training-plans/generate")
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new TrainingPlanGenerateRequest(targetId))))
+                .andExpect(status().isOk())
                 .andReturn();
-        String taskId = null;
-        if (planResult.getResponse().getStatus() == 200) {
-            aiTasksSucceeded++;
-            taskId = objectMapper.readTree(planResult.getResponse().getContentAsString())
-                    .get("tasks").get(0).get("id").asText();
-        }
+        String taskId = objectMapper.readTree(planResult.getResponse().getContentAsString())
+                .get("tasks").get(0).get("id").asText();
 
-        // 7. TrainingFeedback
-        if (taskId != null) {
-            aiTasksAttempted++;
-            MvcResult feedbackResult = mockMvc.perform(post("/api/training-tasks/" + taskId + "/answer")
-                            .header("Authorization", "Bearer " + token)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(
-                                    new TrainingTaskAnswerRequest("使用Spring Boot自动配置简化开发"))))
-                    .andReturn();
-            if (feedbackResult.getResponse().getStatus() == 200) {
-                aiTasksSucceeded++;
-            }
-        }
+        // 6. TrainingFeedback — 必须成功
+        MvcResult feedbackResult = mockMvc.perform(post("/api/training-tasks/" + taskId + "/answer")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new TrainingTaskAnswerRequest("使用Spring Boot自动配置简化开发"))))
+                .andExpect(status().isOk())
+                .andReturn();
+        TrainingFeedbackDto feedback = objectMapper.readValue(
+                feedbackResult.getResponse().getContentAsString(), TrainingFeedbackDto.class);
+        assertThat(feedback.score()).as("TrainingFeedback.score").isBetween(0, 100);
+        assertThat(feedback.feedback()).as("TrainingFeedback.feedback").isNotBlank();
+    }
 
-        // 8. MockInterview: start + 1 answer + finish
-        aiTasksAttempted++;
+    @Test
+    @Order(2)
+    @DisplayName("MockInterview 冒烟: start -> answer -> finish 允许偶发失败")
+    void mockInterviewSmokeTest() throws Exception {
+        String token = loginAndGetToken("smoke_mock_user");
+        String targetId = createTarget(token, "Java Backend",
+                "熟悉 Java/Spring Boot/MySQL/Redis");
+        confirmProfile(token, targetId,
+                "5年Java后端开发经验，熟悉Spring Boot和微服务架构",
+                java.util.List.of("Java", "Spring Boot", "MySQL", "Redis"),
+                java.util.List.of("支付系统重构，日均处理百万级交易"),
+                java.util.List.of("某互联网公司 后端工程师 3年"));
+
         MvcResult interviewResult = mockMvc.perform(post("/api/mock-interviews/start")
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new MockInterviewStartRequest(targetId, null))))
                 .andReturn();
-        String interviewId = null;
-        if (interviewResult.getResponse().getStatus() == 200) {
-            aiTasksSucceeded++;
-            interviewId = objectMapper.readTree(interviewResult.getResponse().getContentAsString()).get("id").asText();
+
+        if (interviewResult.getResponse().getStatus() != 200) {
+            // MockInterview 允许偶发失败（AI 模型波动）
+            return;
         }
 
-        if (interviewId != null) {
-            aiTasksAttempted++;
-            MvcResult answerResult = mockMvc.perform(post("/api/mock-interviews/" + interviewId + "/answer")
-                            .header("Authorization", "Bearer " + token)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(
-                                    new MockInterviewAnswerRequest("我使用Redis缓存热点数据"))))
-                    .andReturn();
-            if (answerResult.getResponse().getStatus() == 200) {
-                aiTasksSucceeded++;
-            }
+        String interviewId = objectMapper.readTree(interviewResult.getResponse().getContentAsString())
+                .get("id").asText();
 
-            aiTasksAttempted++;
-            MvcResult reportResult = mockMvc.perform(post("/api/mock-interviews/" + interviewId + "/finish")
-                            .header("Authorization", "Bearer " + token))
-                    .andReturn();
-            if (reportResult.getResponse().getStatus() == 200) {
-                aiTasksSucceeded++;
-            }
+        MvcResult answerResult = mockMvc.perform(post("/api/mock-interviews/" + interviewId + "/answer")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new MockInterviewAnswerRequest("我使用Redis缓存热点数据"))))
+                .andReturn();
+        if (answerResult.getResponse().getStatus() != 200) {
+            return;
         }
 
-        // 最终断言：至少 50% 的 AI task 成功（允许模型波动）
-        double successRate = (double) aiTasksSucceeded / aiTasksAttempted;
-        assertThat(successRate)
-                .as("AI task 成功率 %.0f%% (%d/%d) — 允许模型偶发失败，但基础设施必须可达",
-                        successRate * 100, aiTasksSucceeded, aiTasksAttempted)
-                .isGreaterThanOrEqualTo(0.5);
+        MvcResult reportResult = mockMvc.perform(post("/api/mock-interviews/" + interviewId + "/finish")
+                        .header("Authorization", "Bearer " + token))
+                .andReturn();
+        if (reportResult.getResponse().getStatus() == 200) {
+            MockInterviewReportDto report = objectMapper.readValue(
+                    reportResult.getResponse().getContentAsString(), MockInterviewReportDto.class);
+            assertThat(report.overallScore()).as("MockInterviewReport.overallScore").isBetween(0, 100);
+        }
     }
 
     private String loginAndGetToken(String username) throws Exception {
