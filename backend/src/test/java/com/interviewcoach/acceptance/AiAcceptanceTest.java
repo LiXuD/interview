@@ -442,6 +442,7 @@ class AiAcceptanceTest {
                 case "mockInterviewReport" -> mockInterviewReportResponse(
                         prompt.targetId());
                 case "coachingMemory" -> mockCoachingMemoryResponse();
+                case "agentDecision" -> mockAgentDecisionResponse();
                 default -> "{}";
             };
         });
@@ -640,5 +641,147 @@ class AiAcceptanceTest {
                   ]
                 }
                 """;
+    }
+
+    private String mockAgentDecisionResponse() {
+        return """
+                {
+                  "currentGoal": "帮助候选人补强系统设计和高级特性短板",
+                  "focusDimensions": ["系统设计", "高级特性"],
+                  "recommendedAction": "建议先完成训练计划中的系统设计练习，再进行下一次模拟面试",
+                  "rationaleSummary": "测评显示系统设计和高级特性是主要短板，训练计划已生成针对性任务",
+                  "toolCalls": [
+                    {"toolName": "generateTrainingPlan", "reason": "基于测评短板生成训练计划"},
+                    {"toolName": "startAdaptiveTraining", "reason": "围绕系统设计进行专项训练"}
+                  ],
+                  "memoryUpdateRequired": false,
+                  "planAdjustmentRequired": false
+                }
+                """;
+    }
+
+    // ==================== Agent 管道测试 ====================
+
+    @Test
+    @DisplayName("Agent 在测评完成后自动更新状态")
+    void agentUpdatesAfterAssessment() throws Exception {
+        String token = loginAndGetToken("accept_agent_user");
+        String targetId = createTarget(token, "Agent Test", "Test JD");
+        confirmProfile(token, targetId, "Summary", List.of("Java"), List.of("Project"), List.of("Exp"));
+        mockAllAiTasks(targetId);
+
+        // Run assessment to trigger agent event
+        String sessionId = mockMvc.perform(post("/api/assessments/start")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new AssessmentStartRequest(targetId))))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        sessionId = objectMapper.readTree(sessionId).get("id").asText();
+
+        answerAllQuestions(token, sessionId, "Strong answer", "Weak answer");
+
+        mockMvc.perform(post("/api/assessments/" + sessionId + "/finish")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+
+        // Verify agent state updated
+        mockMvc.perform(get("/api/targets/" + targetId + "/coach-agent")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.targetId").value(targetId))
+                .andExpect(jsonPath("$.status").value("active"))
+                .andExpect(jsonPath("$.currentGoal").isString())
+                .andExpect(jsonPath("$.activeFocusDimensions").isArray())
+                .andExpect(jsonPath("$.nextRecommendedAction").isString())
+                .andExpect(jsonPath("$.lastDecisionSummary").isString())
+                .andExpect(jsonPath("$.lastRunAt").isString());
+    }
+
+    @Test
+    @DisplayName("Agent 在训练完成后更新状态")
+    void agentUpdatesAfterTraining() throws Exception {
+        String token = loginAndGetToken("accept_agent_train_user");
+        String targetId = createTarget(token, "Agent Train Test", "Test JD");
+        confirmProfile(token, targetId, "Summary", List.of("Java"), List.of("Project"), List.of("Exp"));
+        mockAllAiTasks(targetId);
+
+        // Generate JobBrief first (required for assessment)
+        mockMvc.perform(post("/api/job-briefs/generate")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new JobBriefGenerateRequest(targetId))))
+                .andExpect(status().isOk());
+
+        // Complete assessment (required for training plan)
+        String sessionJson = mockMvc.perform(post("/api/assessments/start")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new AssessmentStartRequest(targetId))))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String sessionId = objectMapper.readTree(sessionJson).get("id").asText();
+
+        for (int i = 1; i <= 5; i++) {
+            mockMvc.perform(post("/api/assessments/" + sessionId + "/answers")
+                            .header("Authorization", "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(new AssessmentAnswerRequest("Answer " + i))))
+                    .andExpect(status().isOk());
+        }
+
+        mockMvc.perform(post("/api/assessments/" + sessionId + "/finish")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+
+        // Generate plan and complete a task
+        MvcResult planResult = mockMvc.perform(post("/api/training-plans/generate")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TrainingPlanGenerateRequest(targetId))))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String taskId = objectMapper.readTree(planResult.getResponse().getContentAsString())
+                .get("tasks").get(0).get("id").asText();
+
+        mockMvc.perform(post("/api/training-tasks/" + taskId + "/answer")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new TrainingTaskAnswerRequest("My training answer"))))
+                .andExpect(status().isOk());
+
+        // Verify agent state after training
+        mockMvc.perform(get("/api/targets/" + targetId + "/coach-agent")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.currentGoal").isString())
+                .andExpect(jsonPath("$.lastEventType").value("TRAINING_TASK_COMPLETED"));
+    }
+
+    @Test
+    @DisplayName("Agent 使用 camelCase 字段名")
+    void agentDtoUsesCamelCase() throws Exception {
+        String token = loginAndGetToken("accept_agent_camel_user");
+        String targetId = createTarget(token, "Camel Test", "Test JD");
+        confirmProfile(token, targetId, "Summary", List.of("Java"), List.of(), List.of());
+        mockAllAiTasks(targetId);
+
+        String response = mockMvc.perform(get("/api/targets/" + targetId + "/coach-agent")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        var json = objectMapper.readTree(response);
+        assertThat(json.has("targetId")).isTrue();
+        assertThat(json.has("currentStage")).isTrue();
+        assertThat(json.has("currentGoal")).isTrue();
+        assertThat(json.has("activeFocusDimensions")).isTrue();
+        assertThat(json.has("nextRecommendedAction")).isTrue();
+        assertThat(json.has("lastDecisionSummary")).isTrue();
+        assertThat(json.has("lastRunAt")).isTrue();
+        assertThat(json.has("target_id")).isFalse();
+        assertThat(json.has("current_stage")).isFalse();
     }
 }

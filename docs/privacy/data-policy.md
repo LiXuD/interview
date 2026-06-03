@@ -132,6 +132,17 @@ grep -r "System.out\|System.err\|logger\." backend/src/main/java/com/interviewco
 
 ## 6. 数据隔离
 
-- 不同用户禁止互相访问对方的 Target、Profile、Report、Provider。
+- 不同用户禁止互相访问对方的 Target、Profile、Report、Provider、Agent。
 - 所有业务查询必须包含用户 ID 过滤。
 - iOS 本地 SwiftData 查询必须按当前用户 ID 过滤。
+
+## 7. Agent 隐私边界
+
+Phase 4 `InterviewCoachAgent` 隐私约束：
+
+- Agent 数据按 `userId + targetId` 唯一隔离，所有查询必须包含用户 ID。
+- Agent 不保存简历原文、用户回答原文、API Key、Authorization Header、完整请求头或 hidden chain-of-thought。
+- `lastDecisionSummary` 只保存面向业务的结构化摘要，不保存模型思维链。
+- Agent Observability 只记录低风险元数据：`event`、`stage`、`outcome`、`latency`；不记录 prompt、completion 或用户原文。
+- Agent 随账号删除（cascade in AuthService）和目标删除（cascade in InterviewTargetService）自动清理。
+- Agent 决策中的 `rationaleSummary` 可展示给用户，不包含敏感信息。

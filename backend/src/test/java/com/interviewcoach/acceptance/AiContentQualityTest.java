@@ -736,6 +736,117 @@ class AiContentQualityTest {
         assertThat(candidateMatchAll).doesNotContain("深度学习训练");
     }
 
+    // ==================== Phase 4: Agent Decision 质量验收 ====================
+
+    @Test
+    @Order(15)
+    @DisplayName("Agent: 测评完成后 Agent 决策包含完整字段且工具在白名单内")
+    void agentDecisionAfterAssessmentIsComplete() throws Exception {
+        PipelineContext ctx = setupFullPipeline(AiAcceptanceFixtures.JAVA_TITLE,
+                AiAcceptanceFixtures.JAVA_JD,
+                AiAcceptanceFixtures.JAVA_SUMMARY,
+                AiAcceptanceFixtures.JAVA_SKILLS,
+                AiAcceptanceFixtures.JAVA_PROJECTS,
+                AiAcceptanceFixtures.JAVA_EXPERIENCE);
+
+        // Agent should have been updated after assessment finish (triggered in setupFullPipeline)
+        MvcResult agentResult = mockMvc.perform(get("/api/targets/" + ctx.targetId + "/coach-agent")
+                        .header("Authorization", "Bearer " + ctx.token))
+                .andReturn();
+        assumeAiOk(agentResult, "Agent 状态查询");
+
+        com.fasterxml.jackson.databind.JsonNode agentJson =
+                objectMapper.readTree(agentResult.getResponse().getContentAsString());
+
+        // Verify agent exists and has been updated
+        assertThat(agentJson.get("id")).isNotNull();
+        assertThat(agentJson.get("targetId").asText()).isEqualTo(ctx.targetId);
+        assertThat(agentJson.get("status").asText()).isEqualTo("active");
+        assertThat(agentJson.get("currentStage").asText()).isNotBlank();
+        assertThat(agentJson.get("currentGoal").asText()).isNotBlank();
+        assertThat(agentJson.get("activeFocusDimensions").isArray()).isTrue();
+        assertThat(agentJson.get("activeFocusDimensions").size()).isGreaterThan(0);
+        assertThat(agentJson.get("nextRecommendedAction").asText()).isNotBlank();
+        assertThat(agentJson.get("lastDecisionSummary").asText()).isNotBlank();
+
+        // Verify last event type is assessment-related
+        assertThat(agentJson.get("lastEventType").asText()).isEqualTo("ASSESSMENT_COMPLETED");
+    }
+
+    @Test
+    @Order(16)
+    @DisplayName("Agent: 决策中的工具调用全部在 6 项白名单内")
+    void agentDecisionToolCallsAreWhitelisted() throws Exception {
+        PipelineContext ctx = setupFullPipeline(AiAcceptanceFixtures.AI_TITLE,
+                AiAcceptanceFixtures.AI_JD,
+                AiAcceptanceFixtures.AI_SUMMARY,
+                AiAcceptanceFixtures.AI_SKILLS,
+                AiAcceptanceFixtures.AI_PROJECTS,
+                AiAcceptanceFixtures.AI_EXPERIENCE);
+
+        MvcResult agentResult = mockMvc.perform(get("/api/targets/" + ctx.targetId + "/coach-agent")
+                        .header("Authorization", "Bearer " + ctx.token))
+                .andReturn();
+        assumeAiOk(agentResult, "Agent 状态查询");
+
+        com.fasterxml.jackson.databind.JsonNode agentJson =
+                objectMapper.readTree(agentResult.getResponse().getContentAsString());
+
+        // Verify focus dimensions are non-empty strings
+        com.fasterxml.jackson.databind.JsonNode dimensions = agentJson.get("activeFocusDimensions");
+        assertThat(dimensions.isArray()).isTrue();
+        for (com.fasterxml.jackson.databind.JsonNode dim : dimensions) {
+            assertThat(dim.asText()).isNotBlank();
+        }
+
+        // The recommended action should be a meaningful string (not just whitespace)
+        String action = agentJson.get("nextRecommendedAction").asText();
+        assertThat(action.trim().length()).isGreaterThan(5);
+    }
+
+    @Test
+    @Order(17)
+    @DisplayName("Agent: Agent JSON 使用 camelCase 字段名")
+    void agentJsonUsesCamelCase() throws Exception {
+        PipelineContext ctx = setupFullPipeline(AiAcceptanceFixtures.JAVA_TITLE,
+                AiAcceptanceFixtures.JAVA_JD,
+                AiAcceptanceFixtures.JAVA_SUMMARY,
+                AiAcceptanceFixtures.JAVA_SKILLS,
+                AiAcceptanceFixtures.JAVA_PROJECTS,
+                AiAcceptanceFixtures.JAVA_EXPERIENCE);
+
+        MvcResult agentResult = mockMvc.perform(get("/api/targets/" + ctx.targetId + "/coach-agent")
+                        .header("Authorization", "Bearer " + ctx.token))
+                .andReturn();
+        assumeAiOk(agentResult, "Agent 状态查询");
+
+        String rawJson = agentResult.getResponse().getContentAsString();
+
+        // Verify camelCase field names exist (not snake_case)
+        assertThat(rawJson).contains("targetId");
+        assertThat(rawJson).contains("currentStage");
+        assertThat(rawJson).contains("currentGoal");
+        assertThat(rawJson).contains("activeFocusDimensions");
+        assertThat(rawJson).contains("nextRecommendedAction");
+        assertThat(rawJson).contains("lastEventType");
+        assertThat(rawJson).contains("lastDecisionSummary");
+        assertThat(rawJson).contains("lastRunAt");
+        assertThat(rawJson).contains("createdAt");
+        assertThat(rawJson).contains("updatedAt");
+
+        // Verify no snake_case versions
+        assertThat(rawJson).doesNotContain("target_id");
+        assertThat(rawJson).doesNotContain("current_stage");
+        assertThat(rawJson).doesNotContain("current_goal");
+        assertThat(rawJson).doesNotContain("active_focus_dimensions");
+        assertThat(rawJson).doesNotContain("next_recommended_action");
+        assertThat(rawJson).doesNotContain("last_event_type");
+        assertThat(rawJson).doesNotContain("last_decision_summary");
+        assertThat(rawJson).doesNotContain("last_run_at");
+        assertThat(rawJson).doesNotContain("created_at");
+        assertThat(rawJson).doesNotContain("updated_at");
+    }
+
     // ==================== Pipeline Setup Helpers ====================
 
     private static class PipelineContext {
