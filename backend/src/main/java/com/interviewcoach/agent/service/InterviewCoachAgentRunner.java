@@ -44,6 +44,7 @@ public class InterviewCoachAgentRunner {
 
     private static final int MAX_MODEL_CALLS = 1;
     private static final int MAX_TOOL_CALLS = 3;
+    private static final int MAX_FOCUS_DIMENSIONS = 3;
 
     private final AgentRepository agentRepository;
     private final InterviewTargetRepository targetRepository;
@@ -111,8 +112,9 @@ public class InterviewCoachAgentRunner {
             AiPrompt prompt = buildPrompt(agent, target, event, progress, memories);
             AgentDecisionDto decision = aiService.generateAgentDecision(prompt);
 
-            validateToolCalls(decision);
+            validateDecision(decision);
             enforceToolCallBudget(decision);
+            validateToolCalls(decision);
 
             agent.setCurrentStage(newStage);
             agent.setLastEventType(event.name());
@@ -256,6 +258,42 @@ public class InterviewCoachAgentRunner {
             return false;
         }
         return !"inferred".equals(item.source()) || "待验证".equals(label);
+    }
+
+    private void validateDecision(AgentDecisionDto decision) {
+        if (decision == null) {
+            throw new IllegalStateException("Agent decision is null");
+        }
+        requireText(decision.currentGoal(), "currentGoal");
+        requireText(decision.recommendedAction(), "recommendedAction");
+        requireText(decision.rationaleSummary(), "rationaleSummary");
+        if (decision.focusDimensions() == null || decision.focusDimensions().isEmpty()) {
+            throw new IllegalStateException("Agent focusDimensions is empty");
+        }
+        if (decision.focusDimensions().size() > MAX_FOCUS_DIMENSIONS) {
+            throw new IllegalStateException(
+                    "Agent requested %d focus dimensions, budget is %d".formatted(
+                            decision.focusDimensions().size(), MAX_FOCUS_DIMENSIONS));
+        }
+        for (String dimension : decision.focusDimensions()) {
+            requireText(dimension, "focusDimensions");
+        }
+        if (decision.toolCalls() == null) {
+            throw new IllegalStateException("Agent toolCalls is null");
+        }
+        for (AgentToolCallDto toolCall : decision.toolCalls()) {
+            if (toolCall == null) {
+                throw new IllegalStateException("Agent toolCalls contains null item");
+            }
+            requireText(toolCall.toolName(), "toolCall.toolName");
+            requireText(toolCall.reason(), "toolCall.reason");
+        }
+    }
+
+    private void requireText(String value, String field) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalStateException("Agent decision field is blank: " + field);
+        }
     }
 
     private void validateToolCalls(AgentDecisionDto decision) {

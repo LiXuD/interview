@@ -69,15 +69,7 @@ class InterviewCoachAgentRunnerTest {
 
     @BeforeEach
     void stubAgentDecision() {
-        Mockito.when(aiService.generateAgentDecision(any())).thenReturn(new AgentDecisionDto(
-                "补强系统设计表达",
-                List.of("systemThinking"),
-                "startAssessment",
-                "根据当前上下文推荐继续测评",
-                List.of(new AgentToolCallDto("startAssessment", "需要确认当前能力基线")),
-                false,
-                false
-        ));
+        Mockito.when(aiService.generateAgentDecision(any())).thenReturn(validDecision());
     }
 
     @Test
@@ -235,6 +227,72 @@ class InterviewCoachAgentRunnerTest {
         assertFalse(userPrompt.contains("强项推断不应当事实"));
     }
 
+    @Test
+    void handleEventRejectsTooManyFocusDimensions() {
+        TestContext ctx = createTestContext("runner_invalid_focus_budget");
+        Mockito.when(aiService.generateAgentDecision(any())).thenReturn(new AgentDecisionDto(
+                "补强表达",
+                List.of("technicalDepth", "projectSpecificity", "systemThinking", "tradeoffAwareness"),
+                "startAssessment",
+                "维度过多",
+                List.of(new AgentToolCallDto("startAssessment", "建立能力基线")),
+                false,
+                false
+        ));
+
+        AgentDecisionDto decision = runner.handleEvent(CoachEvent.ASSESSMENT_COMPLETED, ctx.targetId, ctx.userId);
+
+        assertNull(decision);
+        assertNotEquals("ASSESSMENT_COMPLETED", agentRepository
+                .findByTargetIdAndUserId(ctx.targetId, ctx.userId)
+                .orElseThrow()
+                .getLastEventType());
+    }
+
+    @Test
+    void handleEventRejectsBlankRecommendedAction() {
+        TestContext ctx = createTestContext("runner_invalid_recommendation");
+        Mockito.when(aiService.generateAgentDecision(any())).thenReturn(new AgentDecisionDto(
+                "补强表达",
+                List.of("systemThinking"),
+                " ",
+                "推荐动作为空",
+                List.of(new AgentToolCallDto("startAssessment", "建立能力基线")),
+                false,
+                false
+        ));
+
+        AgentDecisionDto decision = runner.handleEvent(CoachEvent.TRAINING_TASK_COMPLETED, ctx.targetId, ctx.userId);
+
+        assertNull(decision);
+        assertNotEquals("TRAINING_TASK_COMPLETED", agentRepository
+                .findByTargetIdAndUserId(ctx.targetId, ctx.userId)
+                .orElseThrow()
+                .getLastEventType());
+    }
+
+    @Test
+    void handleEventRejectsBlankToolReason() {
+        TestContext ctx = createTestContext("runner_invalid_tool_reason");
+        Mockito.when(aiService.generateAgentDecision(any())).thenReturn(new AgentDecisionDto(
+                "补强表达",
+                List.of("systemThinking"),
+                "startAssessment",
+                "工具原因为空",
+                List.of(new AgentToolCallDto("startAssessment", "")),
+                false,
+                false
+        ));
+
+        AgentDecisionDto decision = runner.handleEvent(CoachEvent.MOCK_INTERVIEW_COMPLETED, ctx.targetId, ctx.userId);
+
+        assertNull(decision);
+        assertNotEquals("MOCK_INTERVIEW_COMPLETED", agentRepository
+                .findByTargetIdAndUserId(ctx.targetId, ctx.userId)
+                .orElseThrow()
+                .getLastEventType());
+    }
+
     private CoachEventRecord savePendingEvent(TestContext ctx, String eventType) {
         CoachEventRecord event = new CoachEventRecord();
         event.setAgent(agentRepository.findByTargetIdAndUserId(ctx.targetId, ctx.userId).orElseThrow());
@@ -273,6 +331,18 @@ class InterviewCoachAgentRunnerTest {
         } catch (Exception e) {
             throw new RuntimeException("Failed to create test context", e);
         }
+    }
+
+    private AgentDecisionDto validDecision() {
+        return new AgentDecisionDto(
+                "补强系统设计表达",
+                List.of("systemThinking"),
+                "startAssessment",
+                "根据当前上下文推荐继续测评",
+                List.of(new AgentToolCallDto("startAssessment", "需要确认当前能力基线")),
+                false,
+                false
+        );
     }
 
     private record TestContext(java.util.UUID userId, java.util.UUID targetId, String token) {}
