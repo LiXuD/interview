@@ -3,6 +3,7 @@ package com.interviewcoach.target.service;
 import com.interviewcoach.assessment.repository.AssessmentResultRepository;
 import com.interviewcoach.assessment.repository.AssessmentSessionRepository;
 import com.interviewcoach.agent.repository.AgentRepository;
+import com.interviewcoach.agent.repository.CoachEventRepository;
 import com.interviewcoach.coachingmemory.repository.CoachingMemoryRepository;
 import com.interviewcoach.common.api.InterviewTargetCreateRequest;
 import com.interviewcoach.common.api.InterviewTargetDto;
@@ -39,6 +40,7 @@ public class InterviewTargetService {
     private final MockInterviewRepository mockInterviewRepository;
     private final CoachingMemoryRepository coachingMemoryRepository;
     private final AgentRepository agentRepository;
+    private final CoachEventRepository coachEventRepository;
 
     public InterviewTargetService(InterviewTargetRepository targetRepository,
                                   CandidateProfileRepository profileRepository,
@@ -49,7 +51,8 @@ public class InterviewTargetService {
                                   TrainingPlanRepository trainingPlanRepository,
                                   MockInterviewRepository mockInterviewRepository,
                                   CoachingMemoryRepository coachingMemoryRepository,
-                                  AgentRepository agentRepository) {
+                                  AgentRepository agentRepository,
+                                  CoachEventRepository coachEventRepository) {
         this.targetRepository = targetRepository;
         this.profileRepository = profileRepository;
         this.jobBriefRepository = jobBriefRepository;
@@ -60,6 +63,7 @@ public class InterviewTargetService {
         this.mockInterviewRepository = mockInterviewRepository;
         this.coachingMemoryRepository = coachingMemoryRepository;
         this.agentRepository = agentRepository;
+        this.coachEventRepository = coachEventRepository;
     }
 
     @Transactional
@@ -117,6 +121,7 @@ public class InterviewTargetService {
         mockInterviewRepository.deleteByTargetId(targetId);
         trainingPlanRepository.deleteByTargetId(targetId);
         jobBriefRepository.deleteByTargetId(targetId);
+        coachEventRepository.deleteByTargetId(targetId);
         agentRepository.deleteByTargetId(targetId);
         coachingMemoryRepository.deleteByTargetId(targetId);
         profileRepository.deleteByTargetId(targetId);
