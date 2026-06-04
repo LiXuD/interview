@@ -174,33 +174,37 @@ APP_SESSION_STARTED
 
 Agent 失败不能回滚已经完成的测评、训练或模拟面试事实。Agent 决策应允许独立重试。
 
-`CoachEvent` 只保存用户、目标、事件类型、来源类型、来源 ID、幂等键和处理状态等低风险元数据，不保存用户回答原文、简历原文、Prompt 或 Completion。事件处理线程不依赖原始 HTTP 请求的 `SecurityContext`，必须根据事件所属用户建立临时受限执行上下文，确保 `AiModelGateway` 仍选择正确用户的云端 Provider，并在调用完成后清理上下文。
+当前实现使用持久化 `CoachEventRecord` 记录事件，字段只包含用户、目标、Agent、事件类型、来源类型、来源 ID、幂等键、处理状态、尝试次数和错误摘要等低风险元数据，不保存用户回答原文、简历原文、Prompt 或 Completion。事件在业务事务提交后通过 `CoachEventDispatcher` 调度，`InterviewCoachAgentRunner` 先 claim 事件，再在独立事务中标记 completed 或 failed。
+
+当前 dispatcher 默认使用单 worker 异步队列，保证同一进程内 Agent 事件串行处理，避免多个真实 AI 事件同时更新同一个 `InterviewCoachAgent` 触发乐观锁冲突。若未来恢复多 worker，必须先实现按 `agentId` 或 `targetId` 分区串行。
+
+事件处理线程不依赖原始 HTTP 请求的 `SecurityContext`，必须根据事件所属用户建立临时受限执行上下文，确保 `AiModelGateway` 仍选择正确用户的云端 Provider，并在调用完成后清理上下文。
 
 ## 7. 受控工具
 
-Agent 可调用的工具必须白名单化，并由后端实现稳定输入输出契约：
+Agent 可调用的工具必须白名单化，并由后端实现稳定输入输出契约。当前后端注册的工具名为：
 
 ```text
-AssessmentTool
-TrainingPlanTool
-AdaptiveTrainingTool
-MockInterviewTool
-ProgressAnalysisTool
-CoachingMemoryTool
+startAssessment
+generateTrainingPlan
+startAdaptiveTraining
+startMockInterview
+analyzeProgress
+updateCoachingMemory
 ```
 
 工具职责：
 
-- `AssessmentTool`：读取测评状态或发起已有测评能力。
-- `TrainingPlanTool`：生成或调整受控训练计划。
-- `AdaptiveTrainingTool`：围绕当前短板推进训练会话。
-- `MockInterviewTool`：发起或建议下一次模拟面试。
-- `ProgressAnalysisTool`：读取结构化能力趋势。
-- `CoachingMemoryTool`：读取必要可信摘要或请求记忆更新。
+- `startAssessment`：返回测评入口建议，不直接创建测评副作用。
+- `generateTrainingPlan`：返回训练计划入口建议，不直接替换训练计划。
+- `startAdaptiveTraining`：返回自适应训练入口建议。
+- `startMockInterview`：返回模拟面试入口建议。
+- `analyzeProgress`：返回结构化能力趋势摘要。
+- `updateCoachingMemory`：返回可信记忆摘要和是否存在可用记忆。
 
 第一阶段不允许模型直接执行数据库写入、构造任意 HTTP 请求或访问未知工具。
 
-受控工具编排最多允许两次模型决策：第一次决策可以请求有限数量的只读工具，第二次决策接收低风险结构化工具摘要并输出最终行动。第二次决策禁止继续请求工具，避免无限自主循环。
+当前实现采用更保守的单次模型决策：`AgentDecisionDto` 先通过后端校验，最多执行 3 个白名单工具，工具只返回低风险结构化摘要或已有业务入口建议。后续若启用第二次模型决策，必须保持“最终决策禁止继续请求工具”的边界，避免无限自主循环。
 
 ## 8. 与现有模块的关系
 
@@ -247,6 +251,8 @@ Agent 的目标不是机械保证每个用户动作只调用一次模型，而�
 GET /api/targets/{targetId}/coach-agent
 ```
 
+不存在或不属于当前用户的 `targetId` 返回统一 `404 TARGET_NOT_FOUND`，避免泄露其他用户的目标是否存在。
+
 返回强类型 Agent 状态：
 
 ```text
@@ -265,7 +271,7 @@ iOS 新增 `Features/CoachAgent`，作为持续教练入口，展示：
 - 当前重点能力维度。
 - 下一步推荐行动。
 - 最近一次教练判断摘要。
-- 进入已有测评、训练、模拟面试或进步追踪的明确动作。
+- 根据受控推荐动作进入已有测评、训练、模拟面试或进步追踪。
 
 该入口不是聊天页，也不展示内部 Provider、Prompt、工具调用或监控指标。
 

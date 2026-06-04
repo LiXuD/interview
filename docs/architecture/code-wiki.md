@@ -479,8 +479,12 @@ finishInterview
 
 - `InterviewCoachAgent`：Agent 实体，含 userId、targetId（唯一约束）、status、currentStage、currentGoal、activeFocusDimensions、nextRecommendedAction、lastEventType、lastDecisionSummary、lastRunAt、version（乐观锁）。
 - `AgentRepository`：按 targetId+userId 查询、按 userId/targetId 删除。
-- `AgentService`：getOrCreateByTarget（首次访问自动创建）、toDto。
-- `InterviewCoachAgentRunner`：事件驱动 Agent 运行器。接收 `CoachEvent`，加载 Agent 上下文（进度、教练记忆），构造 Prompt 调用 AI 生成 `AgentDecisionDto`，校验工具白名单，更新 Agent 状态。白名单工具：`startAssessment`、`generateTrainingPlan`、`startAdaptiveTraining`、`startMockInterview`、`analyzeProgress`、`updateCoachingMemory`。
+- `AgentService`：按目标查询 Agent；目标创建时会创建 Agent，GET 保留 get-or-create 兜底；不存在或越权目标返回 `TARGET_NOT_FOUND`。
+- `CoachEventRecord`：持久化幂等事件记录，含 Agent、用户、目标、事件类型、来源、幂等键、状态、尝试次数和错误摘要，不保存 prompt/completion 或用户原文。
+- `CoachEventService`：在业务事务内记录事件，并提供 claim、completed、failed 状态流转。
+- `CoachEventDispatcher`：业务事务提交后调度 Agent 事件处理，可通过 `app.agent.dispatch-enabled` 关闭。默认单 worker 串行处理事件，避免同一 Agent 并发更新触发乐观锁冲突；异步线程逃逸异常会标记事件 failed。
+- `InterviewCoachAgentRunner`：事件驱动 Agent 运行器。接收 `CoachEventRecord` 或显式事件，加载 Agent 上下文（进度、过滤后的教练记忆），构造 Prompt 调用 AI 生成 `AgentDecisionDto`，校验非空字段、重点维度预算和工具白名单，执行受控工具摘要，更新 Agent 状态。白名单工具：`startAssessment`、`generateTrainingPlan`、`startAdaptiveTraining`、`startMockInterview`、`analyzeProgress`、`updateCoachingMemory`。
+- `AgentToolOrchestrator`：执行白名单工具并记录 `agent.tool.duration` / `agent.tool.total` metrics。当前工具只返回低风险摘要或已有业务入口建议，不直接创建测评、训练或模拟面试副作用。
 - `CoachEvent`：枚举，包含 TARGET_CREATED、RESUME_SUMMARY_CONFIRMED、ASSESSMENT_COMPLETED、TRAINING_TASK_COMPLETED、TRAINING_SESSION_COMPLETED、MOCK_INTERVIEW_COMPLETED、MEMORY_CORRECTED、APP_SESSION_STARTED。
 - `AgentController`：
   - `GET /api/targets/{targetId}/coach-agent`
@@ -496,6 +500,7 @@ finishInterview
 - 使用 `@Version` 乐观锁防止并发覆盖。
 - Agent 随账号删除（cascade in AuthService）和目标删除（cascade in InterviewTargetService）自动清理。
 - Agent 不保存简历原文、用户回答原文、API Key 或 hidden chain-of-thought。
+- `rejected` 记忆不进入 Agent Prompt；`inferred` 只作为待验证线索使用。
 
 ## 5. API 地图
 

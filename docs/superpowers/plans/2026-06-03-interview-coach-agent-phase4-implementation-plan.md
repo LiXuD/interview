@@ -8,6 +8,8 @@
 
 **Tech Stack:** Spring Boot 3.5, Java 17, Spring Data JPA, Spring Security, Spring AI through `AiModelGateway`, Micrometer, PostgreSQL/H2, OpenAPI, SwiftUI iOS 17+, async/await, Codable DTO.
 
+**Current implementation note after review hardening:** the shipped code uses `InterviewCoachAgent`, `AgentRepository`, `CoachEventRecord`, `CoachEventRepository`, `CoachEventService`, `CoachEventDispatcher`, `InterviewCoachAgentRunner`, and `AgentToolOrchestrator`. Target creation creates the Agent immediately; GET keeps get-or-create as a fallback. Events are persisted in the business transaction and processed after commit. The async dispatcher defaults to a single worker so events update Agent state serially; raising concurrency requires a separate `agentId`/`targetId` partitioned executor design. Tool orchestration is intentionally single-pass and conservative: one `agentDecision` model call, at most 3 registered tools, no arbitrary HTTP/database writes, and side-effecting tools return existing business entry recommendations instead of creating assessment/training/mock records automatically. Decision-carried memory writes and training-task replacement remain future hardening unless implemented in a separate reviewed slice.
+
 ---
 
 ## 0. Approved Inputs And Non-Negotiable Constraints

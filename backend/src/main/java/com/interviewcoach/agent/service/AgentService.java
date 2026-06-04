@@ -3,6 +3,7 @@ package com.interviewcoach.agent.service;
 import com.interviewcoach.agent.entity.InterviewCoachAgent;
 import com.interviewcoach.agent.repository.AgentRepository;
 import com.interviewcoach.common.api.CoachAgentDto;
+import com.interviewcoach.common.error.TargetNotFoundException;
 import com.interviewcoach.target.entity.InterviewTarget;
 import com.interviewcoach.target.repository.InterviewTargetRepository;
 import com.interviewcoach.user.entity.User;
@@ -41,7 +42,7 @@ public class AgentService {
 
     private InterviewCoachAgent createNewAgent(UUID targetId, UUID userId) {
         InterviewTarget target = targetRepository.findByIdAndUserId(targetId, userId)
-                .orElseThrow(() -> new IllegalArgumentException("Target not found: " + targetId));
+                .orElseThrow(() -> new TargetNotFoundException(targetId));
         InterviewCoachAgent agent = new InterviewCoachAgent();
         agent.setUser(target.getUser());
         agent.setTarget(target);

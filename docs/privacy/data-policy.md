@@ -142,7 +142,9 @@ Phase 4 `InterviewCoachAgent` 隐私约束：
 
 - Agent 数据按 `userId + targetId` 唯一隔离，所有查询必须包含用户 ID。
 - Agent 不保存简历原文、用户回答原文、API Key、Authorization Header、完整请求头或 hidden chain-of-thought。
+- `CoachEventRecord` 只保存事件类型、来源类型、来源 ID、幂等键、处理状态、尝试次数和错误摘要等低风险元数据，不保存 prompt、completion、简历原文或用户回答原文。
+- Agent Prompt 构造前必须过滤教练记忆：`rejected` 一律排除，`inferred` 只能作为待验证线索。
 - `lastDecisionSummary` 只保存面向业务的结构化摘要，不保存模型思维链。
-- Agent Observability 只记录低风险元数据：`event`、`stage`、`outcome`、`latency`；不记录 prompt、completion 或用户原文。
+- Agent Observability 只记录低风险元数据：`event`、`toolName`、`outcome`、`latency`；不记录 prompt、completion 或用户原文。
 - Agent 随账号删除（cascade in AuthService）和目标删除（cascade in InterviewTargetService）自动清理。
 - Agent 决策中的 `rationaleSummary` 可展示给用户，不包含敏感信息。

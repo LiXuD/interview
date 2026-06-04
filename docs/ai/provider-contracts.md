@@ -176,6 +176,8 @@ Task 26 起，后端通过 Micrometer 记录 AI 调用指标，可通过 Spring 
 | `ai.token.usage` | Counter | task, provider, model | 估算 token 使用量 |
 | `agent.event.duration` | Timer | event, outcome | Agent 事件处理延迟（纳秒） |
 | `agent.event.total` | Counter | event, outcome | Agent 事件总次数 |
+| `agent.tool.duration` | Timer | toolName, outcome | Agent 白名单工具执行延迟（纳秒） |
+| `agent.tool.total` | Counter | toolName, outcome | Agent 白名单工具执行次数 |
 
 ### 8.2 标签值
 
@@ -183,6 +185,7 @@ Task 26 起，后端通过 Micrometer 记录 AI 调用指标，可通过 Spring 
 |------|----------|------|
 | `task` | jobBrief, assessmentQuestions, assessmentQuestionScore, assessmentResult, trainingPlan, trainingFeedback, adaptiveTrainingTurn, mockInterviewQuestion, mockInterviewReport, candidateProfileDraft, coachingMemory, agentDecision | AI 任务类型 |
 | `event` | TARGET_CREATED, RESUME_SUMMARY_CONFIRMED, ASSESSMENT_COMPLETED, TRAINING_TASK_COMPLETED, TRAINING_SESSION_COMPLETED, MOCK_INTERVIEW_COMPLETED, MEMORY_CORRECTED, APP_SESSION_STARTED | Agent 触发事件 |
+| `toolName` | startAssessment, generateTrainingPlan, startAdaptiveTraining, startMockInterview, analyzeProgress, updateCoachingMemory | Agent 白名单工具名 |
 | `provider` | platformDefault, userOpenAICompatible | Provider 类型 |
 | `model` | 配置的模型名称 | 模型标识 |
 | `mode` | chatCompletions, responses | API 模式 |
@@ -196,6 +199,7 @@ Task 26 起，后端通过 Micrometer 记录 AI 调用指标，可通过 Spring 
 | `GET /actuator/metrics` | 所有指标列表 |
 | `GET /actuator/metrics/ai.call.duration` | AI 调用延迟指标 |
 | `GET /actuator/metrics/ai.call.total` | AI 调用总次数指标 |
+| `GET /actuator/metrics/agent.tool.total` | Agent 工具执行次数指标 |
 
 ### 8.4 安全约束
 

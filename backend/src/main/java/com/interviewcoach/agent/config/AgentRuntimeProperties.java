@@ -7,8 +7,8 @@ public class AgentRuntimeProperties {
 
     private boolean dispatchEnabled = true;
     private boolean asyncEnabled = true;
-    private int executorCorePoolSize = 2;
-    private int executorMaxPoolSize = 4;
+    private int executorCorePoolSize = 1;
+    private int executorMaxPoolSize = 1;
     private int executorQueueCapacity = 100;
 
     public boolean isDispatchEnabled() {

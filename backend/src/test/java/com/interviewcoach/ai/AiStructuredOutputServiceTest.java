@@ -1387,6 +1387,34 @@ class AiStructuredOutputServiceTest {
     }
 
     @Test
+    void questionScoreAllowsOneBasedFinalQuestionIndexBecauseServiceNormalizesIt() {
+        PlatformAiClient client = prompt -> """
+                {
+                  "questionIndex": 5,
+                  "score": 70,
+                  "dimension": "technicalDepth",
+                  "feedback": "反馈",
+                  "problems": ["缺少指标"],
+                  "improvedExample": "改进示例",
+                  "answerStructure": {
+                    "background": "present: 背景清楚",
+                    "task": "partial: 任务不够具体",
+                    "action": "present: 行动明确",
+                    "result": "missing: 缺少结果",
+                    "tradeoff": "missing: 缺少权衡",
+                    "review": "missing: 缺少复盘"
+                  },
+                  "followUpRisks": ["追问指标"],
+                  "contentHighlights": ["结构清晰"],
+                  "contentGaps": ["缺少权衡"]
+                }
+                """;
+        AssessmentQuestionScoreDto result = serviceWith(client).generateQuestionScore(
+                new AiPrompt(AiPrompt.TASK_ASSESSMENT_QUESTION_SCORE, "assessment-1", "system", "user"));
+        assertThat(result.questionIndex()).isEqualTo(5);
+    }
+
+    @Test
     void questionScoreRejectsInvalidJson() {
         PlatformAiClient client = prompt -> "not-json";
         AiParseException ex = assertThrows(AiParseException.class, () -> serviceWith(client).generateQuestionScore(

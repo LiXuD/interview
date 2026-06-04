@@ -749,14 +749,9 @@ class AiContentQualityTest {
                 AiAcceptanceFixtures.JAVA_PROJECTS,
                 AiAcceptanceFixtures.JAVA_EXPERIENCE);
 
-        // Agent should have been updated after assessment finish (triggered in setupFullPipeline)
-        MvcResult agentResult = mockMvc.perform(get("/api/targets/" + ctx.targetId + "/coach-agent")
-                        .header("Authorization", "Bearer " + ctx.token))
-                .andReturn();
-        assumeAiOk(agentResult, "Agent 状态查询");
-
+        // Agent events are dispatched asynchronously by a single worker; wait until it catches up.
         com.fasterxml.jackson.databind.JsonNode agentJson =
-                objectMapper.readTree(agentResult.getResponse().getContentAsString());
+                waitForAgentLastEvent(ctx, "ASSESSMENT_COMPLETED");
 
         // Verify agent exists and has been updated
         assertThat(agentJson.get("id")).isNotNull();
@@ -769,7 +764,6 @@ class AiContentQualityTest {
         assertThat(agentJson.get("nextRecommendedAction").asText()).isNotBlank();
         assertThat(agentJson.get("lastDecisionSummary").asText()).isNotBlank();
 
-        // Verify last event type is assessment-related
         assertThat(agentJson.get("lastEventType").asText()).isEqualTo("ASSESSMENT_COMPLETED");
     }
 
@@ -904,6 +898,29 @@ class AiContentQualityTest {
 
         ctx.assessmentCompleted = true;
         return ctx;
+    }
+
+    private com.fasterxml.jackson.databind.JsonNode waitForAgentLastEvent(PipelineContext ctx, String expectedEvent)
+            throws Exception {
+        long deadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(90);
+        com.fasterxml.jackson.databind.JsonNode lastJson = null;
+        while (System.nanoTime() < deadline) {
+            MvcResult agentResult = mockMvc.perform(get("/api/targets/" + ctx.targetId + "/coach-agent")
+                            .header("Authorization", "Bearer " + ctx.token))
+                    .andReturn();
+            assumeAiOk(agentResult, "Agent 状态查询");
+
+            lastJson = objectMapper.readTree(agentResult.getResponse().getContentAsString());
+            if (lastJson.hasNonNull("lastEventType")
+                    && expectedEvent.equals(lastJson.get("lastEventType").asText())) {
+                return lastJson;
+            }
+            Thread.sleep(1000);
+        }
+        assertThat(lastJson)
+                .as("Agent did not reach expected lastEventType " + expectedEvent + " before timeout")
+                .isNotNull();
+        return lastJson;
     }
 
     private String loginAndGetToken(String username) throws Exception {

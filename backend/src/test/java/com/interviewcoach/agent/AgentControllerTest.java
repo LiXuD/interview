@@ -74,14 +74,14 @@ class AgentControllerTest {
     }
 
     @Test
-    void getAgentForNonExistentTargetReturnsBadRequest() throws Exception {
+    void getAgentForNonExistentTargetReturnsNotFound() throws Exception {
         String token = loginAndGetToken("agent_no_target_user");
         UUID nonExistentTargetId = UUID.randomUUID();
 
         mockMvc.perform(get("/api/targets/" + nonExistentTargetId + "/coach-agent")
                         .header("Authorization", "Bearer " + token))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("TARGET_NOT_FOUND"));
     }
 
     @Test
@@ -99,7 +99,8 @@ class AgentControllerTest {
 
         mockMvc.perform(get("/api/targets/" + targetId + "/coach-agent")
                         .header("Authorization", "Bearer " + tokenB))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("TARGET_NOT_FOUND"));
     }
 
     @Test
@@ -124,7 +125,8 @@ class AgentControllerTest {
         // Old target should not be accessible
         mockMvc.perform(get("/api/targets/" + targetId + "/coach-agent")
                         .header("Authorization", "Bearer " + newToken))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("TARGET_NOT_FOUND"));
     }
 
     @Test

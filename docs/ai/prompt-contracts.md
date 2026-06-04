@@ -512,10 +512,12 @@ Task 23 的测评结果必须支持逐题诊断。`assessmentQuestionScore` 任�
 
 - `answerStructure` 诊断 STAR+ 结构（背景 background、任务 task、行动 action、结果 result、权衡 tradeoff、复盘 review）。
 - 每个 `answerStructure` 字段格式为 `"状态: 简短评语"`，允许使用半角 `:` 或全角 `：`，状态只能是 `present`、`partial` 或 `missing`。
+- `questionIndex` prompt 要求使用后端当前题的零基下标；生产存储时以后端当前题下标归一化，避免模型把用户可见题号（1-5）误写为事实。
 - `followUpRisks` 至少 1 条，列出真实面试官可能追问的薄弱点。
 - `contentHighlights` 必须是列表；当回答没有任何有效亮点时允许为空，禁止为了满足格式虚构优点。
 - `contentGaps` 为非空列表。
 - `improvedExample` 必须基于候选人已确认的真实经历改写，禁止编造新项目。
+- 当候选人回答为空、占位、跑题或信息不足时，模型仍必须返回完整 JSON：`score` 应给 0-30，`contentHighlights` 返回空数组，STAR+ 缺失项使用 `missing`，`improvedExample` 只说明应如何基于真实经历补充，禁止拒绝输出或返回解释文字。
 - 聚合总分、维度分、主要短板和下一步训练建议由 `assessmentResult` 任务在汇总所有逐题诊断后输出。
 
 ### 11.3 教练记忆生成
@@ -655,6 +657,8 @@ Task 31 已使用 Spring AI `MessageWindowChatMemory`（窗口大小 12）管理
 - `InterviewTarget` 目标岗位标题。
 - `CoachEvent` 触发事件名称。
 
+记忆进入 Agent Prompt 前必须先做可信度过滤：`rejected` 一律不进入 Prompt；`inferred` 只能放在“待验证线索”语境下，不能混入强项、短板或建议重点的事实上下文。
+
 System Prompt 要求：
 
 - 定义白名单工具列表：`startAssessment`、`generateTrainingPlan`、`startAdaptiveTraining`、`startMockInterview`、`analyzeProgress`、`updateCoachingMemory`。
@@ -680,7 +684,7 @@ System Prompt 要求：
 校验规则：
 
 - `currentGoal` 非空文本。
-- `focusDimensions` 非空列表。
+- `focusDimensions` 非空列表，最多 3 个，且每项非空。
 - `recommendedAction` 非空文本。
 - `rationaleSummary` 非空文本。
 - `toolCalls` 列表中每项 `toolName` 和 `reason` 非空。
@@ -689,7 +693,7 @@ System Prompt 要求：
 失败策略：
 
 - 结构化输出解析失败时最多重试 1 次；仍失败返回 `AI_PARSE_FAILED`。
-- 工具不在白名单内时抛出 `IllegalStateException`，Agent 状态不更新。
+- 工具不在白名单内、工具 reason 为空、重点维度超预算或推荐动作为空时，Agent 状态不更新。
 - Agent 失败不回滚已完成的业务事实（测评、训练、模拟面试）。
 
 ### 13.1 AI 调用收拢
@@ -706,8 +710,8 @@ System Prompt 要求：
 - Agent 复用已持久化的 `CoachingMemory`、`ProgressDashboard`、`InterviewTarget` 摘要，不重新请求原始数据。
 - 确定性检查（如任务是否完成、测评是否达标）由代码完成，不调用模型重复计算。
 - Agent 每次运行最多 1 次模型调用、3 次工具调用。
-- Agent 调用预算由 `InterviewCoachAgentRunner` 常量控制，超出预算直接拒绝。
-- Agent 事件 metrics 只记录 event、stage、outcome、latency，不记录 prompt、completion 或用户原文。
+- Agent 调用预算由 `InterviewCoachAgentRunner` 和 `AgentRuntimeProperties` 控制，超出预算直接拒绝。
+- Agent 事件 metrics 只记录 event、outcome、latency；工具 metrics 只记录 toolName、outcome、latency，不记录 prompt、completion 或用户原文。
 
 ## 14. 测试要求
 

@@ -1057,6 +1057,7 @@ paths:
       tags:
         - CoachAgent
       summary: Get or create the persistent coach agent for a target
+      description: Returns the current user's persistent coach agent for the target. Missing targets and targets owned by another user both return TARGET_NOT_FOUND.
       operationId: getCoachAgent
       parameters:
         - name: targetId

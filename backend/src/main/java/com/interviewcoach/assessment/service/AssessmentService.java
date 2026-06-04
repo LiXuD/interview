@@ -331,9 +331,12 @@ public class AssessmentService {
                 }
 
                 score 范围 0-100。
+                questionIndex 必须使用 JSON 示例中的当前题零基下标 %d，不是用户看到的第 %d 题。
                 feedback 必须针对该回答的具体内容给出，禁止泛泛而谈。
                 problems 必须指出回答中的具体不足，至少 1 条。
                 improvedExample 必须基于候选人已确认的真实经历改写，禁止编造新项目。
+                如果候选人回答为空、占位、跑题或信息不足，仍必须返回完整 JSON：score 给 0-30，
+                contentHighlights 返回空数组，answerStructure 缺失项使用 missing，improvedExample 只说明应如何基于真实经历补充，不得拒绝输出或返回解释文字。
 
                 answerStructure 诊断回答的 STAR+ 结构（背景 background、任务 task、行动 action、结果 result、权衡 tradeoff、复盘 review）。
                 每个字段格式为 "状态: 简短评语"，状态只能是 present、partial 或 missing。
@@ -341,7 +344,7 @@ public class AssessmentService {
                 followUpRisks 列出真实面试官可能追问的薄弱点，至少 1 条。
                 contentHighlights 列出回答中的具体亮点；如果回答没有任何有效亮点，必须返回空数组，禁止虚构优点。
                 contentGaps 列出回答中的内容缺失或不足。
-                """.formatted(questionIndex);
+                """.formatted(questionIndex, questionIndex, questionIndex + 1);
         String userPrompt = """
                 题号：%d（共 %d 题）
 

@@ -162,7 +162,9 @@ public class AiStructuredOutputService {
         if (dto.score() < 0 || dto.score() > 100) {
             throw new IllegalArgumentException("question score out of range");
         }
-        if (dto.questionIndex() < 0 || dto.questionIndex() > 4) {
+        // AssessmentService normalizes the stored index to the current backend question.
+        // Accept 1-based final-question output from live models while keeping the rest strict.
+        if (dto.questionIndex() < 0 || dto.questionIndex() > 5) {
             throw new IllegalArgumentException("questionIndex out of range");
         }
         requireText(dto.dimension(), "dimension");
