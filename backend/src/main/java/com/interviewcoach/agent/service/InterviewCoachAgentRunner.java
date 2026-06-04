@@ -1,6 +1,7 @@
 package com.interviewcoach.agent.service;
 
 import com.interviewcoach.agent.entity.CoachEvent;
+import com.interviewcoach.agent.entity.CoachEventRecord;
 import com.interviewcoach.agent.entity.InterviewCoachAgent;
 import com.interviewcoach.agent.repository.AgentRepository;
 import com.interviewcoach.ai.service.AiMetrics;
@@ -17,6 +18,7 @@ import com.interviewcoach.target.repository.InterviewTargetRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
@@ -48,19 +50,41 @@ public class InterviewCoachAgentRunner {
     private final CoachingMemoryService coachingMemoryService;
     private final ProgressService progressService;
     private final AiMetrics aiMetrics;
+    private final CoachEventService coachEventService;
 
     public InterviewCoachAgentRunner(AgentRepository agentRepository,
                                      InterviewTargetRepository targetRepository,
                                      AiStructuredOutputService aiService,
                                      CoachingMemoryService coachingMemoryService,
                                      ProgressService progressService,
-                                     AiMetrics aiMetrics) {
+                                     AiMetrics aiMetrics,
+                                     CoachEventService coachEventService) {
         this.agentRepository = agentRepository;
         this.targetRepository = targetRepository;
         this.aiService = aiService;
         this.coachingMemoryService = coachingMemoryService;
         this.progressService = progressService;
         this.aiMetrics = aiMetrics;
+        this.coachEventService = coachEventService;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void run(UUID eventId) {
+        CoachEventRecord event = coachEventService.claim(eventId);
+        if (event == null) {
+            return;
+        }
+        try {
+            AgentDecisionDto decision = handleEvent(
+                    CoachEvent.valueOf(event.getEventType()), event.getTargetId(), event.getUserId());
+            if (decision == null) {
+                coachEventService.markFailed(eventId, "AgentDecisionFailed");
+                return;
+            }
+            coachEventService.markCompleted(eventId);
+        } catch (Exception ex) {
+            coachEventService.markFailed(eventId, ex.getClass().getSimpleName());
+        }
     }
 
     @Transactional
@@ -79,8 +103,6 @@ public class InterviewCoachAgentRunner {
             });
 
             String newStage = determineStage(event, agent.getCurrentStage());
-            agent.setCurrentStage(newStage);
-            agent.setLastEventType(event.name());
 
             ProgressDashboardDto progress = loadProgress(targetId, userId);
             List<CoachingMemoryDto> memories = coachingMemoryService.getMemories(targetId, userId);
@@ -91,6 +113,8 @@ public class InterviewCoachAgentRunner {
             validateToolCalls(decision);
             enforceToolCallBudget(decision);
 
+            agent.setCurrentStage(newStage);
+            agent.setLastEventType(event.name());
             agent.setCurrentGoal(decision.currentGoal());
             agent.setActiveFocusDimensions(new ArrayList<>(decision.focusDimensions()));
             agent.setNextRecommendedAction(decision.recommendedAction());

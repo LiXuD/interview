@@ -3,7 +3,7 @@ package com.interviewcoach.training.service;
 import com.interviewcoach.ai.service.AiPrompt;
 import com.interviewcoach.ai.service.AiStructuredOutputService;
 import com.interviewcoach.agent.entity.CoachEvent;
-import com.interviewcoach.agent.service.InterviewCoachAgentRunner;
+import com.interviewcoach.agent.service.CoachEventService;
 import com.interviewcoach.coachingmemory.service.CoachingMemoryService;
 import com.interviewcoach.common.api.AdaptiveTrainingRoundDto;
 import com.interviewcoach.common.api.AdaptiveTrainingSessionDto;
@@ -57,7 +57,7 @@ public class TrainingService {
     private final CandidateProfileRepository profileRepository;
     private final AiStructuredOutputService aiService;
     private final CoachingMemoryService coachingMemoryService;
-    private final InterviewCoachAgentRunner agentRunner;
+    private final CoachEventService coachEventService;
 
     public TrainingService(TrainingPlanRepository planRepository,
                            TrainingTaskRepository taskRepository,
@@ -67,7 +67,7 @@ public class TrainingService {
                            CandidateProfileRepository profileRepository,
                            AiStructuredOutputService aiService,
                            CoachingMemoryService coachingMemoryService,
-                           InterviewCoachAgentRunner agentRunner) {
+                           CoachEventService coachEventService) {
         this.planRepository = planRepository;
         this.taskRepository = taskRepository;
         this.sessionRepository = sessionRepository;
@@ -76,7 +76,7 @@ public class TrainingService {
         this.profileRepository = profileRepository;
         this.aiService = aiService;
         this.coachingMemoryService = coachingMemoryService;
-        this.agentRunner = agentRunner;
+        this.coachEventService = coachEventService;
     }
 
     @Transactional
@@ -163,7 +163,7 @@ public class TrainingService {
             log.warn("Failed to generate coaching memory for training task {}", taskId, ex);
         }
 
-        fireAgentEvent(CoachEvent.TRAINING_TASK_COMPLETED, task.getPlan().getTargetId(), userId);
+        fireAgentEvent(CoachEvent.TRAINING_TASK_COMPLETED, task.getPlan().getTargetId(), userId, taskId, "trainingTask");
 
         return toFeedbackDto(feedback);
     }
@@ -307,7 +307,8 @@ public class TrainingService {
             log.warn("Failed to generate coaching memory for adaptive training task {}", task.getId(), ex);
         }
 
-        fireAgentEvent(CoachEvent.TRAINING_SESSION_COMPLETED, task.getPlan().getTargetId(), task.getPlan().getUser().getId());
+        fireAgentEvent(CoachEvent.TRAINING_SESSION_COMPLETED, task.getPlan().getTargetId(), task.getPlan().getUser().getId(),
+                session.getId(), "trainingSession");
     }
 
     private String firstNonBlank(String primary, String fallback) {
@@ -561,9 +562,9 @@ public class TrainingService {
         );
     }
 
-    private void fireAgentEvent(CoachEvent event, UUID targetId, UUID userId) {
+    private void fireAgentEvent(CoachEvent event, UUID targetId, UUID userId, UUID sourceId, String sourceType) {
         try {
-            agentRunner.handleEvent(event, targetId, userId);
+            coachEventService.recordEvent(userId, targetId, event, sourceType, sourceId);
         } catch (Exception ex) {
             log.warn("Agent event {} failed for targetId={}: {}", event.name(), targetId, ex.getMessage());
         }

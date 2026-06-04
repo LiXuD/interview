@@ -25,6 +25,12 @@ spring:
         dialect: org.hibernate.dialect.H2Dialect
 
 app:
+  agent:
+    dispatch-enabled: true
+    async-enabled: false
+    executor-core-pool-size: 1
+    executor-max-pool-size: 1
+    executor-queue-capacity: 10
   auth:
     dev-login-enabled: true
   jwt:

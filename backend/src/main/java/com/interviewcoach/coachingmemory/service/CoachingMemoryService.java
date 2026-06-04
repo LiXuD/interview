@@ -1,7 +1,7 @@
 package com.interviewcoach.coachingmemory.service;
 
 import com.interviewcoach.agent.entity.CoachEvent;
-import com.interviewcoach.agent.service.InterviewCoachAgentRunner;
+import com.interviewcoach.agent.service.CoachEventService;
 import com.interviewcoach.ai.service.AiPrompt;
 import com.interviewcoach.ai.service.AiStructuredOutputService;
 import com.interviewcoach.coachingmemory.entity.CoachingMemory;
@@ -22,7 +22,6 @@ import com.interviewcoach.target.repository.InterviewTargetRepository;
 import com.interviewcoach.user.entity.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,16 +58,16 @@ public class CoachingMemoryService {
     private final AiStructuredOutputService aiService;
     private final CoachingMemoryRepository memoryRepository;
     private final InterviewTargetRepository targetRepository;
-    private final InterviewCoachAgentRunner agentRunner;
+    private final CoachEventService coachEventService;
 
     public CoachingMemoryService(AiStructuredOutputService aiService,
                                  CoachingMemoryRepository memoryRepository,
                                  InterviewTargetRepository targetRepository,
-                                 @Lazy InterviewCoachAgentRunner agentRunner) {
+                                 CoachEventService coachEventService) {
         this.aiService = aiService;
         this.memoryRepository = memoryRepository;
         this.targetRepository = targetRepository;
-        this.agentRunner = agentRunner;
+        this.coachEventService = coachEventService;
     }
 
     @Transactional
@@ -131,7 +130,7 @@ public class CoachingMemoryService {
         item.setConfidence("high");
         CoachingMemoryDto result = toDto(memoryRepository.save(memory));
 
-        fireAgentEvent(CoachEvent.MEMORY_CORRECTED, memory.getTarget().getId(), userId);
+        fireAgentEvent(CoachEvent.MEMORY_CORRECTED, memory.getTarget().getId(), userId, memoryId, request);
 
         return result;
     }
@@ -373,9 +372,15 @@ public class CoachingMemoryService {
                 .toList();
     }
 
-    private void fireAgentEvent(CoachEvent event, UUID targetId, UUID userId) {
+    private void fireAgentEvent(CoachEvent event,
+                                UUID targetId,
+                                UUID userId,
+                                UUID sourceId,
+                                CoachingMemoryCorrectionRequest request) {
         try {
-            agentRunner.handleEvent(event, targetId, userId);
+            String discriminator = "%s:%s:%s:%d:%s:%s".formatted(
+                    event.name(), sourceId, request.field(), request.itemIndex(), request.source(), request.content());
+            coachEventService.recordEvent(userId, targetId, event, "coachingMemory", sourceId, discriminator);
         } catch (Exception ex) {
             log.warn("Agent event {} failed for targetId={}: {}", event.name(), targetId, ex.getMessage());
         }

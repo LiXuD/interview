@@ -1,5 +1,7 @@
 package com.interviewcoach.profile.service;
 
+import com.interviewcoach.agent.entity.CoachEvent;
+import com.interviewcoach.agent.service.CoachEventService;
 import com.interviewcoach.ai.service.AiPrompt;
 import com.interviewcoach.ai.service.AiStructuredOutputService;
 import com.interviewcoach.common.api.CandidateProfileConfirmRequest;
@@ -22,13 +24,16 @@ public class CandidateProfileService {
     private final CandidateProfileRepository profileRepository;
     private final InterviewTargetRepository targetRepository;
     private final AiStructuredOutputService aiService;
+    private final CoachEventService coachEventService;
 
     public CandidateProfileService(CandidateProfileRepository profileRepository,
                                     InterviewTargetRepository targetRepository,
-                                    AiStructuredOutputService aiService) {
+                                    AiStructuredOutputService aiService,
+                                    CoachEventService coachEventService) {
         this.profileRepository = profileRepository;
         this.targetRepository = targetRepository;
         this.aiService = aiService;
+        this.coachEventService = coachEventService;
     }
 
     /**
@@ -84,6 +89,8 @@ public class CandidateProfileService {
         profile.setExperience(request.experience());
 
         profile = profileRepository.save(profile);
+        coachEventService.recordEvent(
+                user, targetId, CoachEvent.RESUME_SUMMARY_CONFIRMED, "candidateProfile", profile.getId());
         return toDto(profile);
     }
 

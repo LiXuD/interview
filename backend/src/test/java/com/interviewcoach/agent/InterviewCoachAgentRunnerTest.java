@@ -1,9 +1,16 @@
 package com.interviewcoach.agent;
 
 import com.interviewcoach.agent.entity.CoachEvent;
+import com.interviewcoach.agent.entity.CoachEventRecord;
+import com.interviewcoach.agent.repository.AgentRepository;
+import com.interviewcoach.agent.repository.CoachEventRepository;
+import com.interviewcoach.agent.service.CoachEventService;
 import com.interviewcoach.agent.service.InterviewCoachAgentRunner;
 import com.interviewcoach.common.api.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.interviewcoach.target.repository.InterviewTargetRepository;
+import com.interviewcoach.user.entity.User;
+import com.interviewcoach.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -29,6 +36,21 @@ class InterviewCoachAgentRunnerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private CoachEventService eventService;
+
+    @Autowired
+    private CoachEventRepository eventRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private InterviewTargetRepository targetRepository;
+
+    @Autowired
+    private AgentRepository agentRepository;
 
     @Test
     void handleTargetCreatedEventReturnsDecision() {
@@ -113,6 +135,45 @@ class InterviewCoachAgentRunnerTest {
         assertTrue(InterviewCoachAgentRunner.ALLOWED_TOOLS.contains("analyzeProgress"));
         assertTrue(InterviewCoachAgentRunner.ALLOWED_TOOLS.contains("updateCoachingMemory"));
         assertEquals(6, InterviewCoachAgentRunner.ALLOWED_TOOLS.size());
+    }
+
+    @Test
+    void runEventIdMarksEventCompletedAndUpdatesAgent() {
+        TestContext ctx = createTestContext("runner_persistent_event");
+        CoachEventRecord event = savePendingEvent(ctx, CoachEvent.TARGET_CREATED.name());
+
+        runner.run(event.getId());
+
+        CoachEventRecord completed = eventRepository.findById(event.getId()).orElseThrow();
+        assertEquals("completed", completed.getStatus());
+        assertNotNull(completed.getProcessedAt());
+    }
+
+    @Test
+    void runEventIdMarksEventFailedWithoutRestoringDeletedBusinessFact() {
+        TestContext ctx = createTestContext("runner_failed_event");
+        CoachEventRecord event = savePendingEvent(ctx, CoachEvent.TARGET_CREATED.name());
+        event.setEventType("BOGUS_EVENT");
+        eventRepository.saveAndFlush(event);
+
+        runner.run(event.getId());
+
+        CoachEventRecord failed = eventRepository.findById(event.getId()).orElseThrow();
+        assertEquals("failed", failed.getStatus());
+        assertEquals("IllegalArgumentException", failed.getLastErrorType());
+        assertTrue(targetRepository.existsById(ctx.targetId));
+    }
+
+    private CoachEventRecord savePendingEvent(TestContext ctx, String eventType) {
+        CoachEventRecord event = new CoachEventRecord();
+        event.setAgent(agentRepository.findByTargetIdAndUserId(ctx.targetId, ctx.userId).orElseThrow());
+        event.setUserId(ctx.userId);
+        event.setTargetId(ctx.targetId);
+        event.setEventType(eventType);
+        event.setSourceType("runnerTest");
+        event.setSourceId(ctx.targetId);
+        event.setIdempotencyKey(java.util.UUID.randomUUID().toString().replace("-", ""));
+        return eventRepository.saveAndFlush(event);
     }
 
     private TestContext createTestContext(String username) {

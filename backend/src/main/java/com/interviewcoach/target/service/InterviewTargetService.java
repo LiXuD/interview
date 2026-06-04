@@ -2,8 +2,11 @@ package com.interviewcoach.target.service;
 
 import com.interviewcoach.assessment.repository.AssessmentResultRepository;
 import com.interviewcoach.assessment.repository.AssessmentSessionRepository;
+import com.interviewcoach.agent.entity.InterviewCoachAgent;
 import com.interviewcoach.agent.repository.AgentRepository;
 import com.interviewcoach.agent.repository.CoachEventRepository;
+import com.interviewcoach.agent.entity.CoachEvent;
+import com.interviewcoach.agent.service.CoachEventService;
 import com.interviewcoach.coachingmemory.repository.CoachingMemoryRepository;
 import com.interviewcoach.common.api.InterviewTargetCreateRequest;
 import com.interviewcoach.common.api.InterviewTargetDto;
@@ -41,6 +44,7 @@ public class InterviewTargetService {
     private final CoachingMemoryRepository coachingMemoryRepository;
     private final AgentRepository agentRepository;
     private final CoachEventRepository coachEventRepository;
+    private final CoachEventService coachEventService;
 
     public InterviewTargetService(InterviewTargetRepository targetRepository,
                                   CandidateProfileRepository profileRepository,
@@ -52,7 +56,8 @@ public class InterviewTargetService {
                                   MockInterviewRepository mockInterviewRepository,
                                   CoachingMemoryRepository coachingMemoryRepository,
                                   AgentRepository agentRepository,
-                                  CoachEventRepository coachEventRepository) {
+                                  CoachEventRepository coachEventRepository,
+                                  CoachEventService coachEventService) {
         this.targetRepository = targetRepository;
         this.profileRepository = profileRepository;
         this.jobBriefRepository = jobBriefRepository;
@@ -64,6 +69,7 @@ public class InterviewTargetService {
         this.coachingMemoryRepository = coachingMemoryRepository;
         this.agentRepository = agentRepository;
         this.coachEventRepository = coachEventRepository;
+        this.coachEventService = coachEventService;
     }
 
     @Transactional
@@ -73,6 +79,11 @@ public class InterviewTargetService {
         target.setTitle(request.title());
         target.setJd(request.jd());
         target = targetRepository.save(target);
+        InterviewCoachAgent agent = new InterviewCoachAgent();
+        agent.setUser(user);
+        agent.setTarget(target);
+        agentRepository.save(agent);
+        coachEventService.recordEvent(user, target.getId(), CoachEvent.TARGET_CREATED, "target", target.getId());
         return toDto(target);
     }
 
