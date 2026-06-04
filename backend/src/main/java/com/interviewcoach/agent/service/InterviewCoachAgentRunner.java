@@ -53,6 +53,7 @@ public class InterviewCoachAgentRunner {
     private final ProgressService progressService;
     private final AiMetrics aiMetrics;
     private final CoachEventService coachEventService;
+    private final AgentToolOrchestrator toolOrchestrator;
 
     public InterviewCoachAgentRunner(AgentRepository agentRepository,
                                      InterviewTargetRepository targetRepository,
@@ -60,7 +61,8 @@ public class InterviewCoachAgentRunner {
                                      CoachingMemoryService coachingMemoryService,
                                      ProgressService progressService,
                                      AiMetrics aiMetrics,
-                                     CoachEventService coachEventService) {
+                                     CoachEventService coachEventService,
+                                     AgentToolOrchestrator toolOrchestrator) {
         this.agentRepository = agentRepository;
         this.targetRepository = targetRepository;
         this.aiService = aiService;
@@ -68,6 +70,7 @@ public class InterviewCoachAgentRunner {
         this.progressService = progressService;
         this.aiMetrics = aiMetrics;
         this.coachEventService = coachEventService;
+        this.toolOrchestrator = toolOrchestrator;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -115,6 +118,8 @@ public class InterviewCoachAgentRunner {
             validateDecision(decision);
             enforceToolCallBudget(decision);
             validateToolCalls(decision);
+            toolOrchestrator.execute(decision.toolCalls(),
+                    new AgentToolOrchestrator.ToolContext(targetId, userId, progress, memories));
 
             agent.setCurrentStage(newStage);
             agent.setLastEventType(event.name());
