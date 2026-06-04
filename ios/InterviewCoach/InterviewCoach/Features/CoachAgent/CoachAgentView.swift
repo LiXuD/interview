@@ -1,12 +1,48 @@
 import SwiftUI
 
+enum CoachAgentRecommendedAction: Equatable {
+    case assessment
+    case training
+    case mockInterview
+    case progress
+
+    var title: String {
+        switch self {
+        case .assessment: return "开始技术测评"
+        case .training: return "查看训练计划"
+        case .mockInterview: return "开始模拟面试"
+        case .progress: return "查看进步追踪"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .assessment: return "checkmark.shield"
+        case .training: return "figure.run"
+        case .mockInterview: return "person.wave.2"
+        case .progress: return "chart.line.uptrend.xyaxis"
+        }
+    }
+}
+
 struct CoachAgentView: View {
     let targetId: String
     let targetTitle: String
+    let onRecommendedAction: (CoachAgentRecommendedAction) -> Void
 
     @State private var agent: CoachAgentDTO?
     @State private var isLoading = false
     @State private var errorMessage: String?
+
+    init(
+        targetId: String,
+        targetTitle: String,
+        onRecommendedAction: @escaping (CoachAgentRecommendedAction) -> Void = { _ in }
+    ) {
+        self.targetId = targetId
+        self.targetTitle = targetTitle
+        self.onRecommendedAction = onRecommendedAction
+    }
 
     var body: some View {
         NavigationStack {
@@ -65,6 +101,13 @@ struct CoachAgentView: View {
                     Text(action)
                         .font(.body)
                         .foregroundStyle(.blue)
+                    if let recommendedAction = recommendedAction(for: action, stage: agent.currentStage) {
+                        Button {
+                            onRecommendedAction(recommendedAction)
+                        } label: {
+                            Label(recommendedAction.title, systemImage: recommendedAction.systemImage)
+                        }
+                    }
                 }
             }
 
@@ -139,6 +182,35 @@ struct CoachAgentView: View {
         case "APP_SESSION_STARTED": return "App 启动"
         default: return event
         }
+    }
+
+    private func recommendedAction(for action: String, stage: String) -> CoachAgentRecommendedAction? {
+        let normalized = "\(action) \(stage)".lowercased()
+
+        if containsAny(normalized, keywords: ["mock", "模拟", "mock_interview", "mockinterview"]) {
+            return .mockInterview
+        }
+        if containsAny(normalized, keywords: ["assessment", "测评", "评估", "答题"]) {
+            return .assessment
+        }
+        if containsAny(normalized, keywords: ["training", "训练", "练习", "计划"]) {
+            return .training
+        }
+        if containsAny(normalized, keywords: ["progress", "进步", "追踪", "复盘", "分析"]) {
+            return .progress
+        }
+
+        switch stage {
+        case "assessment": return .assessment
+        case "training": return .training
+        case "mockInterview": return .mockInterview
+        case "review": return .progress
+        default: return nil
+        }
+    }
+
+    private func containsAny(_ text: String, keywords: [String]) -> Bool {
+        keywords.contains { text.contains($0) }
     }
 
     private func formatDate(_ dateString: String) -> String {

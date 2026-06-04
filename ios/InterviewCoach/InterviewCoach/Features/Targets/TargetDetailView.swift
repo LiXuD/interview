@@ -177,9 +177,27 @@ struct TargetDetailView: View {
             ProgressDashboardView(targetId: currentTarget.id, targetTitle: currentTarget.title)
         }
         .sheet(isPresented: $showCoachAgent) {
-            CoachAgentView(targetId: currentTarget.id, targetTitle: currentTarget.title)
+            CoachAgentView(targetId: currentTarget.id, targetTitle: currentTarget.title) { action in
+                openCoachAgentRecommendation(action)
+            }
         }
         .loadingOverlay(isLoading: isLoading)
+    }
+
+    private func openCoachAgentRecommendation(_ action: CoachAgentRecommendedAction) {
+        showCoachAgent = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            switch action {
+            case .assessment:
+                showAssessment = true
+            case .training:
+                showTraining = true
+            case .mockInterview:
+                showMockInterview = true
+            case .progress:
+                showProgressDashboard = true
+            }
+        }
     }
 
     private func save() async {

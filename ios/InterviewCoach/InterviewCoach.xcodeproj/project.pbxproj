@@ -58,6 +58,8 @@
 		2A0000010000000000000124 /* DimensionAnalysisView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000125 /* DimensionAnalysisView.swift */; };
 		2A0000010000000000000126 /* DimensionAnalysisDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000127 /* DimensionAnalysisDTO.swift */; };
 		2A0000010000000000000128 /* ProgressDashboardDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000129 /* ProgressDashboardDTO.swift */; };
+		2A0000010000000000000132 /* CoachAgentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000131 /* CoachAgentView.swift */; };
+		2A0000010000000000000134 /* CoachAgentDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0000010000000000000133 /* CoachAgentDTO.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -114,6 +116,8 @@
 		2A0000010000000000000125 /* DimensionAnalysisView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DimensionAnalysisView.swift; sourceTree = "<group>"; };
 		2A0000010000000000000127 /* DimensionAnalysisDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DimensionAnalysisDTO.swift; sourceTree = "<group>"; };
 		2A0000010000000000000129 /* ProgressDashboardDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressDashboardDTO.swift; sourceTree = "<group>"; };
+		2A0000010000000000000131 /* CoachAgentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoachAgentView.swift; sourceTree = "<group>"; };
+		2A0000010000000000000133 /* CoachAgentDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoachAgentDTO.swift; sourceTree = "<group>"; };
 		2A0000010000000000000112 /* InterviewCoach.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = InterviewCoach.entitlements; sourceTree = "<group>"; };
 		2A0000010000000000000115 /* InterviewCoachRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = InterviewCoachRelease.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -214,6 +218,7 @@
 				2A0000020000000000000002 /* CoachingMemoryDTO.swift */,
 				2A0000010000000000000127 /* DimensionAnalysisDTO.swift */,
 				2A0000010000000000000129 /* ProgressDashboardDTO.swift */,
+				2A0000010000000000000133 /* CoachAgentDTO.swift */,
 			);
 			path = DTO;
 			sourceTree = "<group>";
@@ -232,6 +237,7 @@
 				2A0000010000000000000113 /* Onboarding */,
 				2A0000010000000000000114 /* Reports */,
 				2A0000010000000000000130 /* Progress */,
+				2A0000010000000000000135 /* CoachAgent */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -382,6 +388,14 @@
 			path = Progress;
 			sourceTree = "<group>";
 		};
+		2A0000010000000000000135 /* CoachAgent */ = {
+			isa = PBXGroup;
+			children = (
+				2A0000010000000000000131 /* CoachAgentView.swift */,
+			);
+			path = CoachAgent;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -501,6 +515,8 @@
 				2A0000010000000000000124 /* DimensionAnalysisView.swift in Sources */,
 				2A0000010000000000000126 /* DimensionAnalysisDTO.swift in Sources */,
 				2A0000010000000000000128 /* ProgressDashboardDTO.swift in Sources */,
+				2A0000010000000000000132 /* CoachAgentView.swift in Sources */,
+				2A0000010000000000000134 /* CoachAgentDTO.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
