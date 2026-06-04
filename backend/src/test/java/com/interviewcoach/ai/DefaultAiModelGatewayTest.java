@@ -33,6 +33,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -187,6 +188,62 @@ class DefaultAiModelGatewayTest {
         CandidateProfileDraftDto result = gateway.generateEntity(prompt, CandidateProfileDraftDto.class);
 
         assertThat(result).isSameAs(dto);
+        verifyNoInteractions(openAiClient, providerService, encryption, springAiUserProviderClient);
+    }
+
+    @Test
+    void springAiPlatformEntityRetriesResponseExtractionFailure() {
+        AtomicInteger attempts = new AtomicInteger();
+        PlatformAiClient platformAiClient = new PlatformAiClient() {
+            @Override
+            public String generateJson(AiPrompt prompt) {
+                throw new UnsupportedOperationException("not used");
+            }
+
+            @Override
+            public <T> T generateEntity(AiPrompt prompt, Class<T> responseType) {
+                if (attempts.incrementAndGet() == 1) {
+                    throw new org.springframework.web.client.RestClientException(
+                            "Error while extracting response for type [ChatCompletion] "
+                                    + "and content type [application/octet-stream]");
+                }
+                return responseType.cast(new CandidateProfileDraftDto(
+                        "平台 typed DTO",
+                        List.of("Spring"),
+                        List.of(),
+                        List.of(),
+                        200));
+            }
+        };
+        OpenAiCompatibleClient openAiClient = mock(OpenAiCompatibleClient.class);
+        AiProviderService providerService = mock(AiProviderService.class);
+        ApiKeyEncryption encryption = mock(ApiKeyEncryption.class);
+        SpringAiUserProviderClient springAiUserProviderClient = mock(SpringAiUserProviderClient.class);
+        PlatformAiProperties platformProperties = new PlatformAiProperties();
+        platformProperties.setModel("gpt-platform");
+        platformProperties.setMode("chatCompletions");
+        SpringAiFoundationProperties springProperties = new SpringAiFoundationProperties();
+        springProperties.setEnabled(true);
+
+        AiPrompt prompt = new AiPrompt(
+                AiPrompt.TASK_CANDIDATE_PROFILE_DRAFT,
+                null,
+                "system",
+                "user");
+
+        AiModelGateway gateway = gateway(
+                platformAiClient,
+                openAiClient,
+                providerService,
+                encryption,
+                platformProperties,
+                springProperties,
+                springAiUserProviderClient);
+
+        CandidateProfileDraftDto result = gateway.generateEntity(prompt, CandidateProfileDraftDto.class);
+
+        assertThat(result.summary()).isEqualTo("平台 typed DTO");
+        assertThat(attempts).hasValue(2);
         verifyNoInteractions(openAiClient, providerService, encryption, springAiUserProviderClient);
     }
 

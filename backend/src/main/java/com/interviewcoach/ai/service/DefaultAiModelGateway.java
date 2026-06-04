@@ -71,7 +71,14 @@ public class DefaultAiModelGateway implements AiModelGateway {
             if (name.contains("ResourceAccessException")) return true;
             if (name.contains("Connection") && name.contains("Exception")) return true;
             String msg = t.getMessage();
-            if (msg != null && msg.toLowerCase().contains("timeout")) return true;
+            if (msg != null) {
+                String normalized = msg.toLowerCase();
+                if (normalized.contains("timeout")) return true;
+                if (name.contains("RestClientException")
+                        && normalized.contains("error while extracting response")) return true;
+                if (name.contains("RestClientException")
+                        && normalized.contains("application/octet-stream")) return true;
+            }
         }
         return false;
     }
