@@ -6,20 +6,29 @@ import com.interviewcoach.agent.repository.AgentRepository;
 import com.interviewcoach.agent.repository.CoachEventRepository;
 import com.interviewcoach.agent.service.CoachEventService;
 import com.interviewcoach.agent.service.InterviewCoachAgentRunner;
+import com.interviewcoach.ai.service.AiPrompt;
+import com.interviewcoach.ai.service.AiStructuredOutputService;
 import com.interviewcoach.common.api.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.interviewcoach.coachingmemory.service.CoachingMemoryService;
 import com.interviewcoach.target.repository.InterviewTargetRepository;
-import com.interviewcoach.user.entity.User;
 import com.interviewcoach.user.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -51,6 +60,25 @@ class InterviewCoachAgentRunnerTest {
 
     @Autowired
     private AgentRepository agentRepository;
+
+    @MockBean
+    private AiStructuredOutputService aiService;
+
+    @MockBean
+    private CoachingMemoryService coachingMemoryService;
+
+    @BeforeEach
+    void stubAgentDecision() {
+        Mockito.when(aiService.generateAgentDecision(any())).thenReturn(new AgentDecisionDto(
+                "补强系统设计表达",
+                List.of("systemThinking"),
+                "startAssessment",
+                "根据当前上下文推荐继续测评",
+                List.of(new AgentToolCallDto("startAssessment", "需要确认当前能力基线")),
+                false,
+                false
+        ));
+    }
 
     @Test
     void handleTargetCreatedEventReturnsDecision() {
@@ -162,6 +190,49 @@ class InterviewCoachAgentRunnerTest {
         assertEquals("failed", failed.getStatus());
         assertEquals("IllegalArgumentException", failed.getLastErrorType());
         assertTrue(targetRepository.existsById(ctx.targetId));
+    }
+
+    @Test
+    void handleEventExcludesRejectedMemoryAndKeepsInferredOnlyAsUnverified() {
+        TestContext ctx = createTestContext("runner_memory_visibility");
+        Mockito.clearInvocations(aiService);
+        Mockito.when(coachingMemoryService.getMemories(ctx.targetId, ctx.userId)).thenReturn(List.of(
+                new CoachingMemoryDto(
+                        java.util.UUID.randomUUID().toString(),
+                        ctx.targetId.toString(),
+                        "assessment",
+                        java.util.UUID.randomUUID().toString(),
+                        List.of(
+                                new CoachingMemoryItemDto("可展示强项", "confirmed", "high"),
+                                new CoachingMemoryItemDto("用户已否认强项", "rejected", "high"),
+                                new CoachingMemoryItemDto("强项推断不应当事实", "inferred", "low")
+                        ),
+                        List.of(new CoachingMemoryItemDto("用户已否认短板", "rejected", "high")),
+                        List.of(),
+                        List.of(),
+                        List.of(
+                                new CoachingMemoryItemDto("需要追问验证的经历", "inferred", "low"),
+                                new CoachingMemoryItemDto("用户已否认待验证项", "rejected", "high")
+                        ),
+                        List.of(new CoachingMemoryItemDto("用户已否认建议", "rejected", "high")),
+                        List.of(),
+                        java.time.Instant.now().toString()
+                )
+        ));
+
+        runner.handleEvent(CoachEvent.ASSESSMENT_COMPLETED, ctx.targetId, ctx.userId);
+
+        ArgumentCaptor<AiPrompt> promptCaptor = ArgumentCaptor.forClass(AiPrompt.class);
+        Mockito.verify(aiService).generateAgentDecision(promptCaptor.capture());
+        String userPrompt = promptCaptor.getValue().userPrompt();
+        assertTrue(userPrompt.contains("可展示强项"));
+        assertTrue(userPrompt.contains("待验证"));
+        assertTrue(userPrompt.contains("需要追问验证的经历"));
+        assertFalse(userPrompt.contains("用户已否认强项"));
+        assertFalse(userPrompt.contains("用户已否认短板"));
+        assertFalse(userPrompt.contains("用户已否认待验证项"));
+        assertFalse(userPrompt.contains("用户已否认建议"));
+        assertFalse(userPrompt.contains("强项推断不应当事实"));
     }
 
     private CoachEventRecord savePendingEvent(TestContext ctx, String eventType) {

@@ -10,6 +10,7 @@ import com.interviewcoach.ai.service.AiStructuredOutputService;
 import com.interviewcoach.common.api.AgentDecisionDto;
 import com.interviewcoach.common.api.AgentToolCallDto;
 import com.interviewcoach.common.api.CoachingMemoryDto;
+import com.interviewcoach.common.api.CoachingMemoryItemDto;
 import com.interviewcoach.common.api.ProgressDashboardDto;
 import com.interviewcoach.coachingmemory.service.CoachingMemoryService;
 import com.interviewcoach.progress.service.ProgressService;
@@ -232,16 +233,29 @@ public class InterviewCoachAgentRunner {
         return new AiPrompt(AiPrompt.TASK_AGENT_DECISION, target.getId().toString(), systemPrompt, userBuilder.toString());
     }
 
-    private void appendMemoryItems(StringBuilder sb, String label, List<?> items) {
-        if (items != null && !items.isEmpty()) {
-            sb.append("  %s：".formatted(label));
-            items.forEach(item -> {
-                if (item instanceof com.interviewcoach.common.api.CoachingMemoryItemDto dto) {
-                    sb.append("[%s/%s] %s; ".formatted(dto.source(), dto.confidence(), dto.content()));
-                }
-            });
-            sb.append("\n");
+    private void appendMemoryItems(StringBuilder sb, String label, List<CoachingMemoryItemDto> items) {
+        if (items == null || items.isEmpty()) {
+            return;
         }
+
+        List<CoachingMemoryItemDto> visibleItems = items.stream()
+                .filter(item -> isVisibleMemoryItem(label, item))
+                .toList();
+        if (visibleItems.isEmpty()) {
+            return;
+        }
+
+        sb.append("  %s：".formatted(label));
+        visibleItems.forEach(item ->
+                sb.append("[%s/%s] %s; ".formatted(item.source(), item.confidence(), item.content())));
+        sb.append("\n");
+    }
+
+    private boolean isVisibleMemoryItem(String label, CoachingMemoryItemDto item) {
+        if (item == null || "rejected".equals(item.source())) {
+            return false;
+        }
+        return !"inferred".equals(item.source()) || "待验证".equals(label);
     }
 
     private void validateToolCalls(AgentDecisionDto decision) {
