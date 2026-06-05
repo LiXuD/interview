@@ -84,7 +84,7 @@ interview/
 └── scripts/
 ```
 
-当前仓库已完成 Task 1-33：MVP 闭环（Walking Skeleton → OpenAPI → Dev Login → Target CRUD → CandidateProfile → JobBrief → Assessment → TrainingPlan → MockInterview → User Provider → Delete Account → TestFlight Polish → Sign in with Apple）、Post-MVP AI 质量闭环（Task 14-17）、Post-MVP Real AI Adaptive Coaching（Task 18-25）、Phase 3 持续训练伙伴与 AI 质量运营闭环（Task 26-33）。Spring AI 底座迁移 Phase 2-6 已完成，AI 调用通过 `AiModelGateway` 统一路由到 Spring AI 或旧客户端。
+当前仓库已完成 Task 1-41：MVP 闭环（Walking Skeleton → OpenAPI → Dev Login → Target CRUD → CandidateProfile → JobBrief → Assessment → TrainingPlan → MockInterview → User Provider → Delete Account → TestFlight Polish → Sign in with Apple）、Post-MVP AI 质量闭环（Task 14-17）、Post-MVP Real AI Adaptive Coaching（Task 18-25）、Phase 3 持续训练伙伴与 AI 质量运营闭环（Task 26-33）、Phase 4 持续存在的面试教练 Agent（Task 34-41）。Spring AI 底座迁移 Phase 2-6 已完成，AI 调用通过 `AiModelGateway` 统一路由到 Spring AI 或旧客户端。
 
 ## 开发计划
 
@@ -185,7 +185,7 @@ Task 18 起，测评出题、测评评分、训练计划/反馈、模拟面试�
 
 ## 当前状态
 
-Task 1-33 全部完成：MVP + Post-MVP AI 质量 + Real AI Adaptive Coaching + Phase 3 持续训练伙伴与 AI 质量运营闭环。Spring AI 底座迁移 Phase 2-6 已完成，AI 调用已通过 `AiModelGateway` 统一路由到 Spring AI `ChatClient`（`chatCompletions` 模式）或旧客户端（`responses` 模式）。
+Task 1-41 全部完成：MVP + Post-MVP AI 质量 + Real AI Adaptive Coaching + Phase 3 持续训练伙伴与 AI 质量运营闭环 + Phase 4 持续存在的面试教练 Agent。Spring AI 底座迁移 Phase 2-6 已完成，AI 调用已通过 `AiModelGateway` 统一路由到 Spring AI `ChatClient`（`chatCompletions` 模式）或旧客户端（`responses` 模式）。
 
 已完成：
 
@@ -193,6 +193,7 @@ Task 1-33 全部完成：MVP + Post-MVP AI 质量 + Real AI Adaptive Coaching + 
 - Task 14-17：Post-MVP AI 质量闭环（平台默认真实 AI 接入、CandidateProfile AI 摘要、AI Prompt 契约补齐、AI 质量迭代）。
 - Task 18-25：Post-MVP Real AI Adaptive Coaching（开发环境真实 AI 基线、真实 AI 验收样例、固定 5 题结构化测评、教练记忆、用户纠错与记忆可信度、逐题评分与回答结构诊断、自适应专项训练、自适应模拟面试增强与本地记忆策略）。
 - Task 26-33：Phase 3 持续训练伙伴与 AI 质量运营闭环（Spring AI Observability、真实 AI 回归评测升级、多天训练计划、能力维度深度分析、进步追踪 Dashboard、Chat Memory 上下文管理、多轮模拟面试、发布硬化与记忆导入审查）。
+- Task 34-41：Phase 4 持续存在的面试教练 Agent（Agent 身份与状态、事件驱动决策、业务事件接入、下一步推荐统一、白名单工具编排、AI 调用收拢、iOS 教练入口、Agent 真实 AI 回归与隐私硬化）。
 - Spring AI 底座迁移：Phase 2（依赖引入）→ Phase 3（平台 Provider 迁移）→ Phase 4（用户 Provider 迁移）→ Phase 5（结构化输出升级）→ Phase 6（Advisor 与记忆增强）。
 
 当前架构：

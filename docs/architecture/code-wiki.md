@@ -579,7 +579,9 @@ ios/InterviewCoach/InterviewCoach/
 │   ├── MockInterview/
 │   ├── Reports/
 │   ├── Settings/
-│   └── Onboarding/
+│   ├── Onboarding/
+│   ├── CoachAgent/
+│   └── Progress/
 └── Resources/
 ```
 
@@ -811,6 +813,29 @@ SwiftData 本地模型：
 - 删除账号（支持"同时删除本机教练记忆文件"选项）。
 - 登录后检测到本机未导入的教练记忆时，提供审查与导入入口。
 - 教练记忆导入支持全选/部分选择/全部拒绝。
+
+### 7.11 CoachAgent
+
+文件：
+
+- `CoachAgentView.swift`
+
+能力：
+
+- 展示当前目标岗位对应的持续教练状态（目标、重点维度、推荐行动、最近判断）。
+- 推荐动作可跳转到已有测评、训练、模拟面试或复盘页面。
+- 提供空状态、加载状态、错误状态。
+
+### 7.12 Progress
+
+文件：
+
+- `ProgressDashboardView.swift`
+
+能力：
+
+- 按目标岗位查看训练完成率、总分趋势和 7 维度雷达。
+- 能力维度深度分析：历史分数、趋势方向、具体短板和下一步训练重点。
 
 ## 8. 核心业务流程
 
