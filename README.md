@@ -1,4 +1,4 @@
-# AI 技术岗面试教练
+# AI 面试教练
 
 一款面向技术岗求职者的 iOS App。用户输入目标岗位、JD、简历或项目经历后，App 通过 AI 完成岗位研究、能力测评、专项训练、模拟面试和复盘报告。
 
@@ -90,7 +90,7 @@ interview/
 
 主计划文档：
 
-- [AI 技术岗面试教练 App Vibecoding 三层开发计划](docs/product/vibecoding-development-plan.md)
+- [AI 面试教练 App Vibecoding 三层开发计划](docs/product/vibecoding-development-plan.md)
 
 后续开发按以下顺序推进：
 

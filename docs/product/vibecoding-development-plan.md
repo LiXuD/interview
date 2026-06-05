@@ -1,4 +1,4 @@
-# AI 技术岗面试教练 App Vibecoding 三层开发计划
+# AI 面试教练 App Vibecoding 三层开发计划
 
 本文档是本项目后续 vibecoding 开发的主计划文档。所有实现任务必须同时遵守项目根目录的 `AGENTS.md` 和 `CLAUDE.md`。
 

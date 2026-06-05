@@ -6,7 +6,7 @@ struct DevLoginView: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            Text("AI 技术岗面试教练")
+            Text("AI 面试教练")
                 .font(.largeTitle)
                 .fontWeight(.semibold)
 

@@ -11,7 +11,7 @@ struct LoginView: View {
         VStack(spacing: 32) {
             Spacer()
 
-            Text("AI 技术岗面试教练")
+            Text("AI 面试教练")
                 .font(.largeTitle)
                 .fontWeight(.semibold)
                 .multilineTextAlignment(.center)
