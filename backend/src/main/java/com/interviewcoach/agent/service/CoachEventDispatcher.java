@@ -11,6 +11,11 @@ import java.util.concurrent.Executor;
 
 import static org.springframework.transaction.event.TransactionPhase.AFTER_COMMIT;
 
+/**
+ * 教练事件分发器。监听 {@link CoachEventRecorded} 应用事件，
+ * 在事务提交后异步或同步触发 Agent 运行。
+ * <p>通过 {@link AgentRuntimeProperties} 控制是否启用分发和是否异步执行。</p>
+ */
 @Component
 public class CoachEventDispatcher {
 
@@ -31,6 +36,11 @@ public class CoachEventDispatcher {
         this.coachAgentExecutor = coachAgentExecutor;
     }
 
+    /**
+     * 事务提交后触发事件分发。若分发开关关闭则静默忽略。
+     *
+     * @param event 已持久化的教练事件
+     */
     @TransactionalEventListener(phase = AFTER_COMMIT)
     public void onRecordedAfterCommit(CoachEventRecorded event) {
         if (!properties.isDispatchEnabled()) {
@@ -47,14 +57,23 @@ public class CoachEventDispatcher {
         }
     }
 
+    /**
+     * 运行单个事件的 Agent 处理，捕获异常后标记失败。
+     * <p>标记失败本身也会被捕获，防止级联异常丢失原始错误。</p>
+     *
+     * @param eventId 教练事件记录 ID
+     */
     private void runEvent(UUID eventId) {
         try {
+            // 1. 调用 AgentRunner 处理事件
             runner.run(eventId);
         } catch (RuntimeException ex) {
+            // 2. 处理失败，标记事件为 failed 状态
             log.warn("Agent event dispatch failed for eventId={}: {}", eventId, ex.toString());
             try {
                 coachEventService.markFailed(eventId, ex.getClass().getSimpleName());
             } catch (RuntimeException markFailedException) {
+                // 3. 标记失败也失败，记录错误日志防止级联异常丢失原始错误
                 log.error("Failed to mark agent event failed for eventId={}: {}",
                         eventId, markFailedException.toString());
             }

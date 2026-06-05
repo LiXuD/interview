@@ -6,6 +6,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 训练任务实体，代表训练计划中的单个练习任务。
+ * 支持一次性回答和自适应多轮训练两种模式。
+ */
 @Entity
 @Table(name = "training_tasks")
 public class TrainingTask {
@@ -18,21 +22,27 @@ public class TrainingTask {
     @JoinColumn(name = "plan_id", nullable = false)
     private TrainingPlan plan;
 
+    /** 任务标题 */
     @Column(nullable = false)
     private String title;
 
+    /** 任务描述，说明练习目标和方法 */
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    /** 状态：pending / in_progress / completed */
     @Column(nullable = false)
     private String status = "pending";
 
+    /** 所属训练天序号，从 0 开始 */
     @Column(nullable = false)
     private int dayIndex = 0;
 
+    /** 一次性回答模式的 AI 反馈 */
     @OneToOne(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
     private TrainingFeedback feedback;
 
+    /** 自适应多轮训练会话列表 */
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TrainingSession> adaptiveSessions = new ArrayList<>();
 

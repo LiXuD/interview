@@ -7,6 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 自适应训练会话实体，围绕单个训练短板进行 2-4 轮 AI 追问训练。
+ * 每轮由 AI 动态决定继续追问、换角度、达标或停止。
+ */
 @Entity
 @Table(name = "training_sessions")
 public class TrainingSession {
@@ -19,23 +23,30 @@ public class TrainingSession {
     @JoinColumn(name = "task_id", nullable = false)
     private TrainingTask task;
 
+    /** 状态：in_progress / completed */
     @Column(nullable = false)
     private String status = "in_progress";
 
+    /** 当前已完成的回答轮数 */
     @Column(nullable = false)
     private int roundIndex = 0;
 
+    /** 最少训练轮数，未达到前 AI 不会返回 pass/stop */
     @Column(nullable = false)
     private int minRounds = 2;
 
+    /** 最多训练轮数，达到后自动结束会话 */
     @Column(nullable = false)
     private int maxRounds = 4;
 
+    /** AI 当前提出的问题 */
     @Column(columnDefinition = "TEXT")
     private String currentQuestion;
 
+    /** 上一轮 AI 决定的动作：continue / pass / switch / stop */
     private String lastAction;
 
+    /** 训练结束后的总结 */
     @Column(columnDefinition = "TEXT")
     private String summary;
 

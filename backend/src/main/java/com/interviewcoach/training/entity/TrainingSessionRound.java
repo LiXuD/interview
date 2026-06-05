@@ -6,6 +6,9 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 自适应训练会话单轮记录，存储每轮的问题、回答、AI 评分与反馈。
+ */
 @Entity
 @Table(name = "training_session_rounds")
 public class TrainingSessionRound {
@@ -18,24 +21,31 @@ public class TrainingSessionRound {
     @JoinColumn(name = "session_id", nullable = false)
     private TrainingSession session;
 
+    /** 轮次序号，从 1 开始 */
     @Column(nullable = false)
     private int roundIndex;
 
+    /** 本轮 AI 提出的问题 */
     @Column(columnDefinition = "TEXT")
     private String question;
 
+    /** 候选人的回答 */
     @Column(columnDefinition = "TEXT")
     private String answer;
 
+    /** AI 决定的动作：continue / pass / switch / stop */
     @Column(nullable = false)
     private String action;
 
+    /** AI 本轮评分，范围 0-100 */
     @Column(nullable = false)
     private int score;
 
+    /** AI 对本轮回答的反馈 */
     @Column(columnDefinition = "TEXT")
     private String feedback;
 
+    /** 本轮回答中发现的具体问题列表 */
     @ElementCollection
     @CollectionTable(name = "training_session_round_problems", joinColumns = @JoinColumn(name = "round_id"))
     @OrderColumn(name = "sort_order")

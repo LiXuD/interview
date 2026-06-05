@@ -5,6 +5,10 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 训练反馈实体，存储 AI 对训练任务回答的评分与改进建议。
+ * 与 {@link TrainingTask} 一对一关联。
+ */
 @Entity
 @Table(name = "training_feedbacks")
 public class TrainingFeedback {
@@ -17,24 +21,30 @@ public class TrainingFeedback {
     @JoinColumn(name = "task_id", nullable = false, unique = true)
     private TrainingTask task;
 
+    /** AI 评分，范围 0-100 */
     @Column(nullable = false)
     private int score;
 
+    /** AI 对回答的整体反馈 */
     @Column(columnDefinition = "TEXT")
     private String feedback;
 
+    /** 回答中发现的具体问题列表 */
     @ElementCollection
     @CollectionTable(name = "training_feedback_problems", joinColumns = @JoinColumn(name = "feedback_id"))
     @OrderColumn(name = "sort_order")
     @Column(name = "problem", columnDefinition = "TEXT")
     private List<String> problems;
 
+    /** AI 改写后的示范回答 */
     @Column(name = "rewritten_answer", columnDefinition = "TEXT")
     private String rewrittenAnswer;
 
+    /** AI 基于回答薄弱点提出的追问 */
     @Column(name = "follow_up_question", columnDefinition = "TEXT")
     private String followUpQuestion;
 
+    /** AI 建议复习的知识点列表 */
     @ElementCollection
     @CollectionTable(name = "training_feedback_review_points", joinColumns = @JoinColumn(name = "feedback_id"))
     @OrderColumn(name = "sort_order")

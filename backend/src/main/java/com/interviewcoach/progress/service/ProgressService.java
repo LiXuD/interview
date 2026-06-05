@@ -20,6 +20,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 教练进步追踪服务，聚合测评分数趋势、训练完成率、能力维度和近期短板。
+ */
 @Service
 public class ProgressService {
 
@@ -41,9 +44,17 @@ public class ProgressService {
         this.dimensionAnalysisService = dimensionAnalysisService;
     }
 
+    /**
+     * 获取指定目标岗位的进步追踪 Dashboard 数据。
+     * 聚合测评分数趋势、模拟面试分数、训练完成率、能力维度分析和近期短板。
+     *
+     * @param targetId 目标岗位 ID
+     * @param userId   用户 ID
+     * @return Dashboard DTO
+     */
     @Transactional(readOnly = true)
     public ProgressDashboardDto getDashboard(UUID targetId, UUID userId) {
-        // Score trend from assessments
+        // 1. 查询测评结果，构建测评分数趋势
         List<AssessmentResult> assessmentResults = assessmentResultRepository
                 .findBySessionTargetIdAndSessionUserIdOrderByCreatedAtDesc(targetId, userId);
 
@@ -55,7 +66,7 @@ public class ProgressService {
                     result.getTotalScore(), "assessment", result.getCreatedAt().toString()));
         }
 
-        // Add mock interview scores from reports
+        // 2. 从模拟面试报告中提取 overallScore，追加到分数趋势
         List<Report> mockInterviewReports = reportRepository
                 .findByTargetIdAndUserIdOrderByCreatedAtDesc(targetId, userId)
                 .stream()
@@ -71,25 +82,26 @@ public class ProgressService {
                             score.intValue(), "mockInterview", report.getCreatedAt().toString()));
                 }
             } catch (Exception ignored) {
+                // 报告内容解析失败时跳过该条目
             }
         }
 
-        // Sort by date
+        // 3. 按时间倒序排列分数趋势
         scoreTrend.sort((a, b) -> b.createdAt().compareTo(a.createdAt()));
 
-        // Training completion
+        // 4. 计算训练计划完成率
         ProgressDashboardDto.TrainingCompletionDto trainingCompletion = trainingPlanRepository
                 .findByTargetIdAndUserId(targetId, userId)
                 .map(this::calculateCompletion)
                 .orElse(new ProgressDashboardDto.TrainingCompletionDto(0, 0, 0.0));
 
-        // Dimension summary
+        // 5. 查询能力维度分析
         DimensionAnalysisDto dimensionAnalysis = dimensionAnalysisService.analyze(targetId, userId);
         List<ProgressDashboardDto.DimensionSummaryDto> dimensionSummary = dimensionAnalysis.dimensions().stream()
                 .map(d -> new ProgressDashboardDto.DimensionSummaryDto(d.name(), d.latestScore(), d.trend()))
                 .toList();
 
-        // Recent weaknesses from coaching memory
+        // 6. 从教练记忆中提取近期短板（去重取前 5 条）
         List<String> recentWeaknesses = coachingMemoryRepository
                 .findByTargetIdAndUserIdOrderByCreatedAtDesc(targetId, userId)
                 .stream()
@@ -100,11 +112,18 @@ public class ProgressService {
                 .limit(5)
                 .toList();
 
+        // 7. 组装并返回 Dashboard DTO
         return new ProgressDashboardDto(
                 targetId.toString(), latestScore, scoreTrend,
                 trainingCompletion, dimensionSummary, recentWeaknesses);
     }
 
+    /**
+     * 计算训练计划完成率。
+     *
+     * @param plan 训练计划实体
+     * @return 训练完成 DTO，包含总任务数、已完成数和完成率
+     */
     private ProgressDashboardDto.TrainingCompletionDto calculateCompletion(TrainingPlan plan) {
         int total = plan.getTasks().size();
         int completed = (int) plan.getTasks().stream()

@@ -8,6 +8,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 训练计划实体，基于测评短板为用户生成多天训练任务列表。
+ * 与 {@link InterviewTarget} 通过 targetId 关联。
+ */
 @Entity
 @Table(name = "training_plans")
 public class TrainingPlan {
@@ -20,6 +24,7 @@ public class TrainingPlan {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    /** 关联的目标岗位 ID */
     @Column(name = "target_id", nullable = false)
     private UUID targetId;
 
@@ -27,9 +32,11 @@ public class TrainingPlan {
     @OrderBy("createdAt ASC")
     private List<TrainingTask> tasks = new ArrayList<>();
 
+    /** 训练计划总天数，默认 3 天 */
     @Column(nullable = false)
     private int totalDays = 3;
 
+    /** 状态：pending / completed */
     @Column(nullable = false)
     private String status = "pending";
 

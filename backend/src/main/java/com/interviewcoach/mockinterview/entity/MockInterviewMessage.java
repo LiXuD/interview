@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * 模拟面试消息实体，记录面试过程中每一轮的对话内容。
+ */
 @Entity
 @Table(name = "mock_interview_messages")
 public class MockInterviewMessage {
@@ -16,9 +19,11 @@ public class MockInterviewMessage {
     @JoinColumn(name = "interview_id", nullable = false)
     private MockInterview interview;
 
+    /** 消息角色：user 或 assistant */
     @Column(nullable = false)
     private String role;
 
+    /** 消息内容 */
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 

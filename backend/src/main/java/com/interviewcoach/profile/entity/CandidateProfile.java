@@ -7,6 +7,10 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 候选人简历摘要实体，存储用户确认后的结构化经历摘要。
+ * 简历原文不落库，仅保存确认后的摘要和技能/项目/经历列表。
+ */
 @Entity
 @Table(name = "candidate_profiles")
 public class CandidateProfile {

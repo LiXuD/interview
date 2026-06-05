@@ -20,6 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * 能力维度分析服务，跨测评、模拟面试和教练记忆汇总 7 个稳定能力维度的评分趋势与短板。
+ */
 @Service
 public class DimensionAnalysisService {
 
@@ -45,10 +48,17 @@ public class DimensionAnalysisService {
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * 分析指定目标岗位下 7 个能力维度的评分历史、趋势和短板。
+     * 汇总测评结果、模拟面试报告和教练记忆中的维度数据。
+     *
+     * @param targetId 目标岗位 ID
+     * @param userId   用户 ID
+     * @return 维度分析 DTO
+     */
     @Transactional(readOnly = true)
     public DimensionAnalysisDto analyze(UUID targetId, UUID userId) {
-        List<DimensionDetailDto> details = new ArrayList<>();
-
+        // 第 1 步：查询该目标岗位下所有测评结果、模拟面试报告和教练记忆
         List<AssessmentResult> assessmentResults = assessmentResultRepository
                 .findBySessionTargetIdAndSessionUserIdOrderByCreatedAtDesc(targetId, userId);
 
@@ -61,10 +71,13 @@ public class DimensionAnalysisService {
         List<CoachingMemory> memories = coachingMemoryRepository
                 .findByTargetIdAndUserIdOrderByCreatedAtDesc(targetId, userId);
 
+        // 第 2 步：逐维度汇总评分历史、趋势和短板
+        List<DimensionDetailDto> details = new ArrayList<>();
         for (String dimension : FIXED_DIMENSIONS) {
             details.add(analyzeDimension(dimension, assessmentResults, mockInterviewReports, memories));
         }
 
+        // 第 3 步：构建并返回维度分析 DTO
         return new DimensionAnalysisDto(targetId.toString(), details);
     }
 
@@ -77,7 +90,7 @@ public class DimensionAnalysisService {
         List<String> evidenceSources = new ArrayList<>();
         List<String> nextFocus = new ArrayList<>();
 
-        // Collect scores from assessment results
+        // 第 1 步：从测评结果中提取该维度的评分和评分理由
         for (AssessmentResult result : assessmentResults) {
             for (AssessmentDimension d : result.getDimensions()) {
                 if (dimensionName.equals(d.getName())) {
@@ -91,24 +104,23 @@ public class DimensionAnalysisService {
             }
         }
 
-        // Collect scores from mock interview reports
+        // 第 2 步：从模拟面试报告中提取该维度的评分
         for (Report report : mockInterviewReports) {
             extractDimensionFromReport(report, dimensionName, scoreHistory, weaknesses);
         }
 
-        // Collect evidence from coaching memory
+        // 第 3 步：从教练记忆中提取该维度的短板证据和下一步重点
         for (CoachingMemory memory : memories) {
             extractFromCoachingMemory(memory, dimensionName, weaknesses, evidenceSources, nextFocus);
         }
 
-        // Sort by createdAt descending so index 0 is the global latest across all sources
+        // 第 4 步：按时间倒序排列评分历史，计算最新分和趋势
         scoreHistory.sort((a, b) -> b.createdAt().compareTo(a.createdAt()));
 
-        // Calculate latest score and trend (scoreHistory is in descending createdAt order)
         Integer latestScore = scoreHistory.isEmpty() ? null : scoreHistory.get(0).score();
         String trend = calculateTrend(scoreHistory);
 
-        // Deduplicate and limit lists
+        // 第 5 步：去重并限制列表长度
         weaknesses = weaknesses.stream().distinct().limit(5).toList();
         evidenceSources = evidenceSources.stream().distinct().limit(5).toList();
         nextFocus = nextFocus.stream().distinct().limit(3).toList();

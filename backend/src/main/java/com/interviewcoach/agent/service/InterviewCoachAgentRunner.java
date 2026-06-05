@@ -28,11 +28,17 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * 面试教练 Agent 运行器。处理教练事件，调用 AI 生成决策，
+ * 校验决策合法性，执行工具调用，并更新 Agent 状态。
+ * <p>采用受控编排：每次事件最多 1 次模型调用、3 次工具调用、3 个关注维度。</p>
+ */
 @Service
 public class InterviewCoachAgentRunner {
 
     private static final Logger log = LoggerFactory.getLogger(InterviewCoachAgentRunner.class);
 
+    /** 允许的工具白名单 */
     public static final Set<String> ALLOWED_TOOLS = Set.of(
             "startAssessment",
             "generateTrainingPlan",
@@ -73,6 +79,12 @@ public class InterviewCoachAgentRunner {
         this.toolOrchestrator = toolOrchestrator;
     }
 
+    /**
+     * 认领并处理单个教练事件。使用独立事务确保认领和处理的原子性。
+     * <p>认领失败（已被其他线程处理）时静默返回；处理失败时标记事件为 failed。</p>
+     *
+     * @param eventId 教练事件记录 ID
+     */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void run(UUID eventId) {
         CoachEventRecord event = coachEventService.claim(eventId);
@@ -92,13 +104,24 @@ public class InterviewCoachAgentRunner {
         }
     }
 
+    /**
+     * 处理教练事件的核心逻辑：确定阶段、加载上下文、调用 AI 决策、校验并执行工具、更新 Agent 状态。
+     * <p>每次事件最多 1 次模型调用、3 次工具调用、3 个关注维度。</p>
+     *
+     * @param event    教练事件类型
+     * @param targetId 目标岗位 ID
+     * @param userId   用户 ID
+     * @return AI 决策结果，处理失败时返回 null
+     */
     @Transactional
     public AgentDecisionDto handleEvent(CoachEvent event, UUID targetId, UUID userId) {
         long startNanos = aiMetrics.startTimerNanos();
         try {
+            // 1. 校验目标归属并加载实体
             InterviewTarget target = targetRepository.findByIdAndUserId(targetId, userId)
                     .orElseThrow(() -> new IllegalArgumentException("Target not found: " + targetId));
 
+            // 2. 查找或自动创建 Agent 实例
             InterviewCoachAgent agent = agentRepository.findByTargetIdAndUserId(targetId, userId)
                     .orElseGet(() -> {
                         InterviewCoachAgent newAgent = new InterviewCoachAgent();
@@ -107,20 +130,27 @@ public class InterviewCoachAgentRunner {
                         return agentRepository.save(newAgent);
             });
 
+            // 3. 根据事件类型确定新的教练阶段
             String newStage = determineStage(event, agent.getCurrentStage());
 
+            // 4. 加载进度概览和教练记忆作为 AI 上下文
             ProgressDashboardDto progress = loadProgress(targetId, userId);
             List<CoachingMemoryDto> memories = coachingMemoryService.getMemories(targetId, userId);
 
+            // 5. 构建 Prompt 并调用 AI 生成决策
             AiPrompt prompt = buildPrompt(agent, target, event, progress, memories);
             AgentDecisionDto decision = aiService.generateAgentDecision(prompt);
 
+            // 6. 校验决策结构完整性、工具调用数量和白名单
             validateDecision(decision);
             enforceToolCallBudget(decision);
             validateToolCalls(decision);
+
+            // 7. 执行工具调用（如启动测评、生成训练计划等）
             toolOrchestrator.execute(decision.toolCalls(),
                     new AgentToolOrchestrator.ToolContext(targetId, userId, progress, memories));
 
+            // 8. 将 AI 决策结果持久化到 Agent 状态
             agent.setCurrentStage(newStage);
             agent.setLastEventType(event.name());
             agent.setCurrentGoal(decision.currentGoal());
@@ -130,17 +160,20 @@ public class InterviewCoachAgentRunner {
             agent.setLastRunAt(Instant.now());
             agentRepository.save(agent);
 
+            // 9. 记录成功指标并返回决策
             recordAgentMetrics(startNanos, event.name(), newStage, "success");
             log.info("Agent event={} targetId={} stage={} tools={}",
                     event.name(), targetId, newStage, decision.toolCalls().size());
             return decision;
         } catch (Exception ex) {
+            // 10. 异常时记录失败指标，返回 null
             recordAgentMetrics(startNanos, event.name(), null, "failure");
             log.warn("Agent event {} failed for targetId={}: {}", event.name(), targetId, ex.getMessage());
             return null;
         }
     }
 
+    /** 根据事件类型确定新的教练阶段 */
     private String determineStage(CoachEvent event, String currentStage) {
         return switch (event) {
             case TARGET_CREATED -> "targetSetup";
@@ -162,11 +195,24 @@ public class InterviewCoachAgentRunner {
         }
     }
 
+    /**
+     * 构建 Agent 决策 Prompt，包含系统指令、当前状态、进度概览和教练记忆。
+     * <p>系统指令定义 JSON 输出格式和白名单约束；用户消息按顺序拼接目标信息、
+     * 事件类型、当前阶段、进度概览和最新教练记忆。</p>
+     *
+     * @param agent    当前 Agent 实体
+     * @param target   目标岗位实体
+     * @param event    触发的教练事件类型
+     * @param progress 用户训练进度概览（可为 null）
+     * @param memories 教练记忆列表（可为 null 或空）
+     * @return 组装完成的 AI Prompt
+     */
     private AiPrompt buildPrompt(InterviewCoachAgent agent,
                                   InterviewTarget target,
                                   CoachEvent event,
                                   ProgressDashboardDto progress,
                                   List<CoachingMemoryDto> memories) {
+        // 1. 系统指令：定义 JSON 输出格式、白名单工具和约束规则
         String systemPrompt = """
                 你是 AI 技术面试教练 Agent。你持续跟踪候选人的面试准备进度，并在每个关键事件后做出下一步决策。
                 你只能从白名单工具中选择动作。只返回合法 JSON 对象，不返回任何其他文字。
@@ -191,6 +237,7 @@ public class InterviewCoachAgentRunner {
                 - 只基于提供的上下文做决策，不要编造候选人未提供的信息。
                 """.formatted(String.join(", ", ALLOWED_TOOLS));
 
+        // 2. 拼接用户消息：目标岗位信息、事件类型、当前 Agent 状态
         StringBuilder userBuilder = new StringBuilder();
         userBuilder.append("目标岗位：%s\n".formatted(target.getTitle()));
         userBuilder.append("触发事件：%s\n".formatted(event.name()));
@@ -205,6 +252,7 @@ public class InterviewCoachAgentRunner {
             userBuilder.append("上次决策摘要：%s\n".formatted(agent.getLastDecisionSummary()));
         }
 
+        // 3. 追加进度概览（测评分数、训练完成率、维度分数和趋势、近期短板）
         if (progress != null) {
             userBuilder.append("\n进度概览：\n");
             if (progress.latestAssessmentScore() != null) {
@@ -228,6 +276,7 @@ public class InterviewCoachAgentRunner {
             }
         }
 
+        // 4. 追加最新教练记忆（强项、短板、待验证、建议重点）
         if (memories != null && !memories.isEmpty()) {
             CoachingMemoryDto latest = memories.get(0);
             userBuilder.append("\n教练记忆（最新）：\n");
@@ -240,11 +289,13 @@ public class InterviewCoachAgentRunner {
         return new AiPrompt(AiPrompt.TASK_AGENT_DECISION, target.getId().toString(), systemPrompt, userBuilder.toString());
     }
 
+    /** 将教练记忆条目追加到 Prompt 中，过滤 rejected 和不适用的 inferred 条目 */
     private void appendMemoryItems(StringBuilder sb, String label, List<CoachingMemoryItemDto> items) {
         if (items == null || items.isEmpty()) {
             return;
         }
 
+        // 1. 过滤：rejected 永不展示，inferred 仅在"待验证"标签下展示
         List<CoachingMemoryItemDto> visibleItems = items.stream()
                 .filter(item -> isVisibleMemoryItem(label, item))
                 .toList();
@@ -252,12 +303,14 @@ public class InterviewCoachAgentRunner {
             return;
         }
 
+        // 2. 格式化输出：[来源/可信度] 内容
         sb.append("  %s：".formatted(label));
         visibleItems.forEach(item ->
                 sb.append("[%s/%s] %s; ".formatted(item.source(), item.confidence(), item.content())));
         sb.append("\n");
     }
 
+    /** 判断记忆条目是否可见：rejected 永不展示，inferred 仅在"待验证"标签下展示 */
     private boolean isVisibleMemoryItem(String label, CoachingMemoryItemDto item) {
         if (item == null || "rejected".equals(item.source())) {
             return false;
@@ -265,6 +318,7 @@ public class InterviewCoachAgentRunner {
         return !"inferred".equals(item.source()) || "待验证".equals(label);
     }
 
+    /** 校验 AI 决策的必填字段和约束 */
     private void validateDecision(AgentDecisionDto decision) {
         if (decision == null) {
             throw new IllegalStateException("Agent decision is null");
@@ -301,6 +355,7 @@ public class InterviewCoachAgentRunner {
         }
     }
 
+    /** 校验工具调用是否在白名单内 */
     private void validateToolCalls(AgentDecisionDto decision) {
         for (AgentToolCallDto toolCall : decision.toolCalls()) {
             if (!ALLOWED_TOOLS.contains(toolCall.toolName())) {
@@ -310,6 +365,7 @@ public class InterviewCoachAgentRunner {
         }
     }
 
+    /** 校验工具调用数量是否超限 */
     private void enforceToolCallBudget(AgentDecisionDto decision) {
         if (decision.toolCalls().size() > MAX_TOOL_CALLS) {
             throw new IllegalStateException(
@@ -318,6 +374,7 @@ public class InterviewCoachAgentRunner {
         }
     }
 
+    /** 记录 Agent 事件处理的耗时和次数指标 */
     private void recordAgentMetrics(long startNanos, String event, String stage, String outcome) {
         long durationNanos = System.nanoTime() - startNanos;
         io.micrometer.core.instrument.Timer.builder("agent.event.duration")

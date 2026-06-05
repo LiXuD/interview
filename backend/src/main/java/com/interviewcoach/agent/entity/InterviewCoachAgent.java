@@ -8,6 +8,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 面试教练 Agent 实体。每个目标岗位对应一个 Agent 实例，
+ * 记录当前教练阶段、目标、关注维度和最近决策状态。
+ * <p>采用乐观锁（@Version）保证并发安全。</p>
+ */
 @Entity
 @Table(name = "interview_coach_agents", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"user_id", "target_id"})
@@ -26,32 +31,41 @@ public class InterviewCoachAgent {
     @JoinColumn(name = "target_id", nullable = false)
     private InterviewTarget target;
 
+    /** Agent 状态：active / paused */
     @Column(nullable = false)
     private String status = "active";
 
+    /** 当前教练阶段：targetSetup / profileConfirmation / assessment / training / mockInterview / review */
     @Column(nullable = false)
     private String currentStage = "targetSetup";
 
+    /** AI 决策生成的当前教练目标 */
     @Column(columnDefinition = "TEXT")
     private String currentGoal;
 
+    /** 当前优先关注的能力维度列表（最多 3 个） */
     @ElementCollection
     @CollectionTable(name = "agent_focus_dimensions", joinColumns = @JoinColumn(name = "agent_id"))
     @OrderColumn(name = "sort_order")
     private List<String> activeFocusDimensions = new ArrayList<>();
 
+    /** AI 推荐的下一步行动 */
     @Column(columnDefinition = "TEXT")
     private String nextRecommendedAction;
 
+    /** 最近一次触发的事件类型 */
     @Column
     private String lastEventType;
 
+    /** 最近一次 AI 决策的摘要（可展示给用户） */
     @Column(columnDefinition = "TEXT")
     private String lastDecisionSummary;
 
+    /** 最近一次 Agent 运行时间 */
     @Column
     private Instant lastRunAt;
 
+    /** 乐观锁版本号 */
     @Version
     private Long version;
 

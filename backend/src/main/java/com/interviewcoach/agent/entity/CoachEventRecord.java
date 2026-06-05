@@ -15,6 +15,10 @@ import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * 教练事件记录实体。持久化每个触发教练 Agent 的业务事件，
+ * 支持幂等去重（基于 idempotency_key）、状态流转和重试计数。
+ */
 @Entity
 @Table(
         name = "coach_events",
@@ -37,30 +41,38 @@ public class CoachEventRecord {
     @Column(name = "target_id", nullable = false)
     private UUID targetId;
 
+    /** 事件类型，对应 {@link CoachEvent} 枚举名 */
     @Column(nullable = false)
     private String eventType;
 
+    /** 事件来源实体类型（如 assessment、mockInterview） */
     @Column(nullable = false)
     private String sourceType;
 
+    /** 事件来源实体 ID */
     @Column(nullable = false)
     private UUID sourceId;
 
+    /** 幂等键，SHA-256(eventType:sourceType:sourceId)，防止重复处理 */
     @Column(name = "idempotency_key", nullable = false, length = 64)
     private String idempotencyKey;
 
+    /** 事件状态：pending / processing / completed / failed */
     @Column(nullable = false)
     private String status = "pending";
 
+    /** 已尝试处理次数 */
     @Column(nullable = false)
     private int attemptCount;
 
+    /** 最近一次失败的异常类型名 */
     @Column
     private String lastErrorType;
 
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
+    /** 事件处理完成时间 */
     @Column
     private Instant processedAt;
 

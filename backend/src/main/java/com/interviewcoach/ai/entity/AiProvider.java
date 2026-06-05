@@ -5,6 +5,10 @@ import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * 用户自定义 AI Provider 实体。存储 OpenAI-compatible 兼容的 Provider 配置，
+ * 包含加密后的 API Key、base URL、模型名称和 API 模式。
+ */
 @Entity
 @Table(name = "ai_providers")
 public class AiProvider {
@@ -17,21 +21,27 @@ public class AiProvider {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    /** 用户自定义的 Provider 显示名称 */
     @Column(nullable = false)
     private String name;
 
+    /** OpenAI-compatible API 的 base URL */
     @Column(name = "base_url", nullable = false)
     private String baseUrl;
 
+    /** AES-GCM 加密后的 API Key 密文 */
     @Column(name = "api_key_encrypted", nullable = false)
     private String apiKeyEncrypted;
 
+    /** 模型名称，如 gpt-4o */
     @Column(nullable = false)
     private String model;
 
+    /** API 模式：chatCompletions 或 responses */
     @Column(name = "openai_api_mode", nullable = false)
     private String openaiApiMode;
 
+    /** 是否为当前用户的默认 Provider */
     @Column(name = "is_default", nullable = false)
     private boolean isDefault = false;
 

@@ -20,6 +20,11 @@ import com.interviewcoach.common.api.SkillMapItem;
 import com.interviewcoach.common.api.TrainingFeedbackDto;
 import java.util.List;
 
+/**
+ * 本地 stub AI 客户端。在平台真实 AI 未启用时提供预设的结构化响应，
+ * 用于单元测试、CI 回归和离线演示。
+ * <p>所有返回内容为占位数据，不代表真实 AI 输出质量，禁止作为 AI 产品体验验收依据。</p>
+ */
 public class LocalPlatformAiClient implements PlatformAiClient {
 
     private final ObjectMapper objectMapper;
@@ -28,6 +33,7 @@ public class LocalPlatformAiClient implements PlatformAiClient {
         this.objectMapper = objectMapper;
     }
 
+    /** 根据 task 类型生成对应的预设 JSON 响应 */
     @Override
     public String generateJson(AiPrompt prompt) {
         try {
@@ -103,7 +109,6 @@ public class LocalPlatformAiClient implements PlatformAiClient {
     private AssessmentQuestionScoreDto buildQuestionScore(AiPrompt prompt) {
         int questionIndex = 0;
         try {
-            // Extract questionIndex from userPrompt: "题号：N（共 M 题）"
             for (String line : prompt.userPrompt().split("\n")) {
                 if (line.startsWith("题号：")) {
                     String numberPart = line.substring("题号：".length()).split("[^0-9]")[0].trim();
@@ -153,7 +158,6 @@ public class LocalPlatformAiClient implements PlatformAiClient {
 
     private AiStructuredOutputService.TrainingPlanResult buildTrainingPlan(AiPrompt prompt) {
         return new AiStructuredOutputService.TrainingPlanResult(List.of(
-                // Day 1: 基础巩固
                 new AiStructuredOutputService.TrainingPlanTaskItem(
                         "系统设计容量规划练习",
                         "针对系统设计短板，练习如何估算 QPS、存储和带宽需求，设计一个支持百万用户的 API 系统。",
@@ -169,7 +173,6 @@ public class LocalPlatformAiClient implements PlatformAiClient {
                         "针对分布式理解薄弱，准备 CAP 理论、最终一致性、分布式锁等常见面试问题的回答。",
                         0
                 ),
-                // Day 2: 进阶练习
                 new AiStructuredOutputService.TrainingPlanTaskItem(
                         "微服务架构设计练习",
                         "基于第一天的容量规划，设计一个完整的微服务架构，包括服务拆分、通信方式和容错策略。",
@@ -185,7 +188,6 @@ public class LocalPlatformAiClient implements PlatformAiClient {
                         "基于第一天的分布式一致性知识，准备 TCC、Saga 等分布式事务方案的面试回答。",
                         1
                 ),
-                // Day 3: 综合实战
                 new AiStructuredOutputService.TrainingPlanTaskItem(
                         "完整系统设计面试模拟",
                         "综合前两天的练习，完成一个端到端的系统设计面试题，包括需求分析、架构设计和性能优化。",

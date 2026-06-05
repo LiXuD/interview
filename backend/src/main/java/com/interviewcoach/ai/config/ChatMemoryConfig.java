@@ -5,18 +5,15 @@ import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Spring AI 聊天记忆配置。为模拟面试提供滑动窗口短上下文管理。
+ */
 @Configuration
 public class ChatMemoryConfig {
 
     /**
-     * Configures a MessageWindowChatMemory with a window size of 12 messages (6 turns).
-     * This is used for mock interview context management.
-     *
-     * Constraints:
-     * - Window size = 12 messages (equivalent to 6 turns of user+assistant)
-     * - ChatMemory does NOT store business logic (confirmed/rejected facts)
-     * - Business long-term memory is stored in CoachingMemory entity
-     * - Resume text, API keys, and AI chain-of-thought are NEVER stored
+     * 配置消息窗口聊天记忆，窗口大小 12 条消息（6 轮对话）。
+     * <p>约束：仅用于模拟面试短窗口上下文，不存储业务教练记忆；简历原文、API Key 和 AI 思维链永不存储。</p>
      */
     @Bean
     public ChatMemory chatMemory() {

@@ -26,6 +26,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
+/**
+ * AI 结构化输出服务。统一管理所有 AI 业务任务的调用、JSON 解析、业务校验和重试修复。
+ * <p>每个 generate* 方法对应一个教练业务场景（岗位画像、测评、训练、模拟面试等），
+ * 内部优先尝试 Spring AI 结构化输出，失败后回退到 JSON 字符串 + 手动解析。</p>
+ */
 @Service
 public class AiStructuredOutputService {
 
@@ -83,6 +88,7 @@ public class AiStructuredOutputService {
                 platformProperties, springAiProperties, springAiUserProviderClient, new NoOpAiMetrics());
     }
 
+    /** 测试用构造函数，使用默认测试配置 */
     public AiStructuredOutputService(PlatformAiClient platformAiClient,
                                      OpenAiCompatibleClient openAiClient,
                                      AiProviderService providerService,
@@ -98,6 +104,12 @@ public class AiStructuredOutputService {
         return properties;
     }
 
+    /**
+     * 生成岗位画像（JobBrief）。包含角色摘要、技能地图、面试话题等结构化信息。
+     *
+     * @param prompt AI 调用请求
+     * @return 校验通过的岗位画像 DTO
+     */
     public JobBriefDto generateJobBrief(AiPrompt prompt) {
         JobBriefDto structuredResult = generateStructuredFromSpringProvider(prompt, JobBriefDto.class);
         if (structuredResult != null) {
@@ -134,8 +146,15 @@ public class AiStructuredOutputService {
         }
     }
 
+    /** 测评题目列表的封装结构 */
     public record AssessmentQuestionsResult(List<AssessmentQuestionDto> questions) {}
 
+    /**
+     * 生成 5 道结构化测评题目，包含维度、难度、意图和评分标准。
+     *
+     * @param prompt AI 调用请求
+     * @return 5 道测评题目 DTO 列表
+     */
     public List<AssessmentQuestionDto> generateAssessmentQuestions(AiPrompt prompt) {
         AssessmentQuestionsResult structuredResult = generateStructuredFromSpringProvider(prompt, AssessmentQuestionsResult.class);
         if (structuredResult != null) {
@@ -146,6 +165,12 @@ public class AiStructuredOutputService {
         return result.questions();
     }
 
+    /**
+     * 生成单题评分结果，包含分数、反馈、改进示范和回答结构诊断。
+     *
+     * @param prompt AI 调用请求
+     * @return 单题评分结果 DTO
+     */
     public AssessmentQuestionScoreDto generateQuestionScore(AiPrompt prompt) {
         AssessmentQuestionScoreDto structuredResult = generateStructuredFromSpringProvider(prompt, AssessmentQuestionScoreDto.class);
         if (structuredResult != null) {
@@ -162,8 +187,6 @@ public class AiStructuredOutputService {
         if (dto.score() < 0 || dto.score() > 100) {
             throw new IllegalArgumentException("question score out of range");
         }
-        // AssessmentService normalizes the stored index to the current backend question.
-        // Accept 1-based final-question output from live models while keeping the rest strict.
         if (dto.questionIndex() < 0 || dto.questionIndex() > 5) {
             throw new IllegalArgumentException("questionIndex out of range");
         }
@@ -204,6 +227,12 @@ public class AiStructuredOutputService {
         }
     }
 
+    /**
+     * 生成测评总结果，包含总分、维度评分、强弱项和下一步行动建议。
+     *
+     * @param prompt AI 调用请求
+     * @return 测评总结果 DTO
+     */
     public AssessmentResultDto generateAssessmentResult(AiPrompt prompt) {
         AssessmentResultDto structuredResult = generateStructuredFromSpringProvider(prompt, AssessmentResultDto.class);
         if (structuredResult != null) {
@@ -269,17 +298,31 @@ public class AiStructuredOutputService {
             你之前的 JSON 不满足业务字段约束。请根据原始任务要求修复缺失、无效或不符合约束的业务字段。
             直接输出修复后的完整 JSON，不要包含任何解释或 markdown 格式。""";
 
+    /**
+     * 调用 AI 并解析为指定类型，失败时最多重试 1 次（修复 JSON 或校验错误）。
+     *
+     * @param prompt    AI 调用请求
+     * @param type      目标 DTO 类型
+     * @param validator 业务校验逻辑
+     * @return 校验通过的 DTO
+     * @param <T>       目标类型
+     * @throws AiParseException 解析或校验两次均失败时
+     */
     private <T> T generateAndValidate(AiPrompt prompt, Class<T> type, BiConsumer<T, AiPrompt> validator) {
         try {
             String malformedJson = null;
             String validationError = null;
+            // 1. 最多尝试 2 次：首次正常调用，第二次携带修复提示
             for (int attempt = 0; attempt < 2; attempt++) {
+                // 2. 第二次尝试时构造修复 Prompt
                 AiPrompt actualPrompt = (attempt == 1 && malformedJson != null)
                         ? repairPrompt(prompt, malformedJson, validationError)
                         : prompt;
+                // 3. 调用 AI 获取原始 JSON
                 String rawJson = generateFromProvider(actualPrompt);
                 recordTokenUsageIfPossible(prompt, rawJson);
                 try {
+                    // 4. 反序列化并执行业务校验
                     T result = objectMapper.readValue(rawJson, type);
                     validator.accept(result, prompt);
                     return result;
@@ -291,6 +334,7 @@ public class AiStructuredOutputService {
                         throw new AiParseException(prompt.task());
                     }
                 } catch (IllegalArgumentException ex) {
+                    // 5. 业务校验失败，记录错误供下次修复
                     malformedJson = rawJson;
                     validationError = ex.getMessage();
                     if (attempt == 1) {
@@ -306,8 +350,17 @@ public class AiStructuredOutputService {
         }
     }
 
+    /**
+     * 构造修复 Prompt，用于重试时指导 AI 修正 JSON 格式或业务字段。
+     *
+     * @param original       原始 AI 调用请求
+     * @param malformedJson  解析失败的原始 JSON 字符串
+     * @param validationError 业务校验错误信息，null 表示 JSON 格式错误
+     * @return 包含修复提示的新 AI 调用请求
+     */
     private AiPrompt repairPrompt(AiPrompt original, String malformedJson, String validationError) {
         if (validationError == null) {
+            // 1. JSON 格式错误：追加格式修复提示
             String userPrompt = "你之前的回复无法被解析为合法 JSON。请只修复 JSON 格式问题。"
                     + "\n\n你之前的回复：\n" + malformedJson
                     + "\n\n请直接输出修复后的完整 JSON，不要包含任何解释或 markdown 格式。";
@@ -315,6 +368,7 @@ public class AiStructuredOutputService {
                     original.systemPrompt() + JSON_REPAIR_SYSTEM_SUFFIX, userPrompt);
         }
 
+        // 2. 业务校验错误：追加字段修复提示
         String userPrompt = "原始任务要求：\n" + original.userPrompt()
                 + "\n\n你之前的回复：\n" + malformedJson
                 + "\n\n校验失败原因：" + validationError
@@ -323,6 +377,7 @@ public class AiStructuredOutputService {
                 original.systemPrompt() + VALIDATION_REPAIR_SYSTEM_SUFFIX, userPrompt);
     }
 
+    /** 对 Spring AI 结构化输出结果进行校验，校验失败返回 null */
     private <T> T validateStructured(AiPrompt prompt, T result, BiConsumer<T, AiPrompt> validator) {
         try {
             validator.accept(result, prompt);
@@ -365,6 +420,7 @@ public class AiStructuredOutputService {
         }
     }
 
+    /** 估算 token 用量（字符数 / 4） */
     private static int estimateTokens(String systemPrompt, String userPrompt, String response) {
         int charCount = (systemPrompt != null ? systemPrompt.length() : 0)
                 + (userPrompt != null ? userPrompt.length() : 0)
@@ -394,9 +450,17 @@ public class AiStructuredOutputService {
         }
     }
 
+    /** 训练计划任务项 */
     public record TrainingPlanTaskItem(String title, String description, int dayIndex) {}
+    /** 训练计划结果封装 */
     public record TrainingPlanResult(List<TrainingPlanTaskItem> tasks) {}
 
+    /**
+     * 生成 3 天训练计划，包含 6-12 个任务，每天 2-4 个。
+     *
+     * @param prompt AI 调用请求
+     * @return 训练任务项列表
+     */
     public List<TrainingPlanTaskItem> generateTrainingPlan(AiPrompt prompt) {
         TrainingPlanResult structuredResult = generateStructuredFromSpringProvider(prompt, TrainingPlanResult.class);
         if (structuredResult != null) {
@@ -427,6 +491,12 @@ public class AiStructuredOutputService {
         }
     }
 
+    /**
+     * 生成训练任务反馈，包含评分、问题诊断、改进示范和追问。
+     *
+     * @param prompt AI 调用请求
+     * @return 训练反馈 DTO
+     */
     public TrainingFeedbackDto generateTrainingFeedback(AiPrompt prompt) {
         TrainingFeedbackDto structuredResult = generateStructuredFromSpringProvider(prompt, TrainingFeedbackDto.class);
         if (structuredResult != null) {
@@ -438,6 +508,12 @@ public class AiStructuredOutputService {
         return withBackendTaskId(generated, prompt.targetId());
     }
 
+    /**
+     * 生成自适应训练轮次结果，决定继续追问、通过或切换话题。
+     *
+     * @param prompt AI 调用请求
+     * @return 自适应训练轮次 DTO
+     */
     public AdaptiveTrainingTurnDto generateAdaptiveTrainingTurn(AiPrompt prompt) {
         AdaptiveTrainingTurnDto structuredResult = generateStructuredFromSpringProvider(prompt, AdaptiveTrainingTurnDto.class);
         if (structuredResult != null) {
@@ -493,8 +569,15 @@ public class AiStructuredOutputService {
         }
     }
 
+    /** 模拟面试问题封装 */
     public record MockInterviewQuestionResult(String question) {}
 
+    /**
+     * 生成模拟面试追问或开场问题。
+     *
+     * @param prompt AI 调用请求
+     * @return 面试问题文本
+     */
     public String generateMockInterviewQuestion(AiPrompt prompt) {
         MockInterviewQuestionResult structuredResult = generateStructuredFromSpringProvider(prompt, MockInterviewQuestionResult.class);
         if (structuredResult != null) {
@@ -512,6 +595,12 @@ public class AiStructuredOutputService {
         requireText(result.question(), "question");
     }
 
+    /**
+     * 生成模拟面试报告，包含总分、维度评分、强弱项和改进示范。
+     *
+     * @param prompt AI 调用请求
+     * @return 模拟面试报告 DTO
+     */
     public MockInterviewReportDto generateMockInterviewReport(AiPrompt prompt) {
         MockInterviewReportDto structuredResult = generateStructuredFromSpringProvider(prompt, MockInterviewReportDto.class);
         if (structuredResult != null) {
@@ -545,8 +634,11 @@ public class AiStructuredOutputService {
     }
 
     /**
-     * Generate candidate profile draft from AI.
-     * Returns DTO with AI-generated content fields; rawTextLength is NOT taken from AI output.
+     * 生成候选人简历摘要草稿。rawTextLength 由后端注入，不取自 AI 输出。
+     *
+     * @param prompt        AI 调用请求
+     * @param rawTextLength 简历原文字符长度
+     * @return 候选人简历摘要草稿 DTO
      */
     public CandidateProfileDraftDto generateCandidateProfileDraft(AiPrompt prompt, int rawTextLength) {
         CandidateProfileDraftDto structuredResult = generateStructuredFromSpringProvider(prompt, CandidateProfileDraftDto.class);
@@ -567,10 +659,20 @@ public class AiStructuredOutputService {
         );
     }
 
+    /**
+     * 尝试通过 Spring AI 结构化输出直接映射实体，失败返回 null。
+     *
+     * @param prompt AI 调用请求
+     * @param type   目标实体类型
+     * @return 映射后的实体，或 null（映射失败时）
+     * @param <T>   目标类型
+     */
     private <T> T generateStructuredFromSpringProvider(AiPrompt prompt, Class<T> type) {
         try {
+            // 1. 委托网关尝试 Spring AI 结构化输出
             return aiModelGateway.generateEntity(prompt, type);
         } catch (AiStructuredOutputMappingException ex) {
+            // 2. 映射失败时记录解析失败指标，返回 null 由调用方回退
             recordParseFailure(prompt);
             DefaultAiModelGateway.clearRequestContext();
             return null;
@@ -590,6 +692,12 @@ public class AiStructuredOutputService {
         requireList(dto.experience(), "experience");
     }
 
+    /**
+     * 生成教练记忆摘要，包含观察到的强弱项、待验证声明和训练重点。
+     *
+     * @param prompt AI 调用请求
+     * @return 教练记忆 DTO
+     */
     public CoachingMemoryDto generateCoachingMemory(AiPrompt prompt) {
         CoachingMemoryDto structuredResult = generateStructuredFromSpringProvider(prompt, CoachingMemoryDto.class);
         if (structuredResult != null) {
@@ -631,6 +739,12 @@ public class AiStructuredOutputService {
     private static final Set<String> VALID_AGENT_STAGES = Set.of(
             "targetSetup", "profileConfirmation", "assessment", "training", "mockInterview", "review");
 
+    /**
+     * 生成 Agent 决策，包含当前目标、关注维度、推荐动作和工具调用计划。
+     *
+     * @param prompt AI 调用请求
+     * @return Agent 决策 DTO
+     */
     public AgentDecisionDto generateAgentDecision(AiPrompt prompt) {
         AgentDecisionDto structuredResult = generateStructuredFromSpringProvider(prompt, AgentDecisionDto.class);
         if (structuredResult != null) {

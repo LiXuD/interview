@@ -10,6 +10,9 @@ import jakarta.persistence.Converter;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * JPA 属性转换器，将逐题评分列表与 JSON 字符串互转，用于数据库存储。
+ */
 @Converter
 public class QuestionScoreListConverter implements AttributeConverter<List<AssessmentQuestionScoreDto>, String> {
 

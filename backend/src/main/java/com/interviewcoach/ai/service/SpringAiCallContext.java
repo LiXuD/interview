@@ -5,11 +5,23 @@ import com.interviewcoach.ai.entity.AiProvider;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Spring AI 调用上下文工厂。为 Spring AI 的 advisor 机制提供标准化的元数据 Map，
+ * 包含 task、targetId、requestId、provider、model、mode 等低风险可观测字段。
+ */
 public final class SpringAiCallContext {
 
     private SpringAiCallContext() {
     }
 
+    /**
+     * 构建用户自定义 Provider 的调用上下文。
+     *
+     * @param prompt    AI 调用请求
+     * @param provider  用户 Provider 实体
+     * @param requestId 请求 ID
+     * @return 包含 provider、model、mode 等元数据的上下文 Map
+     */
     public static Map<String, Object> user(AiPrompt prompt, AiProvider provider, String requestId) {
         Map<String, Object> context = base(prompt, requestId);
         context.put("ai.provider", "userOpenAICompatible");
@@ -19,6 +31,14 @@ public final class SpringAiCallContext {
         return context;
     }
 
+    /**
+     * 构建平台默认 AI 的调用上下文。
+     *
+     * @param prompt     AI 调用请求
+     * @param properties 平台 AI 配置属性
+     * @param requestId  请求 ID
+     * @return 包含 provider、model、mode 等元数据的上下文 Map
+     */
     public static Map<String, Object> platform(AiPrompt prompt, PlatformAiProperties properties, String requestId) {
         Map<String, Object> context = base(prompt, requestId);
         context.put("ai.provider", "platformDefault");

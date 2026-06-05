@@ -5,6 +5,9 @@ import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * 目标岗位实体，存储用户创建的求职目标及对应 JD。
+ */
 @Entity
 @Table(name = "interview_targets")
 public class InterviewTarget {
@@ -20,9 +23,11 @@ public class InterviewTarget {
     @Column(nullable = false)
     private String title;
 
+    /** 岗位描述（Job Description）原文。 */
     @Column(nullable = false, columnDefinition = "TEXT")
     private String jd;
 
+    /** 岗位状态：active / completed / archived。 */
     @Column(nullable = false)
     private String status = "active";
 

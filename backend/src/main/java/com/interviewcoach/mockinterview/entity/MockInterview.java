@@ -7,6 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 模拟面试会话实体，记录一次完整的模拟面试过程及其状态。
+ */
 @Entity
 @Table(name = "mock_interviews")
 public class MockInterview {
@@ -22,9 +25,11 @@ public class MockInterview {
     @Column(name = "target_id", nullable = false)
     private UUID targetId;
 
+    /** 面试状态：in_progress 或 completed */
     @Column(nullable = false)
     private String status = "in_progress";
 
+    /** 本次面试的侧重能力维度，可为 null */
     @Column(name = "focus_dimension")
     private String focusDimension;
 

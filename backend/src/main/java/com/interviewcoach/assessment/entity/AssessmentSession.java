@@ -9,6 +9,10 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 测评会话实体，管理 5 题结构化测评的完整生命周期。
+ * 包含题目列表、用户逐题回答和逐题 AI 评分。
+ */
 @Entity
 @Table(name = "assessment_sessions")
 public class AssessmentSession {
@@ -25,25 +29,31 @@ public class AssessmentSession {
     @JoinColumn(name = "target_id", nullable = false)
     private InterviewTarget target;
 
+    /** 状态：in_progress / completed */
     @Column(nullable = false)
     private String status = "in_progress";
 
+    /** 当前待回答的题目索引 */
     @Column(nullable = false)
     private int questionIndex = 0;
 
+    /** 题目总数，默认 5 题 */
     @Column(nullable = false)
     private int totalQuestions = 5;
 
+    /** AI 生成的测评题目列表（JSON 存储） */
     @Column(columnDefinition = "TEXT")
     @Convert(converter = AssessmentQuestionListConverter.class)
     private List<AssessmentQuestionDto> questions;
 
+    /** 用户按顺序提交的回答列表 */
     @ElementCollection
     @CollectionTable(name = "assessment_session_answers", joinColumns = @JoinColumn(name = "session_id"))
     @OrderColumn(name = "sort_order")
     @Column(name = "answer", columnDefinition = "TEXT")
     private List<String> answers;
 
+    /** AI 对每道题的逐题评分（JSON 存储） */
     @Column(columnDefinition = "TEXT")
     @Convert(converter = QuestionScoreListConverter.class)
     private List<AssessmentQuestionScoreDto> questionScores;

@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * 用户实体，存储用户基本信息和认证标识。
+ */
 @Entity
 @Table(name = "users")
 public class User {
@@ -15,6 +18,7 @@ public class User {
     @Column(unique = true, nullable = false)
     private String username;
 
+    /** Sign in with Apple 的唯一用户标识，仅 Apple 登录用户有值。 */
     @Column(unique = true)
     private String appleUserId;
 

@@ -25,17 +25,25 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Apple Sign in 身份令牌验证器。
+ * 通过 Apple JWKS 端点获取公钥，验证 identityToken 的签名、issuer、audience 和 nonce。
+ * 公钥缓存 1 小时，避免频繁请求 Apple 服务器。
+ */
 @Component
 public class AppleTokenVerifier {
 
     private static final String APPLE_JWKS_URL = "https://appleid.apple.com/auth/keys";
+    /** Apple 预期的 issuer 值 */
     private static final String APPLE_ISSUER = "https://appleid.apple.com";
 
     private final String servicesId;
     private final ObjectMapper objectMapper;
     private final HttpClient httpClient;
 
+    /** Apple JWKS 公钥缓存，key 为 kid */
     private final Map<String, PublicKey> keyCache = new ConcurrentHashMap<>();
+    /** 公钥缓存过期时间 */
     private volatile Instant cacheExpiry = Instant.MIN;
 
     public AppleTokenVerifier(@Value("${app.apple.services-id}") String servicesId,
@@ -45,9 +53,19 @@ public class AppleTokenVerifier {
         this.httpClient = HttpClient.newHttpClient();
     }
 
+    /**
+     * 验证 Apple identity token 并返回用户的 subject（appleUserId）。
+     *
+     * @param identityToken Apple 返回的 identity token
+     * @param rawNonce      iOS 客户端生成的原始 nonce
+     * @return token 中的 subject（appleUserId）
+     * @throws AppleAuthFailedException 验证失败时抛出
+     */
     public String verifyAndGetSub(String identityToken, String rawNonce) {
         try {
+            // 1. 确保 Apple JWKS 公钥已加载到缓存（过期则自动刷新）
             ensureKeysLoaded(false);
+            // 2. 根据 token header 中的 kid 解析对应公钥，验证签名、issuer 和 audience
             Claims claims = Jwts.parser()
                     .verifyWith(resolveKey(identityToken))
                     .requireIssuer(APPLE_ISSUER)
@@ -56,6 +74,7 @@ public class AppleTokenVerifier {
                     .parseSignedClaims(identityToken)
                     .getPayload();
 
+            // 3. 校验 token 中的 nonce 与客户端传入的 rawNonce 的 SHA-256 哈希是否一致
             String tokenNonce = claims.get("nonce", String.class);
             if (tokenNonce == null) {
                 throw new AppleAuthFailedException("Apple identity token missing nonce claim");
@@ -65,6 +84,7 @@ public class AppleTokenVerifier {
                 throw new AppleAuthFailedException("Nonce mismatch");
             }
 
+            // 4. 验证通过，返回 subject（appleUserId）
             return claims.getSubject();
         } catch (AppleAuthFailedException ex) {
             throw ex;
@@ -73,6 +93,7 @@ public class AppleTokenVerifier {
         }
     }
 
+    /** 根据 token header 中的 kid 从缓存中解析对应的公钥 */
     private PublicKey resolveKey(String token) {
         String kid = extractKid(token);
         PublicKey key = keyCache.get(kid);
@@ -86,6 +107,7 @@ public class AppleTokenVerifier {
         return key;
     }
 
+    /** 从 JWT header 中提取 kid（密钥 ID） */
     private String extractKid(String token) {
         String[] parts = token.split("\\.");
         if (parts.length < 2) {
@@ -106,6 +128,7 @@ public class AppleTokenVerifier {
         }
     }
 
+    /** 从 Apple JWKS 端点加载公钥，支持强制刷新和缓存过期检查 */
     private synchronized void ensureKeysLoaded(boolean force) {
         if (!force && Instant.now().isBefore(cacheExpiry) && !keyCache.isEmpty()) {
             return;
@@ -138,6 +161,7 @@ public class AppleTokenVerifier {
         }
     }
 
+    /** 将 JWK 格式的 RSA 公钥参数解析为 Java PublicKey */
     private PublicKey parseRsaPublicKey(JsonNode jwk) {
         try {
             byte[] nBytes = Base64.getUrlDecoder().decode(jwk.get("n").asText());
@@ -155,6 +179,7 @@ public class AppleTokenVerifier {
 
     private static final char[] HEX = "0123456789abcdef".toCharArray();
 
+    /** 对原始 nonce 执行 SHA-256 哈希，返回十六进制字符串 */
     private String hashNonce(String nonce) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");

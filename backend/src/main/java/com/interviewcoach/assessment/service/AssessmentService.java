@@ -38,6 +38,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 测评业务服务，负责测评出题、逐题评分、综合结果生成和报告创建等核心逻辑。
+ */
 @Service
 public class AssessmentService {
 
@@ -83,16 +86,26 @@ public class AssessmentService {
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * 启动一次新的测评，AI 生成 5 道结构化题目。
+     *
+     * @param user     当前用户
+     * @param targetId 目标岗位 ID
+     * @return 测评会话 DTO，包含题目列表
+     */
     @Transactional
     public AssessmentSessionDto startAssessment(User user, UUID targetId) {
+        // 第 1 步：校验目标岗位和候选人摘要的用户归属
         InterviewTarget target = targetRepository.findByIdAndUserId(targetId, user.getId())
                 .orElseThrow(() -> new TargetNotFoundException(targetId));
         CandidateProfile profile = profileRepository.findByTargetIdAndUserId(targetId, user.getId())
                 .orElseThrow(() -> new ProfileNotFoundException(targetId));
 
+        // 第 2 步：调用 AI 生成 5 道结构化测评题目
         List<AssessmentQuestionDto> questions = aiService.generateAssessmentQuestions(
                 buildQuestionPrompt(target, profile));
 
+        // 第 3 步：创建测评会话实体并初始化状态
         AssessmentSession session = new AssessmentSession();
         session.setUser(user);
         session.setTarget(target);
@@ -106,8 +119,17 @@ public class AssessmentService {
         return toSessionDto(session);
     }
 
+    /**
+     * 提交某道题的回答，AI 进行逐题评分并存储评分结果。
+     *
+     * @param sessionId 测评会话 ID
+     * @param userId    用户 ID
+     * @param answer    候选人回答
+     * @return 更新后的测评会话 DTO
+     */
     @Transactional
     public AssessmentSessionDto submitAnswer(UUID sessionId, UUID userId, String answer) {
+        // 第 1 步：校验会话归属和答题状态
         AssessmentSession session = findSession(sessionId, userId);
 
         if (!STATUS_IN_PROGRESS.equals(session.getStatus())) {
@@ -117,13 +139,14 @@ public class AssessmentService {
             throw new IllegalArgumentException("All questions already answered");
         }
 
+        // 第 2 步：记录回答并推进题目索引
         int currentIndex = session.getQuestionIndex();
         AssessmentQuestionDto question = session.getQuestions().get(currentIndex);
 
         session.getAnswers().add(answer);
         session.setQuestionIndex(currentIndex + 1);
 
-        // Per-question AI scoring
+        // 第 3 步：调用 AI 进行逐题评分与结构诊断
         AssessmentQuestionScoreDto aiScore = aiService.generateQuestionScore(
                 buildQuestionScorePrompt(session, question, answer, currentIndex));
         AssessmentQuestionScoreDto score = new AssessmentQuestionScoreDto(
@@ -139,7 +162,7 @@ public class AssessmentService {
                 CollectionUtils.copyList(aiScore.contentGaps())
         );
 
-        // Store scores
+        // 第 4 步：累积存储逐题评分结果
         List<AssessmentQuestionScoreDto> scores = session.getQuestionScores();
         if (scores == null) {
             scores = new ArrayList<>();
@@ -147,13 +170,22 @@ public class AssessmentService {
         scores.add(score);
         session.setQuestionScores(scores);
 
+        // 第 5 步：持久化并返回更新后的会话 DTO
         sessionRepository.save(session);
 
         return toSessionDto(session);
     }
 
+    /**
+     * 完成测评，AI 生成综合评分、维度分析、报告，并触发教练记忆生成。
+     *
+     * @param sessionId 测评会话 ID
+     * @param userId    用户 ID
+     * @return 测评结果 DTO，含总分、维度评分、优劣势和改进建议
+     */
     @Transactional
     public AssessmentResultDto finishAssessment(UUID sessionId, UUID userId) {
+        // 第 1 步：校验会话归属和答题完整性
         AssessmentSession session = findSession(sessionId, userId);
 
         if (!STATUS_IN_PROGRESS.equals(session.getStatus())) {
@@ -163,9 +195,11 @@ public class AssessmentService {
             throw new IllegalArgumentException("Not all questions answered");
         }
 
+        // 第 2 步：调用 AI 生成综合评分、维度分析和改进建议
         AssessmentResultDto aiResult = aiService.generateAssessmentResult(
                 buildResultPrompt(session));
 
+        // 第 3 步：构建测评结果实体并持久化
         AssessmentResult result = new AssessmentResult();
         result.setSession(session);
         result.setTotalScore(aiResult.totalScore());
@@ -177,15 +211,18 @@ public class AssessmentService {
         result.setNextActions(aiResult.nextActions());
         result = resultRepository.save(result);
 
+        // 第 4 步：规范化逐题评分，标记会话完成
         List<AssessmentQuestionScoreDto> scoresCopy = normalizeQuestionScores(session.getQuestionScores());
 
         session.setStatus(STATUS_COMPLETED);
         session.setQuestionScores(scoresCopy);
         sessionRepository.save(session);
 
+        // 第 5 步：构建结果 DTO 并创建 Report 记录
         AssessmentResultDto resultDto = toResultDto(result, scoresCopy);
         createReport(session, resultDto);
 
+        // 第 6 步：生成教练记忆，失败不影响主流程
         try {
             coachingMemoryService.generateFromAssessment(
                     session.getUser(), session.getTarget().getId(), resultDto, session.getQuestions(),
@@ -194,11 +231,19 @@ public class AssessmentService {
             log.warn("Failed to generate coaching memory for assessment {}", sessionId, ex);
         }
 
+        // 第 7 步：触发教练 Agent 事件
         fireAgentEvent(CoachEvent.ASSESSMENT_COMPLETED, session.getTarget().getId(), session.getUser().getId(), sessionId);
 
         return resultDto;
     }
 
+    /**
+     * 查询测评会话详情。
+     *
+     * @param sessionId 测评会话 ID
+     * @param userId    用户 ID
+     * @return 测评会话 DTO
+     */
     @Transactional(readOnly = true)
     public AssessmentSessionDto getAssessment(UUID sessionId, UUID userId) {
         return toSessionDto(findSession(sessionId, userId));

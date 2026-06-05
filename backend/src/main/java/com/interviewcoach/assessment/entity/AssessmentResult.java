@@ -5,6 +5,10 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 测评结果实体，存储 AI 对 5 题测评的综合评分、维度分析和改进建议。
+ * 与 {@link AssessmentSession} 一对一关联。
+ */
 @Entity
 @Table(name = "assessment_results")
 public class AssessmentResult {
@@ -17,25 +21,30 @@ public class AssessmentResult {
     @JoinColumn(name = "session_id", nullable = false, unique = true)
     private AssessmentSession session;
 
+    /** 综合总分，范围 0-100 */
     @Column(nullable = false)
     private int totalScore;
 
+    /** 各能力维度的评分列表 */
     @ElementCollection
     @CollectionTable(name = "assessment_result_dimensions", joinColumns = @JoinColumn(name = "result_id"))
     private List<AssessmentDimension> dimensions;
 
+    /** 候选人的优势项 */
     @ElementCollection
     @CollectionTable(name = "assessment_result_strengths", joinColumns = @JoinColumn(name = "result_id"))
     @OrderColumn(name = "sort_order")
     @Column(name = "strength", columnDefinition = "TEXT")
     private List<String> strengths;
 
+    /** 候选人的短板项 */
     @ElementCollection
     @CollectionTable(name = "assessment_result_weaknesses", joinColumns = @JoinColumn(name = "result_id"))
     @OrderColumn(name = "sort_order")
     @Column(name = "weakness", columnDefinition = "TEXT")
     private List<String> weaknesses;
 
+    /** AI 建议的下一步行动计划 */
     @ElementCollection
     @CollectionTable(name = "assessment_result_next_actions", joinColumns = @JoinColumn(name = "result_id"))
     @OrderColumn(name = "sort_order")

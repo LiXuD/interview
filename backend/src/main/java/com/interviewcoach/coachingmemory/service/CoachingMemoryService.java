@@ -29,6 +29,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 教练记忆业务服务，负责从测评、训练和模拟面试中生成结构化教练记忆，
+ * 支持用户纠错和本地记忆导入。
+ */
 @Service
 public class CoachingMemoryService {
 
@@ -70,6 +74,17 @@ public class CoachingMemoryService {
         this.coachEventService = coachEventService;
     }
 
+    /**
+     * 从测评结果生成教练记忆，沉淀候选人的能力观察。
+     *
+     * @param user           当前用户
+     * @param targetId       目标岗位 ID
+     * @param resultDto      测评结果
+     * @param questions      测评题目列表
+     * @param questionScores 逐题评分
+     * @param sessionId      测评会话 ID
+     * @return 生成的教练记忆 DTO
+     */
     @Transactional
     public CoachingMemoryDto generateFromAssessment(User user, UUID targetId,
                                                     AssessmentResultDto resultDto,
@@ -81,6 +96,16 @@ public class CoachingMemoryService {
         return generateAndSave(user, target, "assessment", sessionId, prompt);
     }
 
+    /**
+     * 从训练反馈生成教练记忆，使用独立事务避免影响主流程。
+     *
+     * @param userId      用户 ID
+     * @param targetId    目标岗位 ID
+     * @param taskId      训练任务 ID
+     * @param feedbackDto 训练反馈
+     * @param taskTitle   任务标题
+     * @return 生成的教练记忆 DTO
+     */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public CoachingMemoryDto generateFromTraining(UUID userId, UUID targetId,
                                                   UUID taskId,
@@ -91,6 +116,15 @@ public class CoachingMemoryService {
         return generateAndSave(target.getUser(), target, "training", taskId, prompt);
     }
 
+    /**
+     * 从模拟面试报告生成教练记忆，沉淀面试表现观察。
+     *
+     * @param user        当前用户
+     * @param targetId    目标岗位 ID
+     * @param reportDto   模拟面试报告
+     * @param interviewId 模拟面试 ID
+     * @return 生成的教练记忆 DTO
+     */
     @Transactional
     public CoachingMemoryDto generateFromMockInterview(User user, UUID targetId,
                                                        MockInterviewReportDto reportDto,
@@ -100,12 +134,26 @@ public class CoachingMemoryService {
         return generateAndSave(user, target, "mockInterview", interviewId, prompt);
     }
 
+    /**
+     * 查询指定目标岗位下的所有教练记忆。
+     *
+     * @param targetId 目标岗位 ID
+     * @param userId   用户 ID
+     * @return 教练记忆 DTO 列表
+     */
     @Transactional(readOnly = true)
     public List<CoachingMemoryDto> getMemories(UUID targetId, UUID userId) {
         return memoryRepository.findByTargetIdAndUserIdOrderByCreatedAtDesc(targetId, userId)
                 .stream().map(this::toDto).toList();
     }
 
+    /**
+     * 查询单条教练记忆详情。
+     *
+     * @param memoryId 教练记忆 ID
+     * @param userId   用户 ID
+     * @return 教练记忆 DTO
+     */
     @Transactional(readOnly = true)
     public CoachingMemoryDto getMemory(UUID memoryId, UUID userId) {
         CoachingMemory memory = memoryRepository.findByIdAndUserId(memoryId, userId)
@@ -113,21 +161,34 @@ public class CoachingMemoryService {
         return toDto(memory);
     }
 
+    /**
+     * 用户纠正教练记忆中的某条记录，将来源标记为 corrected 或 rejected。
+     *
+     * @param memoryId 教练记忆 ID
+     * @param userId   用户 ID
+     * @param request  纠正请求，包含字段名、索引、新内容和来源
+     * @return 更新后的教练记忆 DTO
+     */
     @Transactional
     public CoachingMemoryDto correctMemoryItem(UUID memoryId, UUID userId, CoachingMemoryCorrectionRequest request) {
+        // 第 1 步：校验记忆归属和纠正请求合法性（来源必须为 corrected 或 rejected）
         CoachingMemory memory = memoryRepository.findByIdAndUserId(memoryId, userId)
                 .orElseThrow(() -> new CoachingMemoryNotFoundException(memoryId));
         validateCorrectionRequest(request);
 
+        // 第 2 步：定位目标字段列表，校验索引范围
         List<CoachingMemoryItem> items = selectItemList(memory, request.field());
         if (request.itemIndex() < 0 || request.itemIndex() >= items.size()) {
             throw new IllegalArgumentException("Invalid coaching memory item index");
         }
 
+        // 第 3 步：更新记忆项内容、来源和可信度
         CoachingMemoryItem item = items.get(request.itemIndex());
         item.setContent(request.content().trim());
         item.setSource(request.source());
         item.setConfidence("high");
+
+        // 第 4 步：持久化并触发教练 Agent 事件
         CoachingMemoryDto result = toDto(memoryRepository.save(memory));
 
         fireAgentEvent(CoachEvent.MEMORY_CORRECTED, memory.getTarget().getId(), userId, memoryId, request);
@@ -135,14 +196,26 @@ public class CoachingMemoryService {
         return result;
     }
 
+    /**
+     * 从本地教练记忆归档导入摘要，标记为 inferred 低可信度等待后续验证。
+     *
+     * @param user      当前用户
+     * @param targetId  目标岗位 ID
+     * @param summaries 本地记忆摘要列表
+     * @return 导入后的教练记忆 DTO
+     */
     @Transactional
     public CoachingMemoryDto importFromLocalArchive(User user, UUID targetId, List<String> summaries) {
+        // 第 1 步：校验目标岗位归属
         InterviewTarget target = findTarget(targetId, user.getId());
+
+        // 第 2 步：将本地摘要转为 inferred 低可信度记忆项
         List<CoachingMemoryItem> unverifiedItems = summaries.stream()
                 .filter(s -> s != null && !s.isBlank())
                 .map(summary -> new CoachingMemoryItem(summary.trim(), "inferred", "low"))
                 .toList();
 
+        // 第 3 步：创建教练记忆实体，所有记忆项放至未验证分类
         CoachingMemory memory = new CoachingMemory();
         memory.setUser(user);
         memory.setTarget(target);
@@ -191,10 +264,16 @@ public class CoachingMemoryService {
         };
     }
 
+    /**
+     * 调用 AI 生成教练记忆并持久化，统一处理测评、训练和模拟面试三种来源。
+     */
     private CoachingMemoryDto generateAndSave(User user, InterviewTarget target,
                                               String sourceType, UUID sourceId,
                                               AiPrompt prompt) {
+        // 第 1 步：调用 AI 生成结构化教练记忆
         CoachingMemoryDto aiResult = aiService.generateCoachingMemory(prompt);
+
+        // 第 2 步：将 AI 结果转为实体并设置来源信息
         CoachingMemory memory = new CoachingMemory();
         memory.setUser(user);
         memory.setTarget(target);
@@ -207,6 +286,8 @@ public class CoachingMemoryService {
         memory.setUnverifiedClaims(toEntityItems(aiResult.unverifiedClaims()));
         memory.setRecommendedNextFocus(toEntityItems(aiResult.recommendedNextFocus()));
         memory.setAvoidRepeating(toEntityItems(aiResult.avoidRepeating()));
+
+        // 第 3 步：持久化并返回 DTO
         return toDto(memoryRepository.save(memory));
     }
 

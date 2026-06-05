@@ -2,6 +2,10 @@ package com.interviewcoach.ai.service;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
+/**
+ * 空操作 AI 指标实现。所有指标记录方法不做任何操作，
+ * 用于不需要指标采集的测试场景。
+ */
 public class NoOpAiMetrics extends AiMetrics {
 
     public NoOpAiMetrics() {
@@ -16,7 +20,7 @@ public class NoOpAiMetrics extends AiMetrics {
     @Override
     public void recordCall(long startNanos, String task, String provider, String model,
                            String mode, String outcome) {
-        // no-op for tests that don't need metrics
+        // no-op
     }
 
     @Override
