@@ -1,6 +1,7 @@
 package com.interviewcoach.acceptance;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.interviewcoach.ai.service.PlatformAiProperties;
 import com.interviewcoach.common.api.*;
 import org.junit.jupiter.api.*;
@@ -9,13 +10,16 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.concurrent.TimeUnit;
+import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -33,6 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("live-ai-test")
+@TestPropertySource(properties = "app.agent.dispatch-enabled=false")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Timeout(value = 600, unit = TimeUnit.SECONDS)
@@ -139,6 +144,14 @@ class AiLiveSmokeTest {
                 feedbackResult.getResponse().getContentAsString(), TrainingFeedbackDto.class);
         assertThat(feedback.score()).as("TrainingFeedback.score").isBetween(0, 100);
         assertThat(feedback.feedback()).as("TrainingFeedback.feedback").isNotBlank();
+
+        assertUsageRecorded(token, 8,
+                "jobBrief",
+                "assessmentQuestions",
+                "assessmentQuestionScore",
+                "assessmentResult",
+                "trainingPlan",
+                "trainingFeedback");
     }
 
     @Test
@@ -181,6 +194,10 @@ class AiLiveSmokeTest {
                 reportResult.getResponse().getContentAsString(), MockInterviewReportDto.class);
         assertThat(report.overallScore()).as("MockInterviewReport.overallScore").isBetween(0, 100);
         assertThat(report.summary()).as("MockInterviewReport.summary").isNotBlank();
+
+        assertUsageRecorded(token, 3,
+                "mockInterviewQuestion",
+                "mockInterviewReport");
     }
 
     private String loginAndGetToken(String username) throws Exception {
@@ -211,5 +228,56 @@ class AiLiveSmokeTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
+    }
+
+    private void assertUsageRecorded(String token, int minimumRequests, String... expectedTasks) throws Exception {
+        MvcResult summaryResult = mockMvc.perform(get("/api/ai-usage/me/summary")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
+        AiUsageSummaryDto summary = objectMapper.readValue(
+                summaryResult.getResponse().getContentAsString(), AiUsageSummaryDto.class);
+        assertThat(summary.totalRequests()).as("AI usage totalRequests").isGreaterThanOrEqualTo(minimumRequests);
+        assertThat(summary.successfulRequests()).as("AI usage successfulRequests").isGreaterThanOrEqualTo(minimumRequests);
+        assertThat(summary.totalInputTokens()).as("AI usage totalInputTokens").isPositive();
+        assertThat(summary.totalOutputTokens()).as("AI usage totalOutputTokens").isPositive();
+        assertThat(summary.totalTokens()).as("AI usage totalTokens")
+                .isGreaterThanOrEqualTo(summary.totalInputTokens() + summary.totalOutputTokens());
+
+        MvcResult dailyResult = mockMvc.perform(get("/api/ai-usage/me/daily")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
+        JsonNode daily = objectMapper.readTree(dailyResult.getResponse().getContentAsString());
+        assertThat(daily).as("AI usage daily points").isNotEmpty();
+        assertThat(daily.get(0).path("totalTokens").asLong()).as("AI usage daily totalTokens").isPositive();
+
+        MvcResult taskResult = mockMvc.perform(get("/api/ai-usage/me/by-task")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
+        JsonNode tasks = objectMapper.readTree(taskResult.getResponse().getContentAsString());
+        java.util.List<String> taskNames = StreamSupport.stream(tasks.spliterator(), false)
+                .map(node -> node.path("name").asText())
+                .toList();
+        assertThat(taskNames).as("AI usage task breakdown").contains(expectedTasks);
+
+        MvcResult modelResult = mockMvc.perform(get("/api/ai-usage/me/by-model")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
+        JsonNode models = objectMapper.readTree(modelResult.getResponse().getContentAsString());
+        assertThat(models).as("AI usage model breakdown").isNotEmpty();
+        assertThat(models.get(0).path("totalTokens").asLong()).as("AI usage model totalTokens").isPositive();
+
+        MvcResult providerResult = mockMvc.perform(get("/api/ai-usage/me/by-provider")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
+        JsonNode providers = objectMapper.readTree(providerResult.getResponse().getContentAsString());
+        java.util.List<String> providerNames = StreamSupport.stream(providers.spliterator(), false)
+                .map(node -> node.path("name").asText())
+                .toList();
+        assertThat(providerNames).as("AI usage provider breakdown").contains("platformDefault");
     }
 }

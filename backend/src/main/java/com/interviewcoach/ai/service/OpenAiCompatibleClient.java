@@ -2,6 +2,8 @@ package com.interviewcoach.ai.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.interviewcoach.aiusage.service.AiUsageContext;
+import com.interviewcoach.aiusage.service.AiUsageParser;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -75,7 +77,9 @@ public class OpenAiCompatibleClient {
             // 3. 发送请求并从响应中提取 content 字段
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
             ResponseEntity<JsonNode> response = restTemplate.postForEntity(url, request, JsonNode.class);
-            return response.getBody().path("choices").get(0).path("message").path("content").asText();
+            JsonNode responseBody = response.getBody();
+            AiUsageParser.fromOpenAiResponse(responseBody).ifPresent(AiUsageContext::setUsage);
+            return responseBody.path("choices").get(0).path("message").path("content").asText();
         } catch (Exception ex) {
             throw new IllegalStateException(providerCallFailure("chatCompletions", model, MODE_CHAT_COMPLETIONS), ex);
         }
@@ -100,7 +104,9 @@ public class OpenAiCompatibleClient {
             // 3. 发送请求并从 output[0].content[0].text 中提取结果
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
             ResponseEntity<JsonNode> response = restTemplate.postForEntity(url, request, JsonNode.class);
-            JsonNode output = response.getBody().path("output");
+            JsonNode responseBody = response.getBody();
+            AiUsageParser.fromOpenAiResponse(responseBody).ifPresent(AiUsageContext::setUsage);
+            JsonNode output = responseBody.path("output");
             if (output.isArray() && output.size() > 0) {
                 JsonNode content = output.get(0).path("content");
                 if (content.isArray() && content.size() > 0) {

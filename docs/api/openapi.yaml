@@ -905,6 +905,179 @@ paths:
         "204":
           description: Provider deleted.
 
+  /api/ai-usage/me/summary:
+    get:
+      tags:
+        - AIUsage
+      summary: Get current user's AI token usage summary
+      operationId: getMyAiUsageSummary
+      parameters:
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Aggregated token usage for the current user.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiUsageSummaryDto"
+        "401":
+          description: Not authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/ai-usage/me/daily:
+    get:
+      tags:
+        - AIUsage
+      summary: Get current user's daily AI token usage
+      operationId: getMyDailyAiUsage
+      parameters:
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Daily token usage points for the current user.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiUsageDailyPointDto"
+        "401":
+          description: Not authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/ai-usage/me/by-task:
+    get:
+      tags:
+        - AIUsage
+      summary: Get current user's AI token usage by task
+      operationId: getMyAiUsageByTask
+      parameters:
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Token usage grouped by AI task.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiUsageBreakdownDto"
+        "401":
+          description: Not authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/ai-usage/me/by-model:
+    get:
+      tags:
+        - AIUsage
+      summary: Get current user's AI token usage by model
+      operationId: getMyAiUsageByModel
+      parameters:
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Token usage grouped by model.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiUsageBreakdownDto"
+        "401":
+          description: Not authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/ai-usage/me/by-provider:
+    get:
+      tags:
+        - AIUsage
+      summary: Get current user's AI token usage by provider type
+      operationId: getMyAiUsageByProvider
+      parameters:
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Token usage grouped by provider type.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiUsageBreakdownDto"
+        "401":
+          description: Not authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /api/coaching-memories/target/{targetId}:
     parameters:
       - name: targetId
@@ -2184,6 +2357,144 @@ components:
           type: array
           items:
             type: string
+
+    AiUsageSummaryDto:
+      type: object
+      required:
+        - totalRequests
+        - successfulRequests
+        - failedRequests
+        - estimatedRequests
+        - totalInputTokens
+        - totalOutputTokens
+        - totalCacheCreationTokens
+        - totalCacheReadTokens
+        - totalReasoningTokens
+        - totalTokens
+      properties:
+        totalRequests:
+          type: integer
+          format: int64
+        successfulRequests:
+          type: integer
+          format: int64
+        failedRequests:
+          type: integer
+          format: int64
+        estimatedRequests:
+          type: integer
+          format: int64
+        totalInputTokens:
+          type: integer
+          format: int64
+        totalOutputTokens:
+          type: integer
+          format: int64
+        totalCacheCreationTokens:
+          type: integer
+          format: int64
+        totalCacheReadTokens:
+          type: integer
+          format: int64
+        totalReasoningTokens:
+          type: integer
+          format: int64
+        totalTokens:
+          type: integer
+          format: int64
+
+    AiUsageDailyPointDto:
+      type: object
+      required:
+        - date
+        - totalRequests
+        - successfulRequests
+        - failedRequests
+        - totalInputTokens
+        - totalOutputTokens
+        - totalCacheCreationTokens
+        - totalCacheReadTokens
+        - totalReasoningTokens
+        - totalTokens
+      properties:
+        date:
+          type: string
+          format: date
+        totalRequests:
+          type: integer
+          format: int64
+        successfulRequests:
+          type: integer
+          format: int64
+        failedRequests:
+          type: integer
+          format: int64
+        totalInputTokens:
+          type: integer
+          format: int64
+        totalOutputTokens:
+          type: integer
+          format: int64
+        totalCacheCreationTokens:
+          type: integer
+          format: int64
+        totalCacheReadTokens:
+          type: integer
+          format: int64
+        totalReasoningTokens:
+          type: integer
+          format: int64
+        totalTokens:
+          type: integer
+          format: int64
+
+    AiUsageBreakdownDto:
+      type: object
+      required:
+        - name
+        - totalRequests
+        - successfulRequests
+        - failedRequests
+        - estimatedRequests
+        - totalInputTokens
+        - totalOutputTokens
+        - totalCacheCreationTokens
+        - totalCacheReadTokens
+        - totalReasoningTokens
+        - totalTokens
+      properties:
+        name:
+          type: string
+        totalRequests:
+          type: integer
+          format: int64
+        successfulRequests:
+          type: integer
+          format: int64
+        failedRequests:
+          type: integer
+          format: int64
+        estimatedRequests:
+          type: integer
+          format: int64
+        totalInputTokens:
+          type: integer
+          format: int64
+        totalOutputTokens:
+          type: integer
+          format: int64
+        totalCacheCreationTokens:
+          type: integer
+          format: int64
+        totalCacheReadTokens:
+          type: integer
+          format: int64
+        totalReasoningTokens:
+          type: integer
+          format: int64
+        totalTokens:
+          type: integer
+          format: int64
 
     CoachingMemoryDto:
       type: object

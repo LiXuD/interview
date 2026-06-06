@@ -15,6 +15,10 @@ import com.interviewcoach.ai.service.PlatformAiProperties;
 import com.interviewcoach.ai.service.SpringAiFoundationProperties;
 import com.interviewcoach.ai.service.SpringAiPlatformClient;
 import com.interviewcoach.ai.service.SpringAiUserProviderClient;
+import com.interviewcoach.aiusage.service.AiUsageContext;
+import com.interviewcoach.aiusage.service.AiUsageLogCommand;
+import com.interviewcoach.aiusage.service.AiUsageMetadata;
+import com.interviewcoach.aiusage.service.AiUsageRecorder;
 import com.interviewcoach.common.api.CandidateProfileDraftDto;
 import com.interviewcoach.common.error.AiProviderCallFailedException;
 import com.interviewcoach.user.entity.User;
@@ -34,6 +38,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -333,6 +338,72 @@ class DefaultAiModelGatewayTest {
         verifyNoInteractions(openAiClient, platformAiClient, springAiUserProviderClient);
     }
 
+    @Test
+    void recordsCurrentUserUsageForSuccessfulJsonCall() {
+        UUID userId = UUID.randomUUID();
+        User user = authenticatedUser(userId);
+        PlatformAiClient platformAiClient = mock(PlatformAiClient.class);
+        OpenAiCompatibleClient openAiClient = mock(OpenAiCompatibleClient.class);
+        AiProviderService providerService = mock(AiProviderService.class);
+        ApiKeyEncryption encryption = mock(ApiKeyEncryption.class);
+        SpringAiUserProviderClient springAiUserProviderClient = mock(SpringAiUserProviderClient.class);
+        PlatformAiProperties platformProperties = new PlatformAiProperties();
+        platformProperties.setModel("gpt-platform");
+        platformProperties.setMode("chatCompletions");
+        CapturingUsageRecorder usageRecorder = new CapturingUsageRecorder();
+
+        UUID targetId = UUID.randomUUID();
+        AiPrompt prompt = new AiPrompt(
+                AiPrompt.TASK_JOB_BRIEF,
+                targetId.toString(),
+                "system prompt",
+                "user prompt");
+        when(providerService.findDefaultProvider(user.getId())).thenReturn(null);
+        when(platformAiClient.generateJson(prompt)).thenAnswer(invocation -> {
+            AiUsageContext.setUsage(new AiUsageMetadata(
+                    100,
+                    25,
+                    3,
+                    7,
+                    2,
+                    "springAiMetadata",
+                    false));
+            return "{\"ok\":true}";
+        });
+
+        AiModelGateway gateway = new DefaultAiModelGateway(
+                platformAiClient,
+                openAiClient,
+                providerService,
+                encryption,
+                platformProperties,
+                new SpringAiFoundationProperties(),
+                springAiUserProviderClient,
+                new NoOpAiMetrics(),
+                usageRecorder);
+
+        String result = gateway.generateJson(prompt);
+
+        assertThat(result).isEqualTo("{\"ok\":true}");
+        AiUsageLogCommand recorded = usageRecorder.recorded.get();
+        assertThat(recorded.userId()).isEqualTo(userId);
+        assertThat(recorded.targetId()).isEqualTo(targetId);
+        assertThat(recorded.task()).isEqualTo(AiPrompt.TASK_JOB_BRIEF);
+        assertThat(recorded.providerType()).isEqualTo("platformDefault");
+        assertThat(recorded.model()).isEqualTo("gpt-platform");
+        assertThat(recorded.mode()).isEqualTo("chatCompletions");
+        assertThat(recorded.success()).isTrue();
+        assertThat(recorded.inputTokens()).isEqualTo(100);
+        assertThat(recorded.outputTokens()).isEqualTo(25);
+        assertThat(recorded.cacheCreationTokens()).isEqualTo(3);
+        assertThat(recorded.cacheReadTokens()).isEqualTo(7);
+        assertThat(recorded.reasoningTokens()).isEqualTo(2);
+        assertThat(recorded.totalTokens()).isEqualTo(137);
+        assertThat(recorded.usageSource()).isEqualTo("springAiMetadata");
+        assertThat(recorded.estimated()).isFalse();
+        assertThat(recorded.durationMs()).isGreaterThanOrEqualTo(0);
+    }
+
     private User authenticatedUser(UUID userId) {
         User user = new User();
         user.setUsername("gateway_user");
@@ -367,7 +438,8 @@ class DefaultAiModelGatewayTest {
                 platformProperties,
                 springProperties,
                 springAiUserProviderClient,
-                new NoOpAiMetrics());
+                new NoOpAiMetrics(),
+                AiUsageRecorder.noop());
     }
 
     private boolean invokeIsTransientFailure(Throwable ex) {
@@ -432,5 +504,14 @@ class DefaultAiModelGatewayTest {
                 HttpStatusCode.valueOf(502), "Bad Gateway", "{}".getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
         RuntimeException wrapper = new RuntimeException("wrapped", cause);
         assertThat(invokeIsTransientFailure(wrapper)).isTrue();
+    }
+
+    private static final class CapturingUsageRecorder implements AiUsageRecorder {
+        private final AtomicReference<AiUsageLogCommand> recorded = new AtomicReference<>();
+
+        @Override
+        public void record(AiUsageLogCommand command) {
+            recorded.set(command);
+        }
     }
 }

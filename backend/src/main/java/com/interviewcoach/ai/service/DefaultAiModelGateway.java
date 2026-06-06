@@ -1,8 +1,14 @@
 package com.interviewcoach.ai.service;
 
 import com.interviewcoach.ai.entity.AiProvider;
+import com.interviewcoach.aiusage.service.AiUsageContext;
+import com.interviewcoach.aiusage.service.AiUsageLogCommand;
+import com.interviewcoach.aiusage.service.AiUsageMetadata;
+import com.interviewcoach.aiusage.service.AiUsageParser;
+import com.interviewcoach.aiusage.service.AiUsageRecorder;
 import com.interviewcoach.common.error.AiProviderCallFailedException;
 import com.interviewcoach.user.entity.User;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -10,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 
 import java.net.SocketTimeoutException;
+import java.util.UUID;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeoutException;
@@ -24,7 +31,14 @@ import java.util.function.Supplier;
 public class DefaultAiModelGateway implements AiModelGateway {
 
     /** 当前请求的 AI 调用上下文，用于指标采集 */
-    public record AiRequestContext(String provider, String model, String mode) {}
+    public record AiRequestContext(
+            String provider,
+            UUID providerId,
+            UUID userId,
+            String model,
+            String mode,
+            String requestId
+    ) {}
 
     private static final ThreadLocal<AiRequestContext> REQUEST_CONTEXT = new ThreadLocal<>();
 
@@ -36,6 +50,7 @@ public class DefaultAiModelGateway implements AiModelGateway {
     /** 清除当前线程的 AI 请求上下文 */
     public static void clearRequestContext() {
         REQUEST_CONTEXT.remove();
+        AiUsageContext.clear();
     }
 
     private static final int MAX_TRANSIENT_RETRIES = 3;
@@ -133,6 +148,7 @@ public class DefaultAiModelGateway implements AiModelGateway {
     private final SpringAiFoundationProperties springAiProperties;
     private final SpringAiUserProviderClient springAiUserProviderClient;
     private final AiMetrics aiMetrics;
+    private final AiUsageRecorder aiUsageRecorder;
 
     public DefaultAiModelGateway(PlatformAiClient platformAiClient,
                                  OpenAiCompatibleClient openAiClient,
@@ -142,6 +158,20 @@ public class DefaultAiModelGateway implements AiModelGateway {
                                  SpringAiFoundationProperties springAiProperties,
                                  SpringAiUserProviderClient springAiUserProviderClient,
                                  AiMetrics aiMetrics) {
+        this(platformAiClient, openAiClient, providerService, encryption, platformProperties, springAiProperties,
+                springAiUserProviderClient, aiMetrics, AiUsageRecorder.noop());
+    }
+
+    @Autowired
+    public DefaultAiModelGateway(PlatformAiClient platformAiClient,
+                                 OpenAiCompatibleClient openAiClient,
+                                 AiProviderService providerService,
+                                 ApiKeyEncryption encryption,
+                                 PlatformAiProperties platformProperties,
+                                 SpringAiFoundationProperties springAiProperties,
+                                 SpringAiUserProviderClient springAiUserProviderClient,
+                                 AiMetrics aiMetrics,
+                                 AiUsageRecorder aiUsageRecorder) {
         this.platformAiClient = platformAiClient;
         this.openAiClient = openAiClient;
         this.providerService = providerService;
@@ -150,15 +180,21 @@ public class DefaultAiModelGateway implements AiModelGateway {
         this.springAiProperties = springAiProperties;
         this.springAiUserProviderClient = springAiUserProviderClient;
         this.aiMetrics = aiMetrics;
+        this.aiUsageRecorder = aiUsageRecorder == null ? AiUsageRecorder.noop() : aiUsageRecorder;
     }
 
     /** 解析当前用户的 Provider 并设置请求上下文 */
     private AiProvider resolveAndSetRequestContext() {
-        AiProvider provider = currentUserProvider();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User user = auth != null && auth.getPrincipal() instanceof User principal ? principal : null;
+        AiProvider provider = user != null ? providerService.findDefaultProvider(user.getId()) : null;
         String prov = provider != null ? "userOpenAICompatible" : "platformDefault";
         String model = provider != null ? provider.getModel() : platformProperties.getModel();
         String mode = provider != null ? provider.getOpenaiApiMode() : platformProperties.getMode();
-        REQUEST_CONTEXT.set(new AiRequestContext(prov, model, mode));
+        UUID providerId = provider != null ? provider.getId() : null;
+        UUID userId = user != null ? user.getId() : null;
+        REQUEST_CONTEXT.set(new AiRequestContext(prov, providerId, userId, model, mode, UUID.randomUUID().toString()));
+        AiUsageContext.clear();
         return provider;
     }
 
@@ -189,10 +225,12 @@ public class DefaultAiModelGateway implements AiModelGateway {
             });
             // 3. 记录成功指标
             recordSuccess(startNanos, prompt, ctx.provider(), ctx.model(), ctx.mode());
+            recordUsage(startNanos, prompt, ctx, true, false, result);
             return result;
         } catch (Exception ex) {
             // 4. 记录失败指标
             recordFailure(startNanos, prompt, ctx.provider(), ctx.model(), ctx.mode(), ex);
+            recordUsage(startNanos, prompt, ctx, false, isTimeout(ex), null);
             throw ex;
         }
     }
@@ -227,10 +265,12 @@ public class DefaultAiModelGateway implements AiModelGateway {
             }
             // 3. 记录成功指标
             recordSuccess(startNanos, prompt, ctx.provider(), ctx.model(), ctx.mode());
+            recordUsage(startNanos, prompt, ctx, true, false, String.valueOf(result));
             return result;
         } catch (Exception ex) {
             // 4. 记录失败指标
             recordFailure(startNanos, prompt, ctx.provider(), ctx.model(), ctx.mode(), ex);
+            recordUsage(startNanos, prompt, ctx, false, isTimeout(ex), null);
             throw ex;
         }
     }
@@ -254,6 +294,58 @@ public class DefaultAiModelGateway implements AiModelGateway {
         String msg = ex.getMessage();
         if (msg != null && msg.toLowerCase().contains("timeout")) return true;
         return isTimeout(ex.getCause());
+    }
+
+    private void recordUsage(long startNanos,
+                             AiPrompt prompt,
+                             AiRequestContext ctx,
+                             boolean success,
+                             boolean timeout,
+                             String responseText) {
+        if (ctx == null || ctx.userId() == null) {
+            AiUsageContext.clear();
+            return;
+        }
+        long durationMs = Math.max(0, (System.nanoTime() - startNanos) / 1_000_000);
+        AiUsageMetadata usage = AiUsageContext.currentUsage();
+        if (usage == null) {
+            usage = AiUsageParser.estimate(prompt.systemPrompt(), prompt.userPrompt(), responseText, "estimatedFallback");
+        }
+        aiUsageRecorder.record(new AiUsageLogCommand(
+                ctx.userId(),
+                parseTargetId(prompt.targetId()),
+                ctx.requestId(),
+                prompt.task(),
+                ctx.provider(),
+                ctx.providerId(),
+                ctx.model(),
+                ctx.mode(),
+                usage.source(),
+                usage.inputTokens(),
+                usage.outputTokens(),
+                usage.cacheCreationTokens(),
+                usage.cacheReadTokens(),
+                usage.reasoningTokens(),
+                usage.totalTokens(),
+                usage.estimated(),
+                success,
+                false,
+                false,
+                timeout,
+                0,
+                durationMs));
+        AiUsageContext.clear();
+    }
+
+    private static UUID parseTargetId(String targetId) {
+        if (targetId == null || targetId.isBlank()) {
+            return null;
+        }
+        try {
+            return UUID.fromString(targetId);
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
     }
 
     /** 通过用户自定义 Provider 生成 JSON 字符串 */

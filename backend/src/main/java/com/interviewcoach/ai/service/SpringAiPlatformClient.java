@@ -1,7 +1,10 @@
 package com.interviewcoach.ai.service;
 
 import com.interviewcoach.common.error.AiProviderCallFailedException;
+import com.interviewcoach.aiusage.service.AiUsageContext;
+import com.interviewcoach.aiusage.service.AiUsageMetadata;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
@@ -38,7 +41,9 @@ public class SpringAiPlatformClient implements PlatformAiClient {
     public String generateJson(AiPrompt prompt) {
         validatePlatformConfig(prompt);
         try {
-            return call(prompt).content();
+            ChatResponse response = call(prompt).chatResponse();
+            recordUsage(response);
+            return content(response);
         } catch (Exception ex) {
             throw platformCallFailed(prompt, ex);
         }
@@ -57,7 +62,10 @@ public class SpringAiPlatformClient implements PlatformAiClient {
     public <T> T generateEntity(AiPrompt prompt, Class<T> responseType) {
         validatePlatformConfig(prompt);
         try {
-            return call(prompt).entity(responseType);
+            org.springframework.ai.chat.client.ResponseEntity<ChatResponse, T> response =
+                    call(prompt).responseEntity(responseType);
+            recordUsage(response.getResponse());
+            return response.getEntity();
         } catch (AiStructuredOutputMappingException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -134,6 +142,32 @@ public class SpringAiPlatformClient implements PlatformAiClient {
                 .openAiApi(openAiApi)
                 .defaultOptions(options)
                 .build();
+    }
+
+    private static void recordUsage(ChatResponse response) {
+        if (response == null || response.getMetadata() == null || response.getMetadata().getUsage() == null) {
+            return;
+        }
+        var usage = response.getMetadata().getUsage();
+        AiUsageContext.setUsage(new AiUsageMetadata(
+                value(usage.getPromptTokens()),
+                value(usage.getCompletionTokens()),
+                0,
+                0,
+                0,
+                "springAiMetadata",
+                false));
+    }
+
+    private static String content(ChatResponse response) {
+        if (response == null || response.getResult() == null || response.getResult().getOutput() == null) {
+            return null;
+        }
+        return response.getResult().getOutput().getText();
+    }
+
+    private static int value(Integer value) {
+        return value == null ? 0 : value;
     }
 
 }
