@@ -6,26 +6,27 @@
 
 | 数据类型 | 存储位置 | 敏感级别 | 说明 |
 |----------|----------|----------|------|
-| 简历原文 | iOS 本地 SwiftData | 高 | 默认只存本地，永不落远端库 |
+| 简历原文 | iOS 本地 SwiftData / 微信小程序本地草稿 | 高 | 默认只存当前设备本地，永不落远端库 |
 | 候选人摘要 | 远端 PostgreSQL | 中 | 用户确认后的结构化摘要 |
-| Bearer Token | iOS Keychain | 高 | 登录凭证 |
+| Bearer Token | iOS Keychain / 微信小程序本地存储 | 高 | 登录凭证，退出登录、401 或删除账号时必须清理 |
 | API Key | 远端 PostgreSQL（加密） | 高 | 用户自定义 AI Provider 密钥 |
 | 岗位目标 | 远端 PostgreSQL + iOS 本地 | 低 | 非敏感业务数据 |
 | 远端教练记忆 | 远端 PostgreSQL | 中 | 结构化训练观察、用户纠错、能力短板和进步摘要 |
-| 本机教练记忆归档 | iOS 本地 SwiftData 或本机文件 | 中 | 用户设备上的 `CoachingMemoryArchive`，删除账号时默认保留，可由用户选择删除 |
+| 本机教练记忆归档 | iOS 本地 SwiftData / 微信小程序本地存储 | 中 | 用户设备上的 `CoachingMemoryArchive`，删除账号时默认保留，可由用户选择删除 |
+| 微信登录凭据 | 后端内存中临时使用 | 高 | `code` 只用于换取微信身份，`sessionKey` 不返回客户端、不落库、不写日志 |
 
 ## 2. 简历摘要隐私链路
 
 ### 2.1 流程
 
-1. 用户在 iOS 粘贴简历或项目经历，原文只存本地 SwiftData。
-2. 用户点击"生成摘要"前，App 必须明确提示：原文将临时发送到后端 AI 进行摘要生成，不会落库。
+1. 用户在 iOS 或微信小程序粘贴简历或项目经历，原文只存当前设备本地。
+2. 用户点击"生成摘要"前，客户端必须明确提示：原文将临时发送到后端 AI 进行摘要生成，不会落库。
 3. 后端 `POST /api/profiles/draft-summary` 接收原文。
 4. 后端只允许在内存中使用原文调用 AI。
 5. 后端不得保存原文，不得记录原文日志。
 6. 后端返回 `CandidateProfileDraftDto`。
-7. 用户在 iOS 编辑并确认摘要。
-8. iOS 调用 `POST /api/profiles/confirm`。
+7. 用户在客户端编辑并确认摘要。
+8. 客户端调用 `POST /api/profiles/confirm`。
 9. 后端只保存确认后的 `CandidateProfile` 摘要。
 
 ### 2.2 存储边界
@@ -36,6 +37,14 @@
 - 用户未确认上传的项目经历原文。
 - 已确认的候选人摘要（离线缓存）。
 - Post-MVP 本机 `CoachingMemoryArchive` 教练记忆归档。
+
+**微信小程序本地存储（纯本地）：**
+
+- Bearer Token。
+- 当前用户基础信息。
+- 简历原文或项目经历原文的本机草稿。
+- 页面草稿和非敏感 UI 状态。
+- 本机 `CoachingMemoryArchive` 教练记忆归档的结构化摘要和导入状态。
 
 **远端 PostgreSQL（服务端）：**
 
@@ -81,6 +90,8 @@ grep -r "System.out\|System.err\|logger\." backend/src/main/java/com/interviewco
 
 - 用户自定义 AI Provider 的 API Key 必须后端加密保存。
 - API Key 禁止返回给 iOS（不在任何 DTO 中）。
+- API Key 禁止返回给微信小程序。
+- API Key 禁止写入微信小程序本地存储；创建、测试 Provider 时只能临时存在于当前请求内存中。
 - API Key 禁止写入日志。
 - Authorization Header 禁止写入日志。
 - 删除 Provider 时必须同时删除密钥。
@@ -92,6 +103,7 @@ grep -r "System.out\|System.err\|logger\." backend/src/main/java/com/interviewco
 - 删除远端 PostgreSQL 中该用户的所有数据（Target、Profile、Assessment、Training、MockInterview、Report、Provider）。
 - 删除远端 `CoachingMemory`、用户纠错记录和训练观察摘要。
 - iOS 必须清空 Keychain Token 和远端同步缓存。
+- 微信小程序必须清空 Token、远端同步缓存和普通草稿。
 - 本机 `CoachingMemoryArchive` 默认保留，除非用户在删除账号页勾选“同时删除本机教练记忆文件”。
 
 删除账号页必须明确说明：
@@ -105,6 +117,8 @@ grep -r "System.out\|System.err\|logger\." backend/src/main/java/com/interviewco
 - 如果检测到本机历史教练记忆，App 不得自动上传到新账号。
 - App 必须让用户主动确认是否导入。
 - 用户拒绝导入时，本机记忆不得参与后续 AI Prompt。
+
+微信小程序同样适用以上规则：重新登录或重新注册时不得自动上传本地历史记忆，必须由用户主动确认导入。
 
 ## 5. 教练记忆隐私边界
 

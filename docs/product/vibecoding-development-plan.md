@@ -28,8 +28,9 @@ MVP Provider 范围：
 | Phase 4 持续存在的面试教练 Agent | Task 34-41 | 全部完成 |
 | Spring AI 底座迁移 | Phase 2-6 | 已完成 |
 | Post-MVP AI 质量运营 | Admin Token Usage Dashboard | 已完成 |
+| 微信小程序入口 | MP Task 1-6 | 计划已建立 |
 
-Task 1-33 和 Spring AI 底座迁移 Phase 2-6 均已完成。Phase 4 Task 34-41 全部完成，后续新增开发必须继续服务 AI 面试教练定位，按已批准的计划推进。Admin Token Usage Dashboard 是 Post-MVP AI 质量运营管理能力，不属于计费、订阅或企业端功能。
+Task 1-33 和 Spring AI 底座迁移 Phase 2-6 均已完成。Phase 4 Task 34-41 全部完成。微信小程序入口已建立开发计划，后续新增开发必须继续服务 AI 面试教练定位，按已批准的计划推进。Admin Token Usage Dashboard 是 Post-MVP AI 质量运营管理能力，不属于计费、订阅或企业端功能。
 
 ---
 
@@ -37,7 +38,7 @@ Task 1-33 和 Spring AI 底座迁移 Phase 2-6 均已完成。Phase 4 Task 34-41
 
 ### 1.1 产品目标
 
-开发一款 iOS App：用户输入目标岗位、JD、简历或项目经历后，App 通过 AI 完成岗位研究、能力测评、专项训练、模拟面试和复盘报告。
+开发一款 iOS App + 微信小程序双入口的 AI 面试教练：用户输入目标岗位、JD、简历或项目经历后，通过 AI 完成岗位研究、能力测评、专项训练、模拟面试和复盘报告。
 
 第一版不是题库 App，而是 AI 面试教练。核心体验必须围绕一条闭环：
 
@@ -97,6 +98,14 @@ iOS：
 - Codable DTO。
 - MVVM 或轻量 feature-based 架构。
 
+微信小程序：
+
+- 原生微信小程序。
+- WXML / WXSS / JavaScript。
+- `wx.request`。
+- 统一请求封装、统一接口路径和本地存储封装。
+- Bearer Token 认证。
+
 后端：
 
 - Spring Boot 3。
@@ -137,6 +146,8 @@ interview/
 │       └── provider-contracts.md
 ├── ios/
 │   └── InterviewCoach/
+├── miniprogram/
+│   └── interview-coach/
 ├── backend/
 │   ├── build.gradle 或 pom.xml
 │   └── src/
@@ -182,6 +193,35 @@ InterviewCoach/
 - 网络 DTO 和 SwiftData Model 禁止混用。
 - 每个 Feature 内部可以有 `Views`、`ViewModels`、`Models`。
 - iOS 禁止直接调用大模型，只能调用后端 API。
+
+### 2.3.1 微信小程序模块边界
+
+`miniprogram/interview-coach/` 计划采用原生小程序结构：
+
+```text
+interview-coach/
+├── app.js
+├── app.json
+├── app.wxss
+├── sitemap.json
+├── pages/
+├── components/
+├── utils/
+│   ├── api.js
+│   ├── request.js
+│   ├── auth.js
+│   ├── config.js
+│   └── storage.js
+└── assets/
+```
+
+规则：
+
+- 小程序只作为第二用户入口，不创建独立业务后端。
+- 接口路径集中维护在 `utils/api.js`。
+- Token 注入、401 处理、loading 和错误提示集中维护在 `utils/request.js`。
+- 本地存储集中维护在 `utils/storage.js`，页面不得散落敏感存储逻辑。
+- 小程序禁止直接调用大模型，只能调用后端 API。
 
 ### 2.4 后端模块边界
 
@@ -233,12 +273,13 @@ dto/
 
 ### 2.5 认证与用户 API
 
-开发阶段先做 dev login，TestFlight 前替换为 Sign in with Apple。
+iOS 开发阶段先做 dev login，TestFlight 前替换为 Sign in with Apple。微信小程序开发阶段允许 Dev Login 调试，生产入口使用微信登录。
 
 Auth API：
 
 - `POST /api/auth/dev-login`
 - `POST /api/auth/apple`
+- `POST /api/auth/wechat`
 - `POST /api/auth/logout`
 - `GET /api/me`
 - `DELETE /api/me`
@@ -246,9 +287,12 @@ Auth API：
 Token 规则：
 
 - iOS 使用 Bearer Token。
-- Token 存 Keychain。
+- 微信小程序使用同一套 Bearer Token。
+- iOS Token 存 Keychain。
+- 小程序 Token 存微信本地存储，退出登录或 401 时必须清理。
 - 所有业务 API 必须要求登录。
 - `DELETE /api/me` 删除远端用户数据后，iOS 必须清空 Keychain 和远端同步缓存。
+- 微信小程序删除账号后必须清空 Token、远端同步缓存和普通草稿。
 - Post-MVP 本机 `CoachingMemoryArchive` 属于用户设备上的本地教练记忆归档，删除账号时默认保留；只有用户勾选“同时删除本机教练记忆文件”才删除。
 - 后端必须使用 Spring Security 标准过滤器链解析 Bearer Token。
 - 认证通过后，当前用户必须通过 `SecurityContextHolder` 获取。
@@ -263,6 +307,14 @@ Token 规则：
 - 本地草稿。
 - 页面缓存状态。
 - Post-MVP 本机 `CoachingMemoryArchive` 教练记忆归档。
+
+微信小程序本地存储：
+
+- Bearer Token。
+- 当前用户基础信息。
+- 页面草稿和非敏感 UI 状态。
+- 简历原文或项目经历原文的本机草稿。
+- 本地教练记忆归档的结构化摘要和导入状态。
 
 远端 PostgreSQL：
 
@@ -281,6 +333,7 @@ Token 规则：
 - App 启动后以远端业务数据为准同步。
 - 简历原文永不落远端库。
 - 用户删除账号后，远端数据删除，Keychain 和远端同步缓存同步清空。
+- 微信小程序删除账号后，远端数据删除，Token、远端同步缓存和普通草稿同步清空。
 - Post-MVP 本机教练记忆归档默认保留；重新登录或重新注册时不得自动上传，必须用户主动确认导入。
 
 ### 2.7 简历摘要隐私链路
@@ -289,14 +342,14 @@ MVP 不做 iOS 本地 AI 摘要。
 
 摘要生成流程：
 
-1. 用户在 iOS 粘贴简历或项目经历，原文只存本地。
+1. 用户在 iOS 或微信小程序粘贴简历或项目经历，原文只存当前设备本地。
 2. 用户点击“生成摘要”前，App 明确提示：原文将临时发送到后端 AI 进行摘要生成，不会落库。
 3. 后端 `POST /api/profiles/draft-summary` 接收原文。
 4. 后端只在内存中使用原文调用 AI。
 5. 后端不得保存原文，不得记录原文日志。
 6. 后端返回 `CandidateProfileDraftDto`。
-7. 用户在 iOS 编辑并确认摘要。
-8. iOS 调用 `POST /api/profiles/confirm`。
+7. 用户在客户端编辑并确认摘要。
+8. 客户端调用 `POST /api/profiles/confirm`。
 9. 后端只保存确认后的 `CandidateProfile` 摘要。
 
 日志强约束：
@@ -307,15 +360,15 @@ MVP 不做 iOS 本地 AI 摘要。
 
 ### 2.8 API JSON 约束
 
-所有后端向 iOS 返回的 JSON 必须使用 camelCase 小驼峰。
+所有后端向 iOS 和微信小程序返回的 JSON 必须使用 camelCase 小驼峰。
 
 强约束：
 
 - 后端必须返回强类型 DTO。
 - 禁止直接把 AI 原始字符串透传给 iOS。
-- 禁止 iOS 解析 AI 原始文本。
+- 禁止客户端解析 AI 原始文本。
 - DTO 字段必须与 OpenAPI 一致。
-- Swift `Codable` 字段必须与后端 camelCase JSON 对齐。
+- Swift `Codable` 字段和小程序 DTO 映射必须与后端 camelCase JSON 对齐。
 
 统一错误响应：
 
@@ -1712,7 +1765,115 @@ Agent 身份与状态
 
 ---
 
-## 8. 最终 MVP 验收路径
+## 8. 微信小程序入口计划
+
+微信小程序入口是 iOS 之外的第二用户入口，详细计划见 `docs/product/wechat-miniprogram-development-plan.md`。小程序首版按完整 iOS 等价规划，但执行必须继续遵守 vibecoding 小任务规则，禁止一次实现多个 Phase。
+
+### MP Task 1: 文档与目录边界
+
+目标：建立小程序入口的正式计划、API 契约和目录边界。
+
+范围：
+
+- 新增微信小程序开发计划文档。
+- 更新产品、架构、隐私、OpenAPI 和 README。
+- 不创建小程序代码目录。
+
+验收：
+
+- 文档明确小程序是第二入口，不改变 AI 面试教练定位。
+- OpenAPI 中存在 `POST /api/auth/wechat` 契约。
+- 没有计划外功能扩展。
+
+### MP Task 2: 微信登录后端契约
+
+目标：实现小程序生产登录所需的后端认证能力。
+
+范围：
+
+- 新增 `WechatLoginRequest`。
+- 新增微信 code2session client。
+- `AuthService` 增加微信登录。
+- `User` 增加可空唯一微信身份字段。
+- `SecurityConfig` 按配置放行微信登录。
+
+验收：
+
+- 首次微信登录创建用户。
+- 重复微信登录复用用户。
+- 登录后 JWT 可访问 `/api/me`。
+- 微信 `sessionKey` 不返回、不落库、不写日志。
+
+### MP Task 3: 小程序基础客户端框架
+
+目标：建立小程序壳、请求封装、认证状态和基础导航。
+
+范围：
+
+- 创建 `miniprogram/interview-coach/` 标准目录。
+- 实现统一接口路径、请求封装、认证状态和本地存储封装。
+- 实现登录页、目标列表空状态、设置入口和健康检查状态。
+
+验收：
+
+- Dev Login 可获取 Token 并访问 `/api/me`。
+- 401 自动清理登录态并返回登录页。
+- Token 注入、错误处理和 loading 状态统一。
+
+### MP Task 4: 核心闭环页面
+
+目标：在小程序走通核心 AI 面试教练闭环。
+
+范围：
+
+- 目标岗位。
+- 简历摘要确认。
+- 岗位画像。
+- 5 题测评。
+- 训练计划和训练任务。
+- 文字模拟面试。
+- 报告。
+
+验收：
+
+- 小程序可完整走通核心闭环。
+- AI 输出只展示后端 DTO。
+- 简历原文隐私提示和临时上传确认完整。
+
+### MP Task 5: Post-MVP 等价能力
+
+目标：补齐 iOS 已有 Post-MVP 用户能力。
+
+范围：
+
+- 自适应训练、多轮模拟面试、维度分析和进步追踪。
+- Coach Agent、AI 用量、AI Provider 设置。
+- 教练记忆查看、纠错和导入。
+
+验收：
+
+- 页面能力与 iOS 等价。
+- 不展示 prompt、completion、API Key 或内部 metrics。
+- Agent 入口不扩展为通用聊天页。
+
+### MP Task 6: 隐私、真实 AI 与发布验收
+
+目标：确认小程序入口可用于真实 AI 产品体验验证。
+
+范围：
+
+- 小程序端隐私提示和删除账号流程。
+- API Key 本地存储检查。
+- 真实 AI smoke 或完整 `AiContentQualityTest`。
+- 微信开发者工具真机预览。
+
+验收：
+
+- 核心教练路径使用真实 AI。
+- 未运行 live AI 验收时，最终输出必须明确“未完成 AI 产品能力验收”。
+- 本地存储不包含 API Key、微信 `sessionKey`、AI 原始字符串或隐私原文上传副本。
+
+## 9. 最终 MVP 验收路径
 
 Task1-12 的最终验收仍按 MVP 功能闭环执行；Task13 是 TestFlight 提审前置认证任务，不改变 MVP 功能闭环验收路径。
 
@@ -1739,7 +1900,7 @@ dev login
 
 只要这条路径不完整，就不算 MVP 完成。
 
-## 9. 每次任务完成输出
+## 10. 每次任务完成输出
 
 每次实现后必须回复：
 

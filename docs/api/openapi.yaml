@@ -77,6 +77,34 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /api/auth/wechat:
+    post:
+      tags:
+        - Auth
+      summary: Sign in with WeChat mini program
+      description: Production login entry for the WeChat mini program. The backend exchanges the wx.login code for a WeChat identity, then issues the same Bearer JWT used by other clients.
+      operationId: wechatLogin
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WechatLoginRequest"
+      responses:
+        "200":
+          description: Login successful.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: "WeChat authentication failed."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /api/auth/logout:
     post:
       tags:
@@ -1434,6 +1462,15 @@ components:
         nonce:
           type: string
           description: raw nonce for replay protection; backend SHA256 hashes it and compares against the JWT nonce claim
+
+    WechatLoginRequest:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          description: wx.login code exchanged by the backend via WeChat code2session; sessionKey is never returned to the client
 
     LoginResponse:
       type: object

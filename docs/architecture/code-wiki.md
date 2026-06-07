@@ -1,6 +1,6 @@
 # Interview Coach Code Wiki
 
-生成日期：2026-05-28（2026-06-07 更新至 Admin Token Usage Dashboard）
+生成日期：2026-05-28（2026-06-07 更新至微信小程序入口计划）
 
 本文档是项目代码级导航，用于帮助后续开发、Code Review 和问题定位。它描述当前仓库中的实际代码结构，不替代以下主约束与契约文档：
 
@@ -12,7 +12,7 @@
 
 ## 1. 项目定位
 
-本项目是 AI 面试教练 iOS App。核心闭环是：
+本项目是 AI 面试教练 iOS App + 微信小程序双入口产品。核心闭环是：
 
 ```text
 目标岗位 -> 简历摘要确认 -> 岗位画像 -> 5 题测评 -> 1 天训练计划 -> 1 次文字模拟面试 -> 报告
@@ -30,6 +30,7 @@
 interview/
 ├── backend/                    # Spring Boot 后端
 ├── ios/InterviewCoach/         # SwiftUI iOS App
+├── miniprogram/interview-coach/ # 原生微信小程序入口（计划目录）
 ├── docs/                       # API、产品、隐私、AI、架构文档
 ├── infra/docker-compose.yml    # 本地 PostgreSQL
 ├── AGENTS.md
@@ -41,12 +42,23 @@ interview/
 
 ### 2.1 本地依赖
 
-后端默认监听 `18080`，iOS 默认请求 `http://127.0.0.1:18080`。
+后端默认监听 `18080`，iOS 默认请求 `http://127.0.0.1:18080`。微信小程序入口计划复用同一后端 API，本地调试时也通过后端 `18080` 端口访问业务能力。
 
 ```text
 iOS Simulator
   -> URLSession
   -> http://127.0.0.1:18080
+  -> Spring Security Bearer Token
+  -> Spring MVC Controller
+  -> Service
+  -> Repository
+  -> PostgreSQL
+```
+
+```text
+微信小程序
+  -> wx.request
+  -> http://127.0.0.1:18080 或部署后的 HTTPS API
   -> Spring Security Bearer Token
   -> Spring MVC Controller
   -> Service
@@ -103,7 +115,7 @@ backend/src/main/java/com/interviewcoach/
 ├── common/
 │   ├── api/        # DTO、HealthController
 │   ├── error/      # 统一错误与异常
-│   └── security/   # Spring Security、JWT、Apple token 验证
+│   └── security/   # Spring Security、JWT、Apple token 验证、微信登录验证计划
 ├── auth/           # 登录、Apple 登录、删除账号编排
 ├── user/           # 当前用户接口与 User 实体
 ├── target/         # 目标岗位
@@ -152,7 +164,7 @@ backend/src/main/java/com/interviewcoach/
 
 关键文件：
 
-- `SecurityConfig`：配置 stateless Spring Security；`/api/health`、`/api/auth/apple` 公开；`/api/auth/dev-login` 仅在 `app.auth.dev-login-enabled=true` 时公开；其他接口必须认证。
+- `SecurityConfig`：配置 stateless Spring Security；`/api/health`、`/api/auth/apple` 公开；`/api/auth/dev-login` 仅在 `app.auth.dev-login-enabled=true` 时公开；微信小程序入口计划新增 `/api/auth/wechat` 并按配置公开；其他接口必须认证。
 - `JwtAuthenticationFilter`：解析 Bearer Token 并写入 `SecurityContextHolder`。
 - `JwtTokenProvider`：签发和校验 JWT。
 - `SecurityUtils`：业务 Controller 从这里获取当前用户，避免硬编码用户 ID。
@@ -175,6 +187,7 @@ HTTP Authorization: Bearer <token>
 
 - `POST /api/auth/dev-login`
 - `POST /api/auth/apple`
+- `POST /api/auth/wechat`（计划中，微信小程序生产登录入口）
 - `POST /api/auth/logout`
 
 `UserController` 提供：
@@ -186,6 +199,7 @@ HTTP Authorization: Bearer <token>
 
 - Dev Login：按 username 查找或创建用户，并签发 JWT。
 - Apple Login：校验 `identityToken` 和必填 `nonce`，通过 Apple sub 查找或创建用户，并签发 JWT。
+- WeChat Login（计划中）：通过微信 code2session 换取 `openId` / `unionId`，查找或创建用户，并签发 JWT；`sessionKey` 不返回、不落库、不写日志。
 - Delete Account：按依赖顺序删除用户相关数据，包括测评、报告、模拟面试、训练、AI Provider、岗位画像、候选人摘要、目标岗位和用户。
 
 ### 4.4 target
@@ -1029,6 +1043,7 @@ Controller
 
 - `GET /api/health`
 - `POST /api/auth/apple`
+- `POST /api/auth/wechat`，微信小程序生产登录入口，按微信登录配置公开。
 - `POST /api/auth/dev-login`，仅 dev-login enabled 时公开。
 
 其他接口均需要 Bearer Token。
@@ -1037,22 +1052,35 @@ Controller
 
 简历：
 
-- iOS 本地输入。
+- iOS 或微信小程序本地输入。
 - draft summary 时临时发送到后端。
 - 后端不落库原文。
 - 确认后只保存摘要、技能、项目、经历。
 
 API Key：
 
-- iOS 创建 Provider 时发送 API Key。
+- iOS 或微信小程序创建 Provider 时发送 API Key。
 - 后端用 AES-GCM 加密保存。
 - 后端返回 `AiProviderDto` 不包含 API Key。
+- 微信小程序不得把 API Key 写入本地存储。
 
 Apple 登录：
 
 - 后端校验 Apple identityToken。
 - `nonce` 是必填字段。
 - 后端 hash raw nonce 后对比 JWT nonce claim。
+
+微信登录（计划中）：
+
+- 小程序调用 `wx.login()` 获取 `code`。
+- 后端调用微信 code2session。
+- 后端只使用 `openId` / `unionId` 绑定用户。
+- 微信 `sessionKey` 不返回客户端、不落库、不写日志。
+
+AI：
+
+- iOS 和微信小程序都禁止直接调用模型。
+- 所有 AI 调用必须通过后端 `AiModelGateway`。
 
 ## 11. 测试地图
 

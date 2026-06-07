@@ -1,6 +1,6 @@
 # AI 面试教练
 
-一款面向技术岗求职者的 iOS App。用户输入目标岗位、JD、简历或项目经历后，App 通过 AI 完成岗位研究、能力测评、专项训练、模拟面试和复盘报告。
+一款面向技术岗求职者的 iOS App + 微信小程序双入口 AI 面试教练。用户输入目标岗位、JD、简历或项目经历后，通过 AI 完成岗位研究、能力测评、专项训练、模拟面试和复盘报告。
 
 本项目不是题库 App，也不是简历润色工具，而是一个围绕目标岗位进行针对性提升的 AI 面试教练。
 
@@ -41,6 +41,14 @@ iOS：
 - URLSession
 - Codable DTO
 
+微信小程序：
+
+- 原生微信小程序
+- WXML / WXSS / JavaScript
+- wx.request
+- 统一请求封装
+- Bearer Token
+
 后端：
 
 - Spring Boot 3
@@ -79,6 +87,8 @@ interview/
 │       └── vibecoding-development-plan.md
 ├── ios/
 │   └── InterviewCoach/
+├── miniprogram/
+│   └── interview-coach/ # 微信小程序入口（计划目录）
 ├── backend/
 ├── web/
 │   └── admin/          # React 管理端（Token 用量看板）
@@ -86,13 +96,14 @@ interview/
 └── scripts/
 ```
 
-当前仓库已完成 Task 1-41：MVP 闭环（Walking Skeleton → OpenAPI → Dev Login → Target CRUD → CandidateProfile → JobBrief → Assessment → TrainingPlan → MockInterview → User Provider → Delete Account → TestFlight Polish → Sign in with Apple）、Post-MVP AI 质量闭环（Task 14-17）、Post-MVP Real AI Adaptive Coaching（Task 18-25）、Phase 3 持续训练伙伴与 AI 质量运营闭环（Task 26-33）、Phase 4 持续存在的面试教练 Agent（Task 34-41）。Spring AI 底座迁移 Phase 2-6 已完成，AI 调用通过 `AiModelGateway` 统一路由到 Spring AI 或旧客户端。Admin Token Usage Dashboard 后端和前端已完成（待提交）。
+当前仓库已完成 Task 1-41：MVP 闭环（Walking Skeleton → OpenAPI → Dev Login → Target CRUD → CandidateProfile → JobBrief → Assessment → TrainingPlan → MockInterview → User Provider → Delete Account → TestFlight Polish → Sign in with Apple）、Post-MVP AI 质量闭环（Task 14-17）、Post-MVP Real AI Adaptive Coaching（Task 18-25）、Phase 3 持续训练伙伴与 AI 质量运营闭环（Task 26-33）、Phase 4 持续存在的面试教练 Agent（Task 34-41）。Spring AI 底座迁移 Phase 2-6 已完成，AI 调用通过 `AiModelGateway` 统一路由到 Spring AI 或旧客户端。Admin Token Usage Dashboard 后端和前端已完成（待提交）。微信小程序入口开发计划已建立，后续按 `docs/product/wechat-miniprogram-development-plan.md` 分阶段推进。
 
 ## 开发计划
 
 主计划文档：
 
 - [AI 面试教练 App Vibecoding 三层开发计划](docs/product/vibecoding-development-plan.md)
+- [微信小程序入口开发计划](docs/product/wechat-miniprogram-development-plan.md)
 
 后续开发按以下顺序推进：
 
@@ -138,6 +149,17 @@ Phase 3 持续训练伙伴与 AI 质量运营闭环：
 31. Chat Memory 上下文管理：用 Spring AI 短窗口记忆替代手写切片，同时保留业务教练记忆边界。
 32. 多轮模拟面试：同一目标岗位支持多次模拟面试和同维度对比。
 33. 发布硬化与记忆导入审查：补齐 TestFlight/App Store、删除账号和本地记忆导入验收。
+
+微信小程序入口路线：
+
+1. 文档与目录边界。
+2. 微信登录后端契约。
+3. 小程序基础客户端框架。
+4. 核心闭环页面。
+5. Post-MVP 等价能力。
+6. 隐私、真实 AI 与发布验收。
+
+小程序后续本地调试将复用后端 `18080` API；生产入口使用微信登录换取项目现有 Bearer Token。
 
 ## 本地真实 AI 配置
 
@@ -187,7 +209,7 @@ Task 18 起，测评出题、测评评分、训练计划/反馈、模拟面试�
 
 ## 当前状态
 
-Task 1-41 全部完成：MVP + Post-MVP AI 质量 + Real AI Adaptive Coaching + Phase 3 持续训练伙伴与 AI 质量运营闭环 + Phase 4 持续存在的面试教练 Agent。Spring AI 底座迁移 Phase 2-6 已完成，AI 调用已通过 `AiModelGateway` 统一路由到 Spring AI `ChatClient`（`chatCompletions` 模式）或旧客户端（`responses` 模式）。
+Task 1-41 全部完成：MVP + Post-MVP AI 质量 + Real AI Adaptive Coaching + Phase 3 持续训练伙伴与 AI 质量运营闭环 + Phase 4 持续存在的面试教练 Agent。Spring AI 底座迁移 Phase 2-6 已完成，AI 调用已通过 `AiModelGateway` 统一路由到 Spring AI `ChatClient`（`chatCompletions` 模式）或旧客户端（`responses` 模式）。微信小程序入口开发计划已建立，当前尚未创建小程序代码目录。
 
 已完成：
 
