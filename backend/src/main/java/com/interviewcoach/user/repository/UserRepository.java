@@ -37,6 +37,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     /** 按用户名模糊搜索 */
     List<User> findByUsernameContainingIgnoreCase(String keyword);
 
+    /** 按用户名或邮箱模糊搜索 */
+    List<User> findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(String usernameKeyword, String emailKeyword);
+
     /** 查询所有用户 ID */
     @Query("SELECT u.id FROM User u")
     List<UUID> findAllIds();

@@ -140,6 +140,7 @@ pnpm-debug.log*
 !.yarn/versions/
 dist/
 coverage/
+*.tsbuildinfo
 .next/
 .nuxt/
 .svelte-kit/

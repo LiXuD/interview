@@ -117,6 +117,7 @@ public class AuthService {
      * @param request Apple 登录请求，含 identityToken 和 nonce
      * @return 登录响应
      */
+    @Transactional
     public LoginResponse appleLogin(AppleLoginRequest request) {
         if (request.identityToken() == null || request.identityToken().isBlank()) {
             throw new AppleAuthFailedException("identityToken is required");
@@ -210,6 +211,7 @@ public class AuthService {
     private void promoteAdmin(User user) {
         if (adminUsernames.contains(user.getUsername()) && !"ADMIN".equals(user.getRole())) {
             user.setRole("ADMIN");
+            userRepository.save(user);
         }
     }
 }

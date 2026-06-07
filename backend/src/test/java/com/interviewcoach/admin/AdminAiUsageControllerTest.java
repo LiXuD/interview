@@ -109,6 +109,20 @@ class AdminAiUsageControllerTest {
     }
 
     @Test
+    void usersPageWithEmailKeyword() throws Exception {
+        User user = userRepository.findByUsername(regularUsername).orElseThrow();
+        user.setEmail("test_" + System.nanoTime() + "@example.com");
+        userRepository.save(user);
+
+        mockMvc.perform(get("/api/admin/ai-usage/users")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .param("keyword", "example.com"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.items[0].username").value(regularUsername));
+    }
+
+    @Test
     void userDetailReturnsDetail() throws Exception {
         mockMvc.perform(get("/api/admin/ai-usage/users/" + regularUserId)
                         .header("Authorization", "Bearer " + adminToken))

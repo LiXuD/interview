@@ -2,6 +2,7 @@ package com.interviewcoach.admin.service;
 
 import com.interviewcoach.aiusage.entity.AiUsageLog;
 import com.interviewcoach.aiusage.repository.AiUsageLogRepository;
+import com.interviewcoach.aiusage.service.AiTokenQuotaService;
 import com.interviewcoach.aiusage.service.UsageAccumulator;
 import com.interviewcoach.common.api.*;
 import com.interviewcoach.user.entity.User;
@@ -22,10 +23,13 @@ public class AdminAiUsageService {
 
     private final AiUsageLogRepository usageRepository;
     private final UserRepository userRepository;
+    private final AiTokenQuotaService quotaService;
 
-    public AdminAiUsageService(AiUsageLogRepository usageRepository, UserRepository userRepository) {
+    public AdminAiUsageService(AiUsageLogRepository usageRepository, UserRepository userRepository,
+                               AiTokenQuotaService quotaService) {
         this.usageRepository = usageRepository;
         this.userRepository = userRepository;
+        this.quotaService = quotaService;
     }
 
     /**
@@ -109,7 +113,7 @@ public class AdminAiUsageService {
 
         List<User> users;
         if (keyword != null && !keyword.isBlank()) {
-            users = userRepository.findByUsernameContainingIgnoreCase(keyword);
+            users = userRepository.findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(keyword, keyword);
         } else {
             users = userRepository.findAll();
         }
@@ -127,10 +131,22 @@ public class AdminAiUsageService {
             lastUsedMap.merge(log.getUserId(), log.getCreatedAt(), (a, b) -> a.isAfter(b) ? a : b);
         }
 
+        // 当前月 platformDefault token 用量（独立于日期筛选）
+        Instant monthStart = currentMonthStartUtc();
+        Instant now = Instant.now();
+        Map<UUID, Long> platformMonthTokensMap = new HashMap<>();
+        if (!userIds.isEmpty()) {
+            List<Object[]> monthRows = usageRepository.sumTotalTokensByUserIdsAndProviderTypeAndCreatedAtBetween(
+                    userIds, "platformDefault", monthStart, now);
+            for (Object[] row : monthRows) {
+                platformMonthTokensMap.put((UUID) row[0], (Long) row[1]);
+            }
+        }
+
         List<AdminAiUsageUserRowDto> rows = new ArrayList<>();
         for (User user : users) {
             UsageAccumulator acc = userAccs.getOrDefault(user.getId(), new UsageAccumulator());
-            long currentMonthTokens = acc.getTotalTokens();
+            long currentMonthTokens = platformMonthTokensMap.getOrDefault(user.getId(), 0L);
             Long quota = user.getMonthlyTokenQuota();
             Long remaining = quota != null ? Math.max(0, quota - currentMonthTokens) : null;
             boolean exceeded = quota != null && currentMonthTokens >= quota;
@@ -191,7 +207,7 @@ public class AdminAiUsageService {
             providerAccs.computeIfAbsent(safeName(log.getProviderType()), k -> new UsageAccumulator()).add(log);
         }
 
-        long currentMonthTokens = acc.getTotalTokens();
+        long currentMonthTokens = quotaService.getCurrentMonthPlatformTokens(userId);
         Long quota = user.getMonthlyTokenQuota();
         Long remaining = quota != null ? Math.max(0, quota - currentMonthTokens) : null;
         boolean exceeded = quota != null && currentMonthTokens >= quota;
@@ -215,8 +231,7 @@ public class AdminAiUsageService {
         if (usersWithQuota.isEmpty()) {
             return 0;
         }
-        Instant monthStart = LocalDate.now(ZoneOffset.UTC).withDayOfMonth(1)
-                .atStartOfDay(ZoneOffset.UTC).toInstant();
+        Instant monthStart = currentMonthStartUtc();
         Instant now = Instant.now();
         List<UUID> userIds = usersWithQuota.stream().map(User::getId).toList();
 
@@ -235,6 +250,11 @@ public class AdminAiUsageService {
             }
         }
         return count;
+    }
+
+    private static Instant currentMonthStartUtc() {
+        return LocalDate.now(ZoneOffset.UTC).withDayOfMonth(1)
+                .atStartOfDay(ZoneOffset.UTC).toInstant();
     }
 
     private static String safeName(String name) {
