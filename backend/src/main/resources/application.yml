@@ -33,6 +33,8 @@ app:
     executor-core-pool-size: 1
     executor-max-pool-size: 1
     executor-queue-capacity: 100
+  admin:
+    usernames: ${IC_ADMIN_USERNAMES:}
   auth:
     dev-login-enabled: true
   jwt:

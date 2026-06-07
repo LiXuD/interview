@@ -26,6 +26,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.beans.factory.annotation.Value;
+
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -50,6 +53,7 @@ public class AuthService {
     private final CoachingMemoryRepository coachingMemoryRepository;
     private final AgentRepository agentRepository;
     private final CoachEventRepository coachEventRepository;
+    private final Set<String> adminUsernames;
 
     public AuthService(UserRepository userRepository, JwtTokenProvider jwtTokenProvider,
                        AppleTokenVerifier appleTokenVerifier,
@@ -64,7 +68,8 @@ public class AuthService {
                        AiProviderRepository aiProviderRepository,
                        CoachingMemoryRepository coachingMemoryRepository,
                        AgentRepository agentRepository,
-                       CoachEventRepository coachEventRepository) {
+                       CoachEventRepository coachEventRepository,
+                       @Value("${app.admin.usernames:}") Set<String> adminUsernames) {
         this.userRepository = userRepository;
         this.jwtTokenProvider = jwtTokenProvider;
         this.appleTokenVerifier = appleTokenVerifier;
@@ -80,6 +85,7 @@ public class AuthService {
         this.coachingMemoryRepository = coachingMemoryRepository;
         this.agentRepository = agentRepository;
         this.coachEventRepository = coachEventRepository;
+        this.adminUsernames = adminUsernames == null ? Set.of() : adminUsernames;
     }
 
     /**
@@ -100,6 +106,7 @@ public class AuthService {
                         return userRepository.findByUsername(request.username()).orElseThrow();
                     }
                 });
+        promoteAdmin(user);
         String token = jwtTokenProvider.generateToken(user.getId());
         return new LoginResponse(token, user.getId().toString(), user.getUsername());
     }
@@ -143,6 +150,7 @@ public class AuthService {
                         return userRepository.findByAppleUserId(appleUserId).orElseThrow();
                     }
                 });
+        promoteAdmin(user);
         String token = jwtTokenProvider.generateToken(user.getId());
         return new LoginResponse(token, user.getId().toString(), user.getUsername());
     }
@@ -194,5 +202,14 @@ public class AuthService {
         targetRepository.deleteByUserId(userId);
         // 13. 最后删除用户主表
         userRepository.deleteById(userId);
+    }
+
+    /**
+     * 如果用户名在管理员名单中且当前角色不是 ADMIN，则提升为 ADMIN。
+     */
+    private void promoteAdmin(User user) {
+        if (adminUsernames.contains(user.getUsername()) && !"ADMIN".equals(user.getRole())) {
+            user.setRole("ADMIN");
+        }
     }
 }

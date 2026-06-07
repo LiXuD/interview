@@ -138,6 +138,8 @@ interview/
 ├── backend/
 │   ├── build.gradle 或 pom.xml
 │   └── src/
+├── web/
+│   └── admin/          # React 管理端（Token 用量看板）
 ├── infra/
 │   └── docker-compose.yml
 └── scripts/

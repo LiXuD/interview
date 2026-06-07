@@ -2,7 +2,9 @@ package com.interviewcoach.user.repository;
 
 import com.interviewcoach.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,4 +27,17 @@ public interface UserRepository extends JpaRepository<User, UUID> {
      * @return 用户实体，不存在时为空
      */
     Optional<User> findByAppleUserId(String appleUserId);
+
+    /** 统计设置了月度配额的用户数 */
+    long countByMonthlyTokenQuotaIsNotNull();
+
+    /** 查询所有设置了月度配额的用户 */
+    List<User> findByMonthlyTokenQuotaIsNotNull();
+
+    /** 按用户名模糊搜索 */
+    List<User> findByUsernameContainingIgnoreCase(String keyword);
+
+    /** 查询所有用户 ID */
+    @Query("SELECT u.id FROM User u")
+    List<UUID> findAllIds();
 }

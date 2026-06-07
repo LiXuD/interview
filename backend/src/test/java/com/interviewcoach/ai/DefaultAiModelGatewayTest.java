@@ -380,7 +380,8 @@ class DefaultAiModelGatewayTest {
                 new SpringAiFoundationProperties(),
                 springAiUserProviderClient,
                 new NoOpAiMetrics(),
-                usageRecorder);
+                usageRecorder,
+                null);
 
         String result = gateway.generateJson(prompt);
 
@@ -439,7 +440,8 @@ class DefaultAiModelGatewayTest {
                 springProperties,
                 springAiUserProviderClient,
                 new NoOpAiMetrics(),
-                AiUsageRecorder.noop());
+                AiUsageRecorder.noop(),
+                null);
     }
 
     private boolean invokeIsTransientFailure(Throwable ex) {

@@ -80,11 +80,13 @@ interview/
 ├── ios/
 │   └── InterviewCoach/
 ├── backend/
+├── web/
+│   └── admin/          # React 管理端（Token 用量看板）
 ├── infra/
 └── scripts/
 ```
 
-当前仓库已完成 Task 1-41：MVP 闭环（Walking Skeleton → OpenAPI → Dev Login → Target CRUD → CandidateProfile → JobBrief → Assessment → TrainingPlan → MockInterview → User Provider → Delete Account → TestFlight Polish → Sign in with Apple）、Post-MVP AI 质量闭环（Task 14-17）、Post-MVP Real AI Adaptive Coaching（Task 18-25）、Phase 3 持续训练伙伴与 AI 质量运营闭环（Task 26-33）、Phase 4 持续存在的面试教练 Agent（Task 34-41）。Spring AI 底座迁移 Phase 2-6 已完成，AI 调用通过 `AiModelGateway` 统一路由到 Spring AI 或旧客户端。
+当前仓库已完成 Task 1-41：MVP 闭环（Walking Skeleton → OpenAPI → Dev Login → Target CRUD → CandidateProfile → JobBrief → Assessment → TrainingPlan → MockInterview → User Provider → Delete Account → TestFlight Polish → Sign in with Apple）、Post-MVP AI 质量闭环（Task 14-17）、Post-MVP Real AI Adaptive Coaching（Task 18-25）、Phase 3 持续训练伙伴与 AI 质量运营闭环（Task 26-33）、Phase 4 持续存在的面试教练 Agent（Task 34-41）。Spring AI 底座迁移 Phase 2-6 已完成，AI 调用通过 `AiModelGateway` 统一路由到 Spring AI 或旧客户端。Admin Token Usage Dashboard 后端和前端已完成（待提交）。
 
 ## 开发计划
 

@@ -25,6 +25,14 @@ public class User {
     @Column
     private String email;
 
+    /** 用户角色，默认 USER；管理员为 ADMIN */
+    @Column(nullable = false)
+    private String role = "USER";
+
+    /** 平台 AI 月度 token 配额，null 表示不限制 */
+    @Column
+    private Long monthlyTokenQuota;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -32,6 +40,9 @@ public class User {
     void prePersist() {
         if (createdAt == null) {
             createdAt = Instant.now();
+        }
+        if (role == null) {
+            role = "USER";
         }
     }
 
@@ -65,5 +76,21 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public Long getMonthlyTokenQuota() {
+        return monthlyTokenQuota;
+    }
+
+    public void setMonthlyTokenQuota(Long monthlyTokenQuota) {
+        this.monthlyTokenQuota = monthlyTokenQuota;
     }
 }

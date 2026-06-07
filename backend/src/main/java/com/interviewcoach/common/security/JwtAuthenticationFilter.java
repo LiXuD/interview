@@ -12,6 +12,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
@@ -54,9 +56,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UUID userId = jwtTokenProvider.getUserId(token);
                 User user = userRepository.findById(userId).orElse(null);
                 if (user != null) {
-                    // 3. 用户有效，构建认证对象并设置到 SecurityContext
+                    // 3. 用户有效，构建认证对象并设置到 SecurityContext，包含角色权限
+                    var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()));
                     UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(user, null, List.of());
+                            new UsernamePasswordAuthenticationToken(user, null, authorities);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             } catch (JwtException ignored) {

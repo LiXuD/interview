@@ -1,6 +1,7 @@
 package com.interviewcoach.ai.service;
 
 import com.interviewcoach.ai.entity.AiProvider;
+import com.interviewcoach.aiusage.service.AiTokenQuotaService;
 import com.interviewcoach.aiusage.service.AiUsageContext;
 import com.interviewcoach.aiusage.service.AiUsageLogCommand;
 import com.interviewcoach.aiusage.service.AiUsageMetadata;
@@ -149,6 +150,7 @@ public class DefaultAiModelGateway implements AiModelGateway {
     private final SpringAiUserProviderClient springAiUserProviderClient;
     private final AiMetrics aiMetrics;
     private final AiUsageRecorder aiUsageRecorder;
+    private final AiTokenQuotaService quotaService;
 
     public DefaultAiModelGateway(PlatformAiClient platformAiClient,
                                  OpenAiCompatibleClient openAiClient,
@@ -159,7 +161,7 @@ public class DefaultAiModelGateway implements AiModelGateway {
                                  SpringAiUserProviderClient springAiUserProviderClient,
                                  AiMetrics aiMetrics) {
         this(platformAiClient, openAiClient, providerService, encryption, platformProperties, springAiProperties,
-                springAiUserProviderClient, aiMetrics, AiUsageRecorder.noop());
+                springAiUserProviderClient, aiMetrics, AiUsageRecorder.noop(), null);
     }
 
     @Autowired
@@ -171,7 +173,8 @@ public class DefaultAiModelGateway implements AiModelGateway {
                                  SpringAiFoundationProperties springAiProperties,
                                  SpringAiUserProviderClient springAiUserProviderClient,
                                  AiMetrics aiMetrics,
-                                 AiUsageRecorder aiUsageRecorder) {
+                                 AiUsageRecorder aiUsageRecorder,
+                                 AiTokenQuotaService quotaService) {
         this.platformAiClient = platformAiClient;
         this.openAiClient = openAiClient;
         this.providerService = providerService;
@@ -181,6 +184,7 @@ public class DefaultAiModelGateway implements AiModelGateway {
         this.springAiUserProviderClient = springAiUserProviderClient;
         this.aiMetrics = aiMetrics;
         this.aiUsageRecorder = aiUsageRecorder == null ? AiUsageRecorder.noop() : aiUsageRecorder;
+        this.quotaService = quotaService;
     }
 
     /** 解析当前用户的 Provider 并设置请求上下文 */
@@ -217,6 +221,7 @@ public class DefaultAiModelGateway implements AiModelGateway {
                 if (provider != null) {
                     return generateJsonFromUserProvider(provider, prompt);
                 }
+                checkPlatformQuota();
                 if (requiresRealAi(prompt)) {
                     throw new AiProviderCallFailedException(
                             "Real AI is required for coaching task: " + prompt.task(), null);
@@ -258,6 +263,7 @@ public class DefaultAiModelGateway implements AiModelGateway {
                     }
                     return generateEntityFromUserProvider(provider, prompt, responseType);
                 }
+                checkPlatformQuota();
                 return generateEntityFromPlatformProvider(prompt, responseType);
             });
             if (result == null) {
@@ -425,6 +431,15 @@ public class DefaultAiModelGateway implements AiModelGateway {
                 && springAiProperties.isEnabled()
                 && springAiUserProviderClient != null
                 && "chatCompletions".equals(provider.getOpenaiApiMode());
+    }
+
+    /** 检查当前用户的平台 AI 月度配额，超限时抛出 AiTokenQuotaExceededException */
+    private void checkPlatformQuota() {
+        if (quotaService == null) return;
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof User user) {
+            quotaService.checkPlatformQuota(user);
+        }
     }
 
     /** 判断当前任务是否强制要求真实 AI */

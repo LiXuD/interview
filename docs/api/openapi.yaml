@@ -1259,6 +1259,123 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  # ─── Admin AI Usage ──────────────────────────────────────────────
+  /api/admin/ai-usage/overview:
+    get:
+      tags: [Admin]
+      summary: 全局 AI 用量概览
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: startDate
+          in: query
+          schema: { type: string, format: date }
+        - name: endDate
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminAiUsageOverviewDto" }
+        "403": { description: Forbidden }
+
+  /api/admin/ai-usage/users:
+    get:
+      tags: [Admin]
+      summary: 用户用量分页列表
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: startDate
+          in: query
+          schema: { type: string, format: date }
+        - name: endDate
+          in: query
+          schema: { type: string, format: date }
+        - name: keyword
+          in: query
+          schema: { type: string }
+        - name: page
+          in: query
+          schema: { type: integer, default: 0 }
+        - name: size
+          in: query
+          schema: { type: integer, default: 20 }
+        - name: sort
+          in: query
+          schema: { type: string, enum: [totalTokensDesc, totalRequestsDesc, usernameAsc, createdAtDesc] }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminAiUsageUsersPageDto" }
+        "403": { description: Forbidden }
+
+  /api/admin/ai-usage/users/{userId}:
+    get:
+      tags: [Admin]
+      summary: 单用户用量详情
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: startDate
+          in: query
+          schema: { type: string, format: date }
+        - name: endDate
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminAiUsageUserDetailDto" }
+        "403": { description: Forbidden }
+        "404": { description: User not found }
+
+  /api/admin/users/{userId}/token-quota:
+    get:
+      tags: [Admin]
+      summary: 查询用户月度配额状态
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminTokenQuotaDto" }
+        "403": { description: Forbidden }
+    patch:
+      tags: [Admin]
+      summary: 更新用户月度配额
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminTokenQuotaUpdateRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminTokenQuotaDto" }
+        "403": { description: Forbidden }
+
 components:
   securitySchemes:
     bearerAuth:
@@ -2664,3 +2781,93 @@ components:
           type: string
         updatedAt:
           type: string
+
+    # ─── Admin DTOs ────────────────────────────────────────────────
+    AdminAiUsageOverviewDto:
+      type: object
+      properties:
+        totalUsers: { type: integer }
+        activeUsers: { type: integer }
+        quotaExceededUsers: { type: integer }
+        summary: { $ref: "#/components/schemas/AiUsageSummaryDto" }
+        daily:
+          type: array
+          items: { $ref: "#/components/schemas/AiUsageDailyPointDto" }
+        topUsers:
+          type: array
+          items: { $ref: "#/components/schemas/AiUsageBreakdownDto" }
+        topModels:
+          type: array
+          items: { $ref: "#/components/schemas/AiUsageBreakdownDto" }
+        topTasks:
+          type: array
+          items: { $ref: "#/components/schemas/AiUsageBreakdownDto" }
+        providers:
+          type: array
+          items: { $ref: "#/components/schemas/AiUsageBreakdownDto" }
+
+    AdminAiUsageUserRowDto:
+      type: object
+      properties:
+        userId: { type: string }
+        username: { type: string }
+        email: { type: string, nullable: true }
+        role: { type: string }
+        createdAt: { type: string, nullable: true }
+        monthlyTokenQuota: { type: integer, nullable: true }
+        currentMonthTokens: { type: integer }
+        remainingMonthlyTokens: { type: integer, nullable: true }
+        quotaExceeded: { type: boolean }
+        lastUsedAt: { type: string, nullable: true }
+        summary: { $ref: "#/components/schemas/AiUsageSummaryDto" }
+
+    AdminAiUsageUserDetailDto:
+      type: object
+      properties:
+        userId: { type: string }
+        username: { type: string }
+        email: { type: string, nullable: true }
+        role: { type: string }
+        createdAt: { type: string, nullable: true }
+        monthlyTokenQuota: { type: integer, nullable: true }
+        currentMonthTokens: { type: integer }
+        remainingMonthlyTokens: { type: integer, nullable: true }
+        quotaExceeded: { type: boolean }
+        summary: { $ref: "#/components/schemas/AiUsageSummaryDto" }
+        daily:
+          type: array
+          items: { $ref: "#/components/schemas/AiUsageDailyPointDto" }
+        byTask:
+          type: array
+          items: { $ref: "#/components/schemas/AiUsageBreakdownDto" }
+        byModel:
+          type: array
+          items: { $ref: "#/components/schemas/AiUsageBreakdownDto" }
+        byProvider:
+          type: array
+          items: { $ref: "#/components/schemas/AiUsageBreakdownDto" }
+
+    AdminAiUsageUsersPageDto:
+      type: object
+      properties:
+        page: { type: integer }
+        size: { type: integer }
+        totalElements: { type: integer }
+        totalPages: { type: integer }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/AdminAiUsageUserRowDto" }
+
+    AdminTokenQuotaUpdateRequest:
+      type: object
+      properties:
+        monthlyTokenQuota: { type: integer, nullable: true }
+
+    AdminTokenQuotaDto:
+      type: object
+      properties:
+        userId: { type: string }
+        monthlyTokenQuota: { type: integer, nullable: true }
+        currentMonthTokens: { type: integer }
+        remainingMonthlyTokens: { type: integer, nullable: true }
+        quotaExceeded: { type: boolean }

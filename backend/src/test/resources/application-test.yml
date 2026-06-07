@@ -31,6 +31,8 @@ app:
     executor-core-pool-size: 1
     executor-max-pool-size: 1
     executor-queue-capacity: 10
+  admin:
+    usernames: admin,testadmin
   auth:
     dev-login-enabled: true
   jwt:

@@ -60,6 +60,7 @@ public class SecurityConfig {
                     if (devLoginEnabled) {
                         auth.requestMatchers(HttpMethod.POST, "/api/auth/dev-login").permitAll();
                     }
+                    auth.requestMatchers("/api/admin/**").hasRole("ADMIN");
                     auth.anyRequest().authenticated();
                 })
                 // 4. 在 UsernamePasswordAuthenticationFilter 之前插入 JWT 认证过滤器
@@ -72,6 +73,16 @@ public class SecurityConfig {
                             ErrorResponse error = new ErrorResponse(
                                     "UNAUTHORIZED",
                                     "Authentication required",
+                                    UUID.randomUUID().toString()
+                            );
+                            objectMapper.writeValue(response.getOutputStream(), error);
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(403);
+                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                            ErrorResponse error = new ErrorResponse(
+                                    "ACCESS_DENIED",
+                                    "Insufficient permissions",
                                     UUID.randomUUID().toString()
                             );
                             objectMapper.writeValue(response.getOutputStream(), error);

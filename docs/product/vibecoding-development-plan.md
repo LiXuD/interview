@@ -27,8 +27,9 @@ MVP Provider 范围：
 | Phase 3 持续训练伙伴与 AI 质量运营闭环 | Task 26-33 | 全部完成 |
 | Phase 4 持续存在的面试教练 Agent | Task 34-41 | 全部完成 |
 | Spring AI 底座迁移 | Phase 2-6 | 已完成 |
+| Post-MVP AI 质量运营 | Admin Token Usage Dashboard | 已完成 |
 
-Task 1-33 和 Spring AI 底座迁移 Phase 2-6 均已完成。Phase 4 Task 34-41 全部完成，后续新增开发必须继续服务 AI 面试教练定位，按已批准的计划推进。
+Task 1-33 和 Spring AI 底座迁移 Phase 2-6 均已完成。Phase 4 Task 34-41 全部完成，后续新增开发必须继续服务 AI 面试教练定位，按已批准的计划推进。Admin Token Usage Dashboard 是 Post-MVP AI 质量运营管理能力，不属于计费、订阅或企业端功能。
 
 ---
 

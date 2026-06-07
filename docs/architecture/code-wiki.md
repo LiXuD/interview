@@ -1,6 +1,6 @@
 # Interview Coach Code Wiki
 
-生成日期：2026-05-28（2026-06-03 更新至 AI 瞬时失败修复与结构化输出重试增强）
+生成日期：2026-05-28（2026-06-07 更新至 Admin Token Usage Dashboard）
 
 本文档是项目代码级导航，用于帮助后续开发、Code Review 和问题定位。它描述当前仓库中的实际代码结构，不替代以下主约束与契约文档：
 
@@ -115,7 +115,9 @@ backend/src/main/java/com/interviewcoach/
 ├── mockinterview/  # 文字模拟面试
 ├── coachingmemory/ # 教练记忆、用户纠错
 ├── report/         # 统一报告
-└── agent/          # 持续存在的面试教练 Agent
+├── agent/          # 持续存在的面试教练 Agent
+├── aiusage/        # AI Token 用量追踪
+└── admin/          # 管理端（用量看板、配额管理）
 ```
 
 ### 3.1 后端分层约定
@@ -502,9 +504,42 @@ finishInterview
 - Agent 不保存简历原文、用户回答原文、API Key 或 hidden chain-of-thought。
 - `rejected` 记忆不进入 Agent Prompt；`inferred` 只作为待验证线索使用。
 
+### 4.14 aiusage
+
+AI Token 用量追踪模块，记录每次 AI 调用的 token 消耗，为管理端用量看板和用户配额提供数据基础。
+
+主要文件：
+
+- `AiUsageLog`：用量日志实体，含 userId、providerType、model、task、totalInputTokens、totalOutputTokens、totalTokens、success、createdAt。
+- `AiUsageLogRepository`：按用户/时间范围查询、按 providerType 汇总 totalTokens（JPQL 聚合）。
+- `AiUsageQueryService`：面向用户端的用量查询服务，提供汇总、每日趋势、按任务/模型/Provider 分解。
+- `UsageAccumulator`：共享的用量累加器，封装 add() → toSummary() / toDaily() / toBreakdown() 转换逻辑，被用户端和管理端共用。
+- `AiTokenQuotaService`：用户月度 token 配额检查，使用 SQL 聚合避免加载全部日志。
+- `AiUsageController`：用户端用量 API（汇总、每日、按任务、按模型、按 Provider）。
+
+约束：
+
+- 用量日志由 AI 调用链路自动写入，用户不可手动创建或修改。
+- 配额检查只统计 `providerType=platformDefault` 的用量。
+
+### 4.15 admin
+
+管理端后端模块，提供 AI token 用量的跨用户全局概览、用户列表和单用户详情，以及用户配额管理。
+
+主要文件：
+
+- `AdminAiUsageService`：管理端用量聚合服务。overview() 提供全局概览（KPI、每日趋势、Top 用户/模型/任务/Provider）；usersPage() 支持关键字搜索和排序的分页用户列表；userDetail() 提供单用户详情。
+- `AdminUserQuotaService`：用户月度配额 CRUD，支持设置、清除和负值校验。
+- `AdminAiUsageController`：管理端 API 端点（overview、users、user detail、quota update）。
+
+约束：
+
+- 所有管理端接口需要 `ROLE_ADMIN` 角色。
+- 配额值不允许负数，传入 null 表示不限制。
+
 ## 5. API 地图
 
-当前 OpenAPI 包含 30+ 个路径：
+当前 OpenAPI 包含 35+ 个路径：
 
 | 模块 | 路径 |
 | --- | --- |
@@ -553,8 +588,17 @@ finishInterview
 | DimensionAnalysis | `GET /api/dimension-analysis?targetId=...` |
 | Progress | `GET /api/progress?targetId=...` |
 | CoachAgent | `GET /api/targets/{targetId}/coach-agent` |
+| AI Usage | `GET /api/ai-usage/summary` |
+| AI Usage | `GET /api/ai-usage/daily` |
+| AI Usage | `GET /api/ai-usage/by-task` |
+| AI Usage | `GET /api/ai-usage/by-model` |
+| AI Usage | `GET /api/ai-usage/by-provider` |
+| Admin | `GET /api/admin/ai-usage/overview` |
+| Admin | `GET /api/admin/ai-usage/users` |
+| Admin | `GET /api/admin/ai-usage/users/{userId}` |
+| Admin | `PATCH /api/admin/users/{userId}/token-quota` |
 
-说明：OpenAPI 中 `/api/targets`、`/api/targets/{id}`、`/api/ai-providers` 等路径下包含多个 HTTP method，因此路径数量和端点数量不同。
+说明：OpenAPI 中 `/api/targets`、`/api/targets/{id}`、`/api/ai-providers` 等路径下包含多个 HTTP method，因此路径数量和端点数量不同。Admin 端点需要 `ROLE_ADMIN` 角色。
 
 ## 6. iOS 总览
 
