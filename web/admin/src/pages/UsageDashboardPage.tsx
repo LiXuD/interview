@@ -98,7 +98,7 @@ export default function UsageDashboardPage() {
       </div>
 
       {/* User Detail Drawer */}
-      <UserUsageDrawer userId={selectedUserId} onClose={() => setSelectedUserId(null)} />
+      <UserUsageDrawer userId={selectedUserId} startDate={startDate || undefined} endDate={endDate || undefined} onClose={() => setSelectedUserId(null)} />
     </>
   )
 }

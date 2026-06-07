@@ -6,13 +6,15 @@ import { formatTokens } from '../utils/format'
 
 interface Props {
   userId: string | null
+  startDate?: string
+  endDate?: string
   onClose: () => void
 }
 
-export default function UserUsageDrawer({ userId, onClose }: Props) {
+export default function UserUsageDrawer({ userId, startDate, endDate, onClose }: Props) {
   const { data, isLoading, error } = useQuery<AdminUserDetail>({
-    queryKey: ['admin-user-detail', userId],
-    queryFn: () => fetchUserDetail(userId!),
+    queryKey: ['admin-user-detail', userId, startDate, endDate],
+    queryFn: () => fetchUserDetail(userId!, { startDate, endDate }),
     enabled: !!userId,
   })
 
