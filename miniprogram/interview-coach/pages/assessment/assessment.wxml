@@ -1,0 +1,71 @@
+<view class="container">
+  <view wx:if="{{error}}" class="error-banner">{{error}}</view>
+
+  <!-- 答题中 -->
+  <view wx:if="{{status === 'in_progress'}}">
+    <view class="progress-bar">
+      <view class="progress-text">第 {{questionIndex + 1}} / {{totalQuestions}} 题</view>
+      <view class="progress-track">
+        <view class="progress-fill" style="width: {{(questionIndex / totalQuestions) * 100}}%"></view>
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="question-meta">
+        <view class="meta-tag">{{currentQuestion.dimension}}</view>
+        <view class="meta-tag difficulty-{{currentQuestion.difficulty}}">{{currentQuestion.difficulty}}</view>
+      </view>
+      <view class="question-text">{{currentQuestion.question}}</view>
+      <view wx:if="{{currentQuestion.intent}}" class="question-intent">提示：{{currentQuestion.intent}}</view>
+    </view>
+
+    <view class="card">
+      <textarea class="answer-input" placeholder="输入你的回答..." value="{{answer}}" bindinput="onAnswerInput" auto-height maxlength="5000" />
+    </view>
+
+    <button class="btn-primary" bindtap="onSubmitAnswer" loading="{{submitting}}" disabled="{{!answer.trim()}}">
+      {{questionIndex < totalQuestions - 1 ? '下一题' : '完成测评'}}
+    </button>
+  </view>
+
+  <!-- 测评结果 -->
+  <view wx:if="{{status === 'completed'}}">
+    <view class="card result-header">
+      <view class="score-circle">{{result.totalScore}}</view>
+      <view class="score-label">总分</view>
+    </view>
+
+    <view class="card">
+      <view class="section-title">优势</view>
+      <view wx:for="{{result.strengths}}" wx:key="*this" class="list-item strength">{{item}}</view>
+    </view>
+
+    <view class="card">
+      <view class="section-title">待提升</view>
+      <view wx:for="{{result.weaknesses}}" wx:key="*this" class="list-item weakness">{{item}}</view>
+    </view>
+
+    <view class="card">
+      <view class="section-title">下一步</view>
+      <view wx:for="{{result.nextActions}}" wx:key="*this" class="list-item">{{item}}</view>
+    </view>
+
+    <view class="card">
+      <view class="section-title">维度评分</view>
+      <view wx:for="{{result.dimensions}}" wx:key="name" class="dimension-row">
+        <view class="dim-name">{{item.name}}</view>
+        <view class="dim-bar">
+          <view class="dim-fill" style="width: {{item.score}}%"></view>
+        </view>
+        <view class="dim-score">{{item.score}}</view>
+      </view>
+    </view>
+
+    <button class="btn-primary" bindtap="goTraining">查看训练计划</button>
+  </view>
+
+  <!-- 初始加载 -->
+  <view wx:if="{{status === 'loading'}}" class="loading-mask">
+    <view>正在开始测评...</view>
+  </view>
+</view>

@@ -22,6 +22,10 @@ public class User {
     @Column(unique = true)
     private String appleUserId;
 
+    /** 微信小程序 openId，仅微信登录用户有值。 */
+    @Column(unique = true)
+    private String wechatOpenId;
+
     @Column
     private String email;
 
@@ -68,6 +72,14 @@ public class User {
 
     public void setAppleUserId(String appleUserId) {
         this.appleUserId = appleUserId;
+    }
+
+    public String getWechatOpenId() {
+        return wechatOpenId;
+    }
+
+    public void setWechatOpenId(String wechatOpenId) {
+        this.wechatOpenId = wechatOpenId;
     }
 
     public String getEmail() {

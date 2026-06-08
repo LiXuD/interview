@@ -1,0 +1,22 @@
+<view class="container">
+  <view wx:if="{{error}}" class="error-banner">{{error}}</view>
+
+  <view wx:if="{{loading}}" class="loading-mask">
+    <view>加载报告...</view>
+  </view>
+
+  <view wx:elif="{{report}}">
+    <view class="card">
+      <view class="report-meta">
+        <view class="report-type">{{report.type === 'assessment' ? '测评报告' : '模拟面试报告'}}</view>
+        <view class="report-time text-muted">{{report.createdAt}}</view>
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="content-text">{{report.content}}</view>
+    </view>
+
+    <button class="btn-primary" bindtap="goBack">返回目标</button>
+  </view>
+</view>

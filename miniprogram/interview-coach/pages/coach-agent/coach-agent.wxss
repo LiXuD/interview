@@ -1,0 +1,8 @@
+.status-row { display: flex; justify-content: space-between; padding: 16rpx 0; border-bottom: 1rpx solid #f0f0f0; }
+.status-row:last-child { border-bottom: none; }
+.status-label { font-size: 28rpx; color: #666; }
+.status-value { font-size: 28rpx; color: #1a1a2e; font-weight: 600; }
+.tag-list { display: flex; flex-wrap: wrap; gap: 12rpx; }
+.tag { background-color: #e8eaf6; color: #3949ab; padding: 8rpx 20rpx; border-radius: 20rpx; font-size: 24rpx; }
+.action-text { font-size: 30rpx; color: #1a1a2e; font-weight: 600; line-height: 1.6; }
+.content-text { font-size: 28rpx; color: #333; line-height: 1.6; }

@@ -1,0 +1,46 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="loading-mask">
+    <view>加载中...</view>
+  </view>
+
+  <view wx:elif="{{error}}" class="container">
+    <view class="error-banner">{{error}}</view>
+    <button class="btn-primary" bindtap="loadTargets">重试</button>
+  </view>
+
+  <view wx:elif="{{targets.length === 0}}" class="empty-state">
+    <view class="empty-icon">+</view>
+    <view class="empty-text">还没有目标岗位</view>
+    <view class="empty-text text-muted">点击下方按钮创建第一个目标</view>
+    <button class="btn-primary" style="margin-top: 40rpx; width: 60%;" bindtap="onCreateTarget">
+      创建目标岗位
+    </button>
+  </view>
+
+  <view wx:else class="container">
+    <view class="section-title">我的目标岗位</view>
+    <view
+      wx:for="{{targets}}"
+      wx:key="id"
+      class="card"
+      bindtap="onTargetTap"
+      data-id="{{item.id}}"
+    >
+      <view class="target-title">{{item.title}}</view>
+      <view class="text-muted">{{item.createdAt}}</view>
+    </view>
+    <button class="btn-primary" bindtap="onCreateTarget">创建目标岗位</button>
+  </view>
+
+  <!-- 底部导航 -->
+  <view class="tab-bar">
+    <view class="tab-item tab-active">
+      <view class="tab-icon">+</view>
+      <view class="tab-label">目标</view>
+    </view>
+    <view class="tab-item" bindtap="goSettings">
+      <view class="tab-icon">...</view>
+      <view class="tab-label">设置</view>
+    </view>
+  </view>
+</view>

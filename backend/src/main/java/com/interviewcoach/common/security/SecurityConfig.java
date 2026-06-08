@@ -57,6 +57,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers("/api/health").permitAll();
                     auth.requestMatchers(HttpMethod.POST, "/api/auth/apple").permitAll();
+                    auth.requestMatchers(HttpMethod.POST, "/api/auth/wechat").permitAll();
                     if (devLoginEnabled) {
                         auth.requestMatchers(HttpMethod.POST, "/api/auth/dev-login").permitAll();
                     }

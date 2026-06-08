@@ -1,0 +1,45 @@
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.setting-row:last-child {
+  border-bottom: none;
+}
+
+.setting-label {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.setting-value {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.btn-logout {
+  margin-top: 60rpx;
+  background-color: #fff;
+  color: #e74c3c;
+  border: 1rpx solid #e74c3c;
+  border-radius: 12rpx;
+  padding: 24rpx 0;
+  text-align: center;
+  font-size: 30rpx;
+  width: 100%;
+}
+
+.btn-delete {
+  margin-top: 24rpx;
+  background-color: #fff;
+  color: #999;
+  border: none;
+  border-radius: 12rpx;
+  padding: 24rpx 0;
+  text-align: center;
+  font-size: 26rpx;
+  width: 100%;
+}

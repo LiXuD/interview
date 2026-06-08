@@ -1,0 +1,8 @@
+.kpi-row { display: flex; justify-content: space-around; text-align: center; }
+.kpi-item { flex: 1; }
+.kpi-value { font-size: 40rpx; font-weight: 700; color: #1a1a2e; }
+.kpi-label { font-size: 24rpx; color: #999; margin-top: 8rpx; }
+.usage-row { display: flex; justify-content: space-between; padding: 16rpx 0; border-bottom: 1rpx solid #f0f0f0; }
+.usage-row:last-child { border-bottom: none; }
+.usage-name { font-size: 28rpx; color: #333; }
+.usage-value { font-size: 26rpx; color: #666; }

@@ -182,6 +182,18 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 处理微信登录认证失败异常，返回 401。
+     *
+     * @param ex 微信认证失败异常
+     * @return 包含 WECHAT_AUTH_FAILED 错误码的响应
+     */
+    @ExceptionHandler(WechatAuthFailedException.class)
+    public ResponseEntity<ErrorResponse> handleWechatAuthFailed(WechatAuthFailedException ex) {
+        return ResponseEntity.status(401)
+                .body(new ErrorResponse("WECHAT_AUTH_FAILED", ex.getMessage(), generateRequestId()));
+    }
+
+    /**
      * 处理访问拒绝异常（角色不足），返回 403。
      */
     @ExceptionHandler(AccessDeniedException.class)

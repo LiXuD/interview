@@ -1,0 +1,10 @@
+.kpi-row { display: flex; justify-content: space-around; text-align: center; }
+.kpi-item { flex: 1; }
+.kpi-value { font-size: 44rpx; font-weight: 700; color: #1a1a2e; }
+.kpi-label { font-size: 24rpx; color: #999; margin-top: 8rpx; }
+.trend-row { display: flex; align-items: center; padding: 12rpx 0; border-bottom: 1rpx solid #f0f0f0; }
+.trend-row:last-child { border-bottom: none; }
+.trend-date { width: 160rpx; font-size: 24rpx; color: #666; }
+.trend-bar { flex: 1; height: 12rpx; background-color: #e0e0e0; border-radius: 6rpx; margin: 0 16rpx; overflow: hidden; }
+.trend-fill { height: 100%; background-color: #27ae60; border-radius: 6rpx; }
+.trend-score { width: 60rpx; text-align: right; font-size: 26rpx; font-weight: 600; color: #1a1a2e; }

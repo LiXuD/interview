@@ -1,0 +1,13 @@
+.memory-card { padding: 24rpx 32rpx; }
+.memory-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12rpx; }
+.memory-source { font-size: 22rpx; padding: 4rpx 16rpx; border-radius: 12rpx; }
+.source-confirmed { background-color: #e8f5e9; color: #2e7d32; }
+.source-observed { background-color: #e3f2fd; color: #1565c0; }
+.source-corrected { background-color: #fff3e0; color: #ef6c00; }
+.source-inferred { background-color: #f3e5f5; color: #7b1fa2; }
+.source-rejected { background-color: #fce4ec; color: #c62828; }
+.memory-confidence { font-size: 22rpx; }
+.memory-content { font-size: 28rpx; color: #333; line-height: 1.6; margin-bottom: 16rpx; }
+.memory-actions { display: flex; gap: 16rpx; }
+.btn-sm { font-size: 24rpx; padding: 8rpx 24rpx; border-radius: 8rpx; background-color: #f0f0f0; color: #333; border: none; min-height: auto; line-height: 1.5; }
+.btn-danger { background-color: #fff3f3; color: #e74c3c; }

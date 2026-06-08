@@ -1,0 +1,53 @@
+.privacy-notice {
+  background-color: #fff8e1;
+  color: #f57f17;
+  padding: 20rpx;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  margin-bottom: 24rpx;
+}
+
+.form-group {
+  margin-bottom: 24rpx;
+}
+
+.form-label {
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 12rpx;
+}
+
+.form-textarea {
+  border: 1rpx solid #ddd;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  font-size: 28rpx;
+  min-height: 300rpx;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.tag {
+  background-color: #e8eaf6;
+  color: #3949ab;
+  padding: 8rpx 20rpx;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+}
+
+.list-item {
+  padding: 12rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+  font-size: 28rpx;
+  color: #333;
+}
+
+.list-item:last-child {
+  border-bottom: none;
+}

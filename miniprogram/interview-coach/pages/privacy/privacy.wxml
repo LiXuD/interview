@@ -1,0 +1,35 @@
+<view class="container">
+  <view class="card">
+    <view class="section-title">数据收集</view>
+    <view class="content-text">本小程序收集以下数据以提供 AI 面试教练服务：</view>
+    <view class="list-item">- 用户名和认证标识（微信 openId）</view>
+    <view class="list-item">- 目标岗位和职位描述（JD）</view>
+    <view class="list-item">- 简历/项目经历摘要（确认后的结构化摘要，非原文）</view>
+    <view class="list-item">- 测评答案、训练回答和模拟面试对话</view>
+  </view>
+
+  <view class="card">
+    <view class="section-title">简历隐私</view>
+    <view class="content-text">您的简历原文仅在生成摘要时临时发送到后端 AI 处理，不会落库存储。后端只保存您确认后的结构化摘要。</view>
+  </view>
+
+  <view class="card">
+    <view class="section-title">AI Provider</view>
+    <view class="content-text">如您配置自定义 AI Provider，API Key 将加密存储在后端，不会返回小程序或写入日志。</view>
+  </view>
+
+  <view class="card">
+    <view class="section-title">本地存储</view>
+    <view class="content-text">小程序本地仅存储：登录 Token、用户基础信息、页面草稿。不存储 API Key、AI 原始输出或简历原文副本。</view>
+  </view>
+
+  <view class="card">
+    <view class="section-title">教练记忆</view>
+    <view class="content-text">教练记忆基于您的测评、训练和模拟面试表现自动生成，用于提供个性化教练建议。您可随时纠错或标记无效。</view>
+  </view>
+
+  <view class="card">
+    <view class="section-title">删除账号</view>
+    <view class="content-text">您可随时在设置中删除账号。删除后，远端所有业务数据将被清除，本地 Token 和缓存将被清空。</view>
+  </view>
+</view>

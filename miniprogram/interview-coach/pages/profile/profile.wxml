@@ -1,0 +1,48 @@
+<view class="container">
+  <view wx:if="{{error}}" class="error-banner">{{error}}</view>
+
+  <!-- 第一步：粘贴简历 -->
+  <view wx:if="{{step === 'input'}}">
+    <view class="section-title">简历 / 项目经历</view>
+    <view class="card">
+      <view class="privacy-notice">
+        点击"生成摘要"后，内容将临时发送到后端 AI 生成结构化摘要，不会落库保存。
+      </view>
+      <view class="form-group">
+        <view class="form-label">简历或项目经历</view>
+        <textarea class="form-textarea" placeholder="粘贴你的简历或项目经历" value="{{resumeText}}" bindinput="onResumeInput" auto-height maxlength="20000" />
+      </view>
+    </view>
+    <button class="btn-primary" bindtap="onGenerate" loading="{{loading}}" disabled="{{!resumeText}}">
+      生成摘要
+    </button>
+  </view>
+
+  <!-- 第二步：确认摘要 -->
+  <view wx:if="{{step === 'confirm'}}">
+    <view class="section-title">确认摘要</view>
+    <view class="card">
+      <view class="form-group">
+        <view class="form-label">摘要</view>
+        <textarea class="form-textarea" value="{{draft.summary}}" bindinput="onSummaryInput" auto-height />
+      </view>
+      <view class="form-group">
+        <view class="form-label">技能</view>
+        <view class="tag-list">
+          <view wx:for="{{draft.skills}}" wx:key="*this" class="tag">{{item}}</view>
+        </view>
+      </view>
+      <view class="form-group">
+        <view class="form-label">项目</view>
+        <view wx:for="{{draft.projects}}" wx:key="*this" class="list-item">{{item}}</view>
+      </view>
+      <view class="form-group">
+        <view class="form-label">经历</view>
+        <view wx:for="{{draft.experience}}" wx:key="*this" class="list-item">{{item}}</view>
+      </view>
+    </view>
+    <button class="btn-primary" bindtap="onConfirm" loading="{{loading}}">
+      确认并继续
+    </button>
+  </view>
+</view>

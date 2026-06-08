@@ -4,6 +4,7 @@ import com.interviewcoach.auth.service.AuthService;
 import com.interviewcoach.common.api.AppleLoginRequest;
 import com.interviewcoach.common.api.LoginRequest;
 import com.interviewcoach.common.api.LoginResponse;
+import com.interviewcoach.common.api.WechatLoginRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -50,5 +51,16 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout() {
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * 微信小程序登录，用 wx.login() 获取的 code 换取 JWT。
+     *
+     * @param request 微信登录请求，包含 code
+     * @return 登录响应，包含 token、userId、username
+     */
+    @PostMapping("/wechat")
+    public LoginResponse wechatLogin(@RequestBody WechatLoginRequest request) {
+        return authService.wechatLogin(request);
     }
 }

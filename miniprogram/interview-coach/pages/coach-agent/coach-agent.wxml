@@ -1,0 +1,39 @@
+<view class="container">
+  <view wx:if="{{error}}" class="error-banner">{{error}}</view>
+  <view wx:if="{{loading}}" class="loading-mask"><view>加载中...</view></view>
+
+  <view wx:elif="{{agent}}">
+    <view class="card">
+      <view class="section-title">教练状态</view>
+      <view class="status-row">
+        <view class="status-label">当前阶段</view>
+        <view class="status-value">{{agent.currentStage || '-'}}</view>
+      </view>
+      <view class="status-row">
+        <view class="status-label">当前目标</view>
+        <view class="status-value">{{agent.currentGoal || '-'}}</view>
+      </view>
+      <view class="status-row">
+        <view class="status-label">状态</view>
+        <view class="status-value status-{{agent.status}}">{{agent.status}}</view>
+      </view>
+    </view>
+
+    <view class="card" wx:if="{{agent.activeFocusDimensions.length > 0}}">
+      <view class="section-title">重点维度</view>
+      <view class="tag-list">
+        <view wx:for="{{agent.activeFocusDimensions}}" wx:key="*this" class="tag">{{item}}</view>
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="section-title">推荐行动</view>
+      <view class="action-text">{{agent.nextRecommendedAction || '暂无推荐'}}</view>
+    </view>
+
+    <view class="card" wx:if="{{agent.lastDecisionSummary}}">
+      <view class="section-title">最近判断</view>
+      <view class="content-text">{{agent.lastDecisionSummary}}</view>
+    </view>
+  </view>
+</view>

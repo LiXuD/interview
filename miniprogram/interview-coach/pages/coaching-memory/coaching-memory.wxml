@@ -1,0 +1,23 @@
+<view class="container">
+  <view wx:if="{{error}}" class="error-banner">{{error}}</view>
+  <view wx:if="{{loading}}" class="loading-mask"><view>加载中...</view></view>
+
+  <view wx:elif="{{memories.length === 0}}" class="empty-state">
+    <view class="empty-text">暂无教练记忆</view>
+    <view class="empty-text text-muted">完成测评、训练或模拟面试后自动生成</view>
+  </view>
+
+  <view wx:else>
+    <view wx:for="{{memories}}" wx:key="id" class="card memory-card">
+      <view class="memory-header">
+        <view class="memory-source source-{{item.source}}">{{item.source}}</view>
+        <view class="memory-confidence text-muted">{{item.confidence}}</view>
+      </view>
+      <view class="memory-content">{{item.content}}</view>
+      <view wx:if="{{item.source !== 'corrected' && item.source !== 'rejected'}}" class="memory-actions">
+        <button class="btn-sm" bindtap="onCorrect" data-id="{{item.id}}" data-source="corrected">纠错</button>
+        <button class="btn-sm btn-danger" bindtap="onCorrect" data-id="{{item.id}}" data-source="rejected">标记无效</button>
+      </view>
+    </view>
+  </view>
+</view>

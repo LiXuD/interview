@@ -1,0 +1,53 @@
+<view class="container">
+  <view wx:if="{{error}}" class="error-banner">{{error}}</view>
+
+  <view wx:if="{{loading}}" class="loading-mask">
+    <view>{{loadingText}}</view>
+  </view>
+
+  <view wx:elif="{{brief}}">
+    <view class="card">
+      <view class="section-title">角色概述</view>
+      <view class="content-text">{{brief.roleSummary}}</view>
+    </view>
+
+    <view class="card">
+      <view class="section-title">必备技能</view>
+      <view wx:for="{{brief.mustHaveSkills}}" wx:key="*this" class="list-item">{{item}}</view>
+    </view>
+
+    <view class="card" wx:if="{{brief.niceToHaveSkills.length > 0}}">
+      <view class="section-title">加分技能</view>
+      <view wx:for="{{brief.niceToHaveSkills}}" wx:key="*this" class="list-item">{{item}}</view>
+    </view>
+
+    <view class="card">
+      <view class="section-title">业务背景</view>
+      <view class="content-text">{{brief.businessContext}}</view>
+    </view>
+
+    <view class="card">
+      <view class="section-title">面试重点</view>
+      <view wx:for="{{brief.interviewTopics}}" wx:key="*this" class="list-item">{{item}}</view>
+    </view>
+
+    <view class="card">
+      <view class="section-title">匹配度</view>
+      <view class="content-text">{{brief.candidateMatch}}</view>
+    </view>
+
+    <view class="card" wx:if="{{brief.riskAreas.length > 0}}">
+      <view class="section-title">风险领域</view>
+      <view wx:for="{{brief.riskAreas}}" wx:key="*this" class="list-item risk">{{item}}</view>
+    </view>
+
+    <button class="btn-primary" bindtap="goAssessment">开始测评</button>
+  </view>
+
+  <view wx:else class="empty-state">
+    <view class="empty-text">尚未生成岗位画像</view>
+    <button class="btn-primary" style="margin-top: 40rpx;" bindtap="onGenerate" loading="{{generating}}">
+      生成岗位画像
+    </button>
+  </view>
+</view>

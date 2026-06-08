@@ -56,6 +56,11 @@ app:
       mode: ${IC_PLATFORM_AI_MODE:chatCompletions}
   apple:
     services-id: com.interviewcoach.app
+  wechat:
+    login-enabled: ${IC_WECHAT_LOGIN_ENABLED:false}
+    mini-program:
+      app-id: ${IC_WECHAT_MINI_PROGRAM_APP_ID:}
+      app-secret: ${IC_WECHAT_MINI_PROGRAM_APP_SECRET:}
 
 management:
   endpoints:

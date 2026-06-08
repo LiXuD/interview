@@ -1,0 +1,2 @@
+.content-text { font-size: 28rpx; color: #333; line-height: 1.6; margin-bottom: 12rpx; }
+.list-item { font-size: 26rpx; color: #666; padding: 8rpx 0; line-height: 1.5; }

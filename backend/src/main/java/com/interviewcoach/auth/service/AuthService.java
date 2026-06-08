@@ -10,10 +10,12 @@ import com.interviewcoach.common.api.AppleLoginRequest;
 import com.interviewcoach.common.api.LoginRequest;
 import com.interviewcoach.common.api.LoginResponse;
 import com.interviewcoach.common.api.UserDto;
+import com.interviewcoach.common.api.WechatLoginRequest;
 import com.interviewcoach.common.error.AppleAuthFailedException;
 import com.interviewcoach.common.error.UserNotFoundException;
 import com.interviewcoach.common.security.AppleTokenVerifier;
 import com.interviewcoach.common.security.JwtTokenProvider;
+import com.interviewcoach.common.security.WechatTokenVerifier;
 import com.interviewcoach.jobbrief.repository.JobBriefRepository;
 import com.interviewcoach.mockinterview.repository.MockInterviewRepository;
 import com.interviewcoach.profile.repository.CandidateProfileRepository;
@@ -41,6 +43,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final AppleTokenVerifier appleTokenVerifier;
+    private final WechatTokenVerifier wechatTokenVerifier;
     private final CandidateProfileRepository profileRepository;
     private final InterviewTargetRepository targetRepository;
     private final JobBriefRepository jobBriefRepository;
@@ -56,7 +59,7 @@ public class AuthService {
     private final Set<String> adminUsernames;
 
     public AuthService(UserRepository userRepository, JwtTokenProvider jwtTokenProvider,
-                       AppleTokenVerifier appleTokenVerifier,
+                       AppleTokenVerifier appleTokenVerifier, WechatTokenVerifier wechatTokenVerifier,
                        CandidateProfileRepository profileRepository,
                        InterviewTargetRepository targetRepository,
                        JobBriefRepository jobBriefRepository,
@@ -73,6 +76,7 @@ public class AuthService {
         this.userRepository = userRepository;
         this.jwtTokenProvider = jwtTokenProvider;
         this.appleTokenVerifier = appleTokenVerifier;
+        this.wechatTokenVerifier = wechatTokenVerifier;
         this.profileRepository = profileRepository;
         this.targetRepository = targetRepository;
         this.jobBriefRepository = jobBriefRepository;
@@ -149,6 +153,47 @@ public class AuthService {
                         return userRepository.save(newUser);
                     } catch (DataIntegrityViolationException e) {
                         return userRepository.findByAppleUserId(appleUserId).orElseThrow();
+                    }
+                });
+        promoteAdmin(user);
+        String token = jwtTokenProvider.generateToken(user.getId());
+        return new LoginResponse(token, user.getId().toString(), user.getUsername());
+    }
+
+    /**
+     * 微信小程序登录：用 code 换取 openId，查找或创建用户并签发 JWT。
+     *
+     * @param request 微信登录请求，含 wx.login() 获取的 code
+     * @return 登录响应
+     */
+    @Transactional
+    public LoginResponse wechatLogin(WechatLoginRequest request) {
+        if (request.code() == null || request.code().isBlank()) {
+            throw new com.interviewcoach.common.error.WechatAuthFailedException("code is required");
+        }
+        String openId = wechatTokenVerifier.codeToOpenId(request.code());
+        return findOrCreateWechatUser(openId);
+    }
+
+    /**
+     * 根据微信 openId 查找或创建用户，签发 JWT Token。
+     * 已有用户直接签发；新用户以 wechat_ 前缀用户名创建，用户名冲突时兜底查询。
+     *
+     * @param openId 微信小程序 openId
+     * @return 登录响应，包含 token、userId、username
+     */
+    @Transactional
+    LoginResponse findOrCreateWechatUser(String openId) {
+        User user = userRepository.findByWechatOpenId(openId)
+                .orElseGet(() -> {
+                    User newUser = new User();
+                    String username = "wechat_" + openId;
+                    try {
+                        newUser.setUsername(username);
+                        newUser.setWechatOpenId(openId);
+                        return userRepository.save(newUser);
+                    } catch (DataIntegrityViolationException e) {
+                        return userRepository.findByWechatOpenId(openId).orElseThrow();
                     }
                 });
         promoteAdmin(user);

@@ -1,0 +1,46 @@
+<view class="container">
+  <view wx:if="{{error}}" class="error-banner">{{error}}</view>
+
+  <view wx:if="{{loading}}" class="loading-mask">
+    <view>加载训练计划...</view>
+  </view>
+
+  <view wx:elif="{{plan}}">
+    <view wx:for="{{dayGroups}}" wx:key="dayIndex" class="day-group">
+      <view class="day-title">第 {{item.dayIndex + 1}} 天</view>
+      <view wx:for="{{item.tasks}}" wx:for-item="task" wx:key="id" class="card task-card" bindtap="onTaskTap" data-task="{{task}}">
+        <view class="task-header">
+          <view class="task-title">{{task.title}}</view>
+          <view class="task-status status-{{task.status}}">{{task.status === 'completed' ? '已完成' : task.status === 'in_progress' ? '进行中' : '待完成'}}</view>
+        </view>
+        <view class="task-desc">{{task.description}}</view>
+      </view>
+    </view>
+
+    <button class="btn-go-mock" bindtap="goMockInterview">开始模拟面试</button>
+  </view>
+
+  <!-- 答题弹出层 -->
+  <view wx:if="{{showAnswer}}" class="modal-mask" bindtap="closeAnswer">
+    <view class="modal-body" catchtap>
+      <view class="modal-title">{{activeTask.title}}</view>
+      <view class="modal-desc">{{activeTask.description}}</view>
+      <textarea class="answer-input" placeholder="输入你的回答..." value="{{taskAnswer}}" bindinput="onTaskAnswerInput" auto-height maxlength="5000" />
+      <view wx:if="{{feedback}}" class="feedback-card">
+        <view class="feedback-score">得分：{{feedback.score}}</view>
+        <view class="feedback-text">{{feedback.feedback}}</view>
+        <view wx:if="{{feedback.problems.length > 0}}" class="feedback-section">
+          <view class="feedback-label">问题</view>
+          <view wx:for="{{feedback.problems}}" wx:key="*this" class="feedback-item">{{item}}</view>
+        </view>
+        <view wx:if="{{feedback.rewrittenAnswer}}" class="feedback-section">
+          <view class="feedback-label">改进示范</view>
+          <view class="feedback-item">{{feedback.rewrittenAnswer}}</view>
+        </view>
+      </view>
+      <button class="btn-primary" bindtap="onSubmitTaskAnswer" loading="{{submitting}}" disabled="{{!taskAnswer.trim()}}">
+        提交
+      </button>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,70 @@
+<view class="page">
+  <view wx:if="{{error}}" class="error-banner container">{{error}}</view>
+
+  <!-- 面试中 -->
+  <view wx:if="{{status === 'in_progress'}}">
+    <scroll-view class="chat-area" scroll-y scroll-into-view="{{scrollToId}}">
+      <view wx:for="{{messages}}" wx:key="id" class="chat-message {{item.role}}">
+        <view class="msg-bubble">{{item.content}}</view>
+      </view>
+      <view id="chat-bottom"></view>
+    </scroll-view>
+
+    <view class="input-area">
+      <view class="turns-info">第 {{conversationTurns}} 轮</view>
+      <view class="input-row">
+        <textarea class="chat-input" placeholder="输入你的回答..." value="{{answer}}" bindinput="onAnswerInput" auto-height maxlength="3000" bindconfirm="onSend" />
+        <button class="send-btn" bindtap="onSend" loading="{{sending}}" disabled="{{!answer.trim()}}">发送</button>
+      </view>
+      <button class="btn-finish" bindtap="onFinish">结束面试</button>
+    </view>
+  </view>
+
+  <!-- 面试报告 -->
+  <view wx:if="{{status === 'completed'}}">
+    <view class="container">
+      <view class="card result-header">
+        <view class="score-circle">{{report.overallScore}}</view>
+        <view class="score-label">总分</view>
+      </view>
+
+      <view class="card">
+        <view class="section-title">总结</view>
+        <view class="content-text">{{report.summary}}</view>
+      </view>
+
+      <view class="card">
+        <view class="section-title">优势</view>
+        <view wx:for="{{report.strengths}}" wx:key="*this" class="list-item strength">{{item}}</view>
+      </view>
+
+      <view class="card">
+        <view class="section-title">待提升</view>
+        <view wx:for="{{report.weaknesses}}" wx:key="*this" class="list-item weakness">{{item}}</view>
+      </view>
+
+      <view class="card">
+        <view class="section-title">维度评分</view>
+        <view wx:for="{{report.dimensionScores}}" wx:key="name" class="dimension-row">
+          <view class="dim-name">{{item.name}}</view>
+          <view class="dim-bar">
+            <view class="dim-fill" style="width: {{item.score}}%"></view>
+          </view>
+          <view class="dim-score">{{item.score}}</view>
+        </view>
+      </view>
+
+      <view class="card" wx:if="{{report.nextTrainingTasks.length > 0}}">
+        <view class="section-title">下一步训练</view>
+        <view wx:for="{{report.nextTrainingTasks}}" wx:key="*this" class="list-item">{{item}}</view>
+      </view>
+
+      <button class="btn-primary" bindtap="goReport">查看完整报告</button>
+    </view>
+  </view>
+
+  <!-- 初始加载 -->
+  <view wx:if="{{status === 'loading'}}" class="loading-mask">
+    <view>正在准备面试...</view>
+  </view>
+</view>

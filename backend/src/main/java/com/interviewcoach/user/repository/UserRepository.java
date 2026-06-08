@@ -28,6 +28,14 @@ public interface UserRepository extends JpaRepository<User, UUID> {
      */
     Optional<User> findByAppleUserId(String appleUserId);
 
+    /**
+     * 根据微信 openId 查找用户。
+     *
+     * @param wechatOpenId 微信小程序 openId
+     * @return 用户实体，不存在时为空
+     */
+    Optional<User> findByWechatOpenId(String wechatOpenId);
+
     /** 统计设置了月度配额的用户数 */
     long countByMonthlyTokenQuotaIsNotNull();
 

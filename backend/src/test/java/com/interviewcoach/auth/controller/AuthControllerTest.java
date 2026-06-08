@@ -3,6 +3,7 @@ package com.interviewcoach.auth.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewcoach.common.api.AppleLoginRequest;
 import com.interviewcoach.common.api.LoginRequest;
+import com.interviewcoach.common.api.WechatLoginRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -121,5 +122,27 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("APPLE_AUTH_FAILED"));
+    }
+
+    @Test
+    void wechatLoginEndpointIsAccessibleWithoutAuth() throws Exception {
+        WechatLoginRequest request = new WechatLoginRequest("test-code");
+
+        mockMvc.perform(post("/api/auth/wechat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("WECHAT_AUTH_FAILED"));
+    }
+
+    @Test
+    void wechatLoginWithEmptyCodeReturns401() throws Exception {
+        WechatLoginRequest request = new WechatLoginRequest("");
+
+        mockMvc.perform(post("/api/auth/wechat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("WECHAT_AUTH_FAILED"));
     }
 }

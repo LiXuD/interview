@@ -1,0 +1,37 @@
+<view class="container">
+  <view wx:if="{{error}}" class="error-banner">{{error}}</view>
+  <view wx:if="{{loading}}" class="loading-mask"><view>加载中...</view></view>
+
+  <view wx:elif="{{summary}}">
+    <view class="card kpi-row">
+      <view class="kpi-item">
+        <view class="kpi-value">{{summary.totalTokens || 0}}</view>
+        <view class="kpi-label">总 Token</view>
+      </view>
+      <view class="kpi-item">
+        <view class="kpi-value">{{summary.totalCalls || 0}}</view>
+        <view class="kpi-label">总调用</view>
+      </view>
+      <view class="kpi-item">
+        <view class="kpi-value">{{summary.monthTokens || 0}}</view>
+        <view class="kpi-label">本月 Token</view>
+      </view>
+    </view>
+
+    <view class="card" wx:if="{{byTask.length > 0}}">
+      <view class="section-title">按任务</view>
+      <view wx:for="{{byTask}}" wx:key="task" class="usage-row">
+        <view class="usage-name">{{item.task}}</view>
+        <view class="usage-value">{{item.tokens}} tokens / {{item.calls}} 次</view>
+      </view>
+    </view>
+
+    <view class="card" wx:if="{{byModel.length > 0}}">
+      <view class="section-title">按模型</view>
+      <view wx:for="{{byModel}}" wx:key="model" class="usage-row">
+        <view class="usage-name">{{item.model}}</view>
+        <view class="usage-value">{{item.tokens}} tokens</view>
+      </view>
+    </view>
+  </view>
+</view>

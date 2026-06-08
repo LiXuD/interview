@@ -1,0 +1,19 @@
+<view class="container">
+  <view wx:if="{{error}}" class="error-banner">{{error}}</view>
+
+  <view class="section-title">目标岗位</view>
+  <view class="card">
+    <view class="form-group">
+      <view class="form-label">岗位名称 *</view>
+      <input class="form-input" placeholder="如：高级 Java 后端工程师" value="{{title}}" bindinput="onTitleInput" />
+    </view>
+    <view class="form-group">
+      <view class="form-label">职位描述 (JD) *</view>
+      <textarea class="form-textarea" placeholder="粘贴完整的职位描述" value="{{jd}}" bindinput="onJdInput" auto-height maxlength="10000" />
+    </view>
+  </view>
+
+  <button class="btn-primary" bindtap="onSubmit" loading="{{submitting}}" disabled="{{!title || !jd}}">
+    创建
+  </button>
+</view>

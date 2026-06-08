@@ -1,0 +1,26 @@
+<view class="container">
+  <view wx:if="{{error}}" class="error-banner">{{error}}</view>
+  <view wx:if="{{loading}}" class="loading-mask"><view>加载中...</view></view>
+
+  <view wx:elif="{{providers.length === 0}}" class="empty-state">
+    <view class="empty-text">尚未配置 AI Provider</view>
+    <view class="empty-text text-muted">使用平台默认 AI，或添加自定义 OpenAI-compatible Provider</view>
+  </view>
+
+  <view wx:else>
+    <view class="section-title">Provider 列表</view>
+    <view wx:for="{{providers}}" wx:key="id" class="card provider-card">
+      <view class="provider-header">
+        <view class="provider-name">{{item.name}}</view>
+        <view wx:if="{{item.isDefault}}" class="default-tag">默认</view>
+      </view>
+      <view class="provider-meta text-muted">{{item.model}} · {{item.openaiApiMode}}</view>
+      <view class="provider-actions">
+        <button class="btn-sm" bindtap="onSetDefault" data-id="{{item.id}}" wx:if="{{!item.isDefault}}">设为默认</button>
+        <button class="btn-sm btn-danger" bindtap="onDelete" data-id="{{item.id}}">删除</button>
+      </view>
+    </view>
+  </view>
+
+  <button class="btn-primary" bindtap="onCreate">添加 Provider</button>
+</view>

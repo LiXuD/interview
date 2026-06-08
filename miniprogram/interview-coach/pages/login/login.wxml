@@ -1,0 +1,31 @@
+<view class="login-page">
+  <view class="login-header">
+    <view class="app-title">Interview Coach</view>
+    <view class="app-subtitle">AI 面试教练</view>
+  </view>
+
+  <view class="login-body">
+    <view wx:if="{{error}}" class="error-banner">{{error}}</view>
+
+    <!-- 微信登录（生产） -->
+    <button class="btn-primary" bindtap="onWechatLogin" loading="{{loading}}">
+      微信登录
+    </button>
+
+    <!-- Dev Login（仅开发环境） -->
+    <view class="dev-login-section">
+      <view class="dev-divider">开发环境</view>
+      <input
+        class="dev-input"
+        placeholder="输入用户名"
+        value="{{username}}"
+        bindinput="onUsernameInput"
+        confirm-type="done"
+        bindconfirm="onDevLogin"
+      />
+      <button class="btn-dev" bindtap="onDevLogin" loading="{{loading}}" disabled="{{!username}}">
+        Dev Login
+      </button>
+    </view>
+  </view>
+</view>

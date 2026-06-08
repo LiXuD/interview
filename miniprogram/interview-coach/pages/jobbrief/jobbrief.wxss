@@ -1,0 +1,20 @@
+.content-text {
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.6;
+}
+
+.list-item {
+  padding: 12rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+  font-size: 28rpx;
+  color: #333;
+}
+
+.list-item:last-child {
+  border-bottom: none;
+}
+
+.list-item.risk {
+  color: #e74c3c;
+}

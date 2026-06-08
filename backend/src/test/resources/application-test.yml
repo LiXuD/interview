@@ -50,3 +50,8 @@ app:
       enabled: false
   apple:
     services-id: com.interviewcoach.app
+  wechat:
+    login-enabled: false
+    mini-program:
+      app-id: test-app-id
+      app-secret: test-app-secret

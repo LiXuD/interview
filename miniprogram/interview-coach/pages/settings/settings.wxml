@@ -1,0 +1,41 @@
+<view class="container">
+  <view wx:if="{{error}}" class="error-banner">{{error}}</view>
+
+  <view class="section-title">账号</view>
+  <view class="card">
+    <view class="setting-row">
+      <view class="setting-label">用户名</view>
+      <view class="setting-value">{{username}}</view>
+    </view>
+    <view class="setting-row">
+      <view class="setting-label">用户 ID</view>
+      <view class="setting-value text-muted" style="font-size: 22rpx;">{{userId}}</view>
+    </view>
+  </view>
+
+  <view class="section-title">健康检查</view>
+  <view class="card">
+    <view class="setting-row" bindtap="checkHealth">
+      <view class="setting-label">后端连接状态</view>
+      <view class="setting-value" style="color: {{healthOk ? '#27ae60' : '#e74c3c'}};">
+        {{healthStatus}}
+      </view>
+    </view>
+  </view>
+
+  <view class="section-title">关于</view>
+  <view class="card">
+    <view class="setting-row">
+      <view class="setting-label">版本</view>
+      <view class="setting-value text-muted">0.1.0 (MVP)</view>
+    </view>
+    <view class="setting-row" bindtap="goPrivacy">
+      <view class="setting-label">隐私政策</view>
+      <view class="setting-value">></view>
+    </view>
+  </view>
+
+  <button class="btn-logout" bindtap="onLogout">退出登录</button>
+
+  <button class="btn-delete" bindtap="onDeleteAccount">删除账号</button>
+</view>

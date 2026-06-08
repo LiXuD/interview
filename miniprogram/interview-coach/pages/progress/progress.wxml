@@ -1,0 +1,43 @@
+<view class="container">
+  <view wx:if="{{error}}" class="error-banner">{{error}}</view>
+  <view wx:if="{{loading}}" class="loading-mask"><view>加载中...</view></view>
+
+  <view wx:elif="{{data}}">
+    <view class="card kpi-row">
+      <view class="kpi-item">
+        <view class="kpi-value">{{data.totalAssessments || 0}}</view>
+        <view class="kpi-label">测评次数</view>
+      </view>
+      <view class="kpi-item">
+        <view class="kpi-value">{{data.totalMockInterviews || 0}}</view>
+        <view class="kpi-label">模拟面试</view>
+      </view>
+      <view class="kpi-item">
+        <view class="kpi-value">{{data.trainingCompletionRate || 0}}%</view>
+        <view class="kpi-label">训练完成率</view>
+      </view>
+    </view>
+
+    <view class="card" wx:if="{{data.scoreTrend.length > 0}}">
+      <view class="section-title">分数趋势</view>
+      <view wx:for="{{data.scoreTrend}}" wx:key="date" class="trend-row">
+        <view class="trend-date">{{item.date}}</view>
+        <view class="trend-bar">
+          <view class="trend-fill" style="width: {{item.score}}%"></view>
+        </view>
+        <view class="trend-score">{{item.score}}</view>
+      </view>
+    </view>
+
+    <view class="card" wx:if="{{data.dimensionSummary.length > 0}}">
+      <view class="section-title">维度摘要</view>
+      <view wx:for="{{data.dimensionSummary}}" wx:key="name" class="dimension-row">
+        <view class="dim-name">{{item.name}}</view>
+        <view class="dim-bar">
+          <view class="dim-fill" style="width: {{item.score}}%"></view>
+        </view>
+        <view class="dim-score">{{item.score}}</view>
+      </view>
+    </view>
+  </view>
+</view>
