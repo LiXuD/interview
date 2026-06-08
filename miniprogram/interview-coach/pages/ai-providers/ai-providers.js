@@ -24,7 +24,7 @@ Page({
 
   onSetDefault(e) {
     const id = e.currentTarget.dataset.id;
-    request.post(API.AI_PROVIDER_SET_DEFAULT(id))
+    request.patch(API.AI_PROVIDER_SET_DEFAULT(id))
       .then(() => { wx.showToast({ title: '已设置' }); this.loadProviders(); })
       .catch((err) => { this.setData({ error: err.message || '设置失败' }); });
   },

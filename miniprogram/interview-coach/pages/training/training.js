@@ -149,14 +149,19 @@ Page({
     request.post(API.ADAPTIVE_SESSION_ANSWER(this.data.adaptiveSessionId), { answer })
       .then((resp) => {
         if (resp.status === 'completed' || resp.finished) {
-          // 自适应训练完成
-          const finalHistory = [...history, { role: 'assistant', content: '训练完成' }];
+          // 自适应训练完成——从 rounds 汇总分数和问题
+          const rounds = resp.rounds || [];
+          const avgScore = rounds.length > 0
+            ? Math.round(rounds.reduce((s, r) => s + (r.score || 0), 0) / rounds.length)
+            : 0;
+          const allProblems = rounds.flatMap((r) => r.problems || []);
+          const finalHistory = [...history, { role: 'assistant', content: resp.summary || '训练已完成' }];
           this.setData({
             feedback: {
-              score: resp.score || 0,
-              feedback: resp.feedback || '训练已完成',
-              problems: resp.problems || [],
-              rewrittenAnswer: resp.rewrittenAnswer || ''
+              score: avgScore,
+              feedback: resp.summary || '训练已完成',
+              problems: allProblems,
+              rewrittenAnswer: ''
             },
             adaptiveHistory: finalHistory,
             taskAnswer: ''

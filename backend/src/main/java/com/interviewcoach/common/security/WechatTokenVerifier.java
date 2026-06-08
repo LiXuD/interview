@@ -3,6 +3,8 @@ package com.interviewcoach.common.security;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interviewcoach.common.error.WechatAuthFailedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +24,7 @@ import java.time.Duration;
 @Component
 public class WechatTokenVerifier {
 
+    private static final Logger log = LoggerFactory.getLogger(WechatTokenVerifier.class);
     private static final String DEFAULT_CODE2SESSION_URL = "https://api.weixin.qq.com/sns/jscode2session";
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
 
@@ -93,7 +96,8 @@ public class WechatTokenVerifier {
         } catch (WechatAuthFailedException e) {
             throw e;
         } catch (Exception e) {
-            throw new WechatAuthFailedException("Failed to call WeChat code2session: " + e.getMessage(), e);
+            log.error("WeChat code2session call failed", e);
+            throw new WechatAuthFailedException("WeChat login failed, please try again later", e);
         }
     }
 }
