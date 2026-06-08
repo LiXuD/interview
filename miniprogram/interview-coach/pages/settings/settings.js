@@ -12,7 +12,9 @@ Page({
     userId: '',
     healthStatus: '未检查',
     healthOk: false,
-    error: ''
+    error: '',
+    showDeleteConfirm: false,
+    deleteLocalMemory: false
   },
 
   onLoad() {
@@ -62,20 +64,25 @@ Page({
       confirmColor: '#e74c3c'
     }).then((res) => {
       if (!res.confirm) return;
-      return wx.showModal({
-        title: '最终确认',
-        content: '确定要删除账号吗？',
-        confirmColor: '#e74c3c'
-      });
-    }).then((res2) => {
-      if (res2 && res2.confirm) this.doDeleteAccount();
+      this.setData({ showDeleteConfirm: true, deleteLocalMemory: false });
     });
   },
 
-  doDeleteAccount() {
-    this.setData({ error: '' });
+  onDeleteMemoryChange(e) {
+    this.setData({ deleteLocalMemory: e.detail.value.length > 0 });
+  },
+
+  onCancelDelete() {
+    this.setData({ showDeleteConfirm: false });
+  },
+
+  onConfirmDelete() {
+    this.setData({ showDeleteConfirm: false, error: '' });
     request.del(API.ME)
       .then(() => {
+        if (this.data.deleteLocalMemory) {
+          try { wx.removeStorageSync('ic_coaching_memory'); } catch (e) { /* ignore */ }
+        }
         storage.clearAuth();
         wx.showToast({ title: '账号已删除', icon: 'success' });
         this._navTimer = setTimeout(() => {

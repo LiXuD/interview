@@ -139,3 +139,14 @@
   padding: 8rpx 0;
   line-height: 1.5;
 }
+
+.task-actions { display: flex; gap: 16rpx; margin-top: 16rpx; }
+.task-actions .btn-sm { flex: 1; text-align: center; font-size: 24rpx; padding: 12rpx 0; border-radius: 8rpx; background-color: #f0f0f0; color: #333; border: none; }
+.btn-adaptive { background-color: #e8eaf6; color: #3949ab; }
+
+.adaptive-history { margin-bottom: 24rpx; }
+.adaptive-msg { padding: 12rpx 16rpx; border-radius: 12rpx; margin-bottom: 12rpx; font-size: 26rpx; line-height: 1.5; }
+.adaptive-msg.user { background-color: #e8eaf6; color: #333; text-align: right; }
+.adaptive-msg.assistant { background-color: #f5f5f5; color: #333; }
+.adaptive-question { background-color: #fff3e0; padding: 16rpx; border-radius: 8rpx; margin-bottom: 24rpx; font-size: 26rpx; color: #ef6c00; }
+.adaptive-question-label { font-weight: 600; }

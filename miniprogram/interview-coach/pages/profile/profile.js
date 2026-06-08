@@ -8,6 +8,7 @@ Page({
     resumeText: '',
     draft: null,
     loading: false,
+    consented: false,
     error: ''
   },
 
@@ -16,6 +17,7 @@ Page({
   },
 
   onResumeInput(e) { this.setData({ resumeText: e.detail.value, error: '' }); },
+  onConsentChange(e) { this.setData({ consented: e.detail.value.length > 0 }); },
   onSummaryInput(e) {
     const draft = { ...this.data.draft, summary: e.detail.value };
     this.setData({ draft, error: '' });
@@ -24,6 +26,21 @@ Page({
   onGenerate() {
     const resumeText = this.data.resumeText.trim();
     if (!resumeText) return;
+    if (!this.data.consented) {
+      this.setData({ error: '请先同意临时上传原文用于 AI 摘要生成' });
+      return;
+    }
+    wx.showModal({
+      title: '确认上传',
+      content: '简历原文将临时发送到后端 AI 生成摘要，不会落库保存。确定继续？',
+      confirmText: '继续'
+    }).then((res) => {
+      if (!res.confirm) return;
+      this.doGenerate(resumeText);
+    });
+  },
+
+  doGenerate(resumeText) {
     this.setData({ loading: true, error: '' });
     request.post(API.PROFILE_DRAFT_SUMMARY, { resumeText })
       .then((draft) => {

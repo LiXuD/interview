@@ -22,5 +22,49 @@
     </view>
   </view>
 
-  <button class="btn-primary" bindtap="onCreate">添加 Provider</button>
+  <button class="btn-primary" bindtap="onCreate" wx:if="{{!showCreate}}">添加 Provider</button>
+
+  <!-- 创建 Provider 表单 -->
+  <view wx:if="{{showCreate}}" class="create-overlay" bindtap="onCloseCreate">
+    <view class="create-sheet" catchtap="">
+      <view class="sheet-header">
+        <text class="sheet-title">添加 Provider</text>
+        <text class="sheet-close" bindtap="onCloseCreate">关闭</text>
+      </view>
+
+      <view class="form-group">
+        <text class="form-label">名称 *</text>
+        <input class="form-input" value="{{form.name}}" placeholder="如 My OpenAI" data-field="name" bindinput="onFormInput" />
+      </view>
+
+      <view class="form-group">
+        <text class="form-label">Base URL *</text>
+        <input class="form-input" value="{{form.baseUrl}}" placeholder="https://api.openai.com/v1" data-field="baseUrl" bindinput="onFormInput" />
+      </view>
+
+      <view class="form-group">
+        <text class="form-label">API Key *</text>
+        <input class="form-input" value="{{form.apiKey}}" placeholder="sk-..." password data-field="apiKey" bindinput="onFormInput" />
+      </view>
+
+      <view class="form-group">
+        <text class="form-label">Model *</text>
+        <input class="form-input" value="{{form.model}}" placeholder="gpt-4o" data-field="model" bindinput="onFormInput" />
+      </view>
+
+      <view class="form-group">
+        <text class="form-label">API 模式</text>
+        <picker range="{{['Chat Completions', 'Responses']}}" bindchange="onModeChange">
+          <view class="form-input picker-value">{{form.openaiApiMode === 'responses' ? 'Responses' : 'Chat Completions'}}</view>
+        </picker>
+      </view>
+
+      <view wx:if="{{testResult}}" class="test-result {{testResult === '连接成功' ? 'test-ok' : 'test-fail'}}">{{testResult}}</view>
+
+      <view class="form-actions">
+        <button class="btn-sm" bindtap="onTestConnection" loading="{{testing}}" disabled="{{testing}}">测试连接</button>
+        <button class="btn-primary" bindtap="onSaveProvider" loading="{{saving}}" disabled="{{saving}}">保存</button>
+      </view>
+    </view>
+  </view>
 </view>

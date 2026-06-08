@@ -43,3 +43,27 @@
   font-size: 26rpx;
   width: 100%;
 }
+
+.modal-mask {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.modal-body {
+  background-color: #fff;
+  border-radius: 24rpx;
+  padding: 48rpx 32rpx;
+  width: 80%;
+}
+.modal-title { font-size: 34rpx; font-weight: 600; color: #1a1a2e; margin-bottom: 16rpx; }
+.modal-desc { font-size: 28rpx; color: #666; margin-bottom: 32rpx; line-height: 1.5; }
+.delete-memory-option { margin-bottom: 32rpx; }
+.consent-label { display: flex; align-items: flex-start; gap: 12rpx; }
+.consent-text { font-size: 26rpx; color: #666; line-height: 1.5; }
+.delete-actions { display: flex; gap: 16rpx; }
+.btn-cancel { flex: 1; background-color: #f0f0f0; color: #333; border: none; border-radius: 12rpx; padding: 20rpx 0; font-size: 28rpx; }
+.btn-confirm-delete { flex: 1; background-color: #e74c3c; color: #fff; border: none; border-radius: 12rpx; padding: 20rpx 0; font-size: 28rpx; }

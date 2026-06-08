@@ -5,15 +5,27 @@
     <view>加载训练计划...</view>
   </view>
 
-  <view wx:elif="{{plan}}">
+  <view wx:elif="{{!plan}}">
+    <view class="empty-state">
+      <view class="empty-text">尚未生成训练计划</view>
+      <view class="empty-text text-muted">基于测评结果生成针对性训练任务</view>
+    </view>
+    <button class="btn-primary" bindtap="onGeneratePlan" loading="{{generating}}" disabled="{{generating}}">生成训练计划</button>
+  </view>
+
+  <view wx:else>
     <view wx:for="{{dayGroups}}" wx:key="dayIndex" class="day-group">
       <view class="day-title">第 {{item.dayIndex + 1}} 天</view>
-      <view wx:for="{{item.tasks}}" wx:for-item="task" wx:key="id" class="card task-card" bindtap="onTaskTap" data-task="{{task}}">
-        <view class="task-header">
+      <view wx:for="{{item.tasks}}" wx:for-item="task" wx:key="id" class="card task-card">
+        <view class="task-header" bindtap="onTaskTap" data-task="{{task}}">
           <view class="task-title">{{task.title}}</view>
           <view class="task-status status-{{task.status}}">{{task.status === 'completed' ? '已完成' : task.status === 'in_progress' ? '进行中' : '待完成'}}</view>
         </view>
-        <view class="task-desc">{{task.description}}</view>
+        <view class="task-desc" bindtap="onTaskTap" data-task="{{task}}">{{task.description}}</view>
+        <view wx:if="{{task.status !== 'completed'}}" class="task-actions">
+          <button class="btn-sm" bindtap="onTaskTap" data-task="{{task}}">普通答题</button>
+          <button class="btn-sm btn-adaptive" bindtap="onStartAdaptive" data-task="{{task}}">自适应训练</button>
+        </view>
       </view>
     </view>
 
@@ -25,7 +37,20 @@
     <view class="modal-body" catchtap>
       <view class="modal-title">{{activeTask.title}}</view>
       <view class="modal-desc">{{activeTask.description}}</view>
-      <textarea class="answer-input" placeholder="输入你的回答..." value="{{taskAnswer}}" bindinput="onTaskAnswerInput" auto-height maxlength="5000" />
+
+      <!-- 自适应模式：显示追问历史 -->
+      <view wx:if="{{adaptiveMode && adaptiveHistory.length > 0}}" class="adaptive-history">
+        <view wx:for="{{adaptiveHistory}}" wx:key="index" class="adaptive-msg {{item.role}}">
+          <text>{{item.content}}</text>
+        </view>
+      </view>
+      <view wx:if="{{adaptiveMode && adaptiveQuestion}}" class="adaptive-question">
+        <text class="adaptive-question-label">当前追问：</text>
+        <text>{{adaptiveQuestion}}</text>
+      </view>
+
+      <textarea class="answer-input" placeholder="{{adaptiveMode ? '回答追问...' : '输入你的回答...'}}" value="{{taskAnswer}}" bindinput="onTaskAnswerInput" auto-height maxlength="5000" />
+
       <view wx:if="{{feedback}}" class="feedback-card">
         <view class="feedback-score">得分：{{feedback.score}}</view>
         <view class="feedback-text">{{feedback.feedback}}</view>
@@ -38,8 +63,9 @@
           <view class="feedback-item">{{feedback.rewrittenAnswer}}</view>
         </view>
       </view>
+
       <button class="btn-primary" bindtap="onSubmitTaskAnswer" loading="{{submitting}}" disabled="{{!taskAnswer.trim()}}">
-        提交
+        {{adaptiveMode ? '回答' : '提交'}}
       </button>
     </view>
   </view>

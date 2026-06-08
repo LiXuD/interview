@@ -38,4 +38,22 @@
   <button class="btn-logout" bindtap="onLogout">退出登录</button>
 
   <button class="btn-delete" bindtap="onDeleteAccount">删除账号</button>
+
+  <!-- 删除确认弹窗 -->
+  <view wx:if="{{showDeleteConfirm}}" class="modal-mask" bindtap="onCancelDelete">
+    <view class="modal-body" catchtap>
+      <view class="modal-title">最终确认</view>
+      <view class="modal-desc">确定要删除账号吗？此操作不可撤销。</view>
+      <checkbox-group bindchange="onDeleteMemoryChange" class="delete-memory-option">
+        <label class="consent-label">
+          <checkbox value="delete" checked="{{deleteLocalMemory}}" color="#e74c3c" />
+          <text class="consent-text">同时删除本机教练记忆归档（默认保留）</text>
+        </label>
+      </checkbox-group>
+      <view class="delete-actions">
+        <button class="btn-cancel" bindtap="onCancelDelete">取消</button>
+        <button class="btn-confirm-delete" bindtap="onConfirmDelete">确认删除</button>
+      </view>
+    </view>
+  </view>
 </view>

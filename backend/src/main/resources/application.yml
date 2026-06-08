@@ -58,6 +58,7 @@ app:
     services-id: com.interviewcoach.app
   wechat:
     login-enabled: ${IC_WECHAT_LOGIN_ENABLED:false}
+    code2session-base-url: ${IC_WECHAT_CODE2SESSION_BASE_URL:}
     mini-program:
       app-id: ${IC_WECHAT_MINI_PROGRAM_APP_ID:}
       app-secret: ${IC_WECHAT_MINI_PROGRAM_APP_SECRET:}

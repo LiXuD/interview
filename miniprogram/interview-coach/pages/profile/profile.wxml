@@ -13,7 +13,13 @@
         <textarea class="form-textarea" placeholder="粘贴你的简历或项目经历" value="{{resumeText}}" bindinput="onResumeInput" auto-height maxlength="20000" />
       </view>
     </view>
-    <button class="btn-primary" bindtap="onGenerate" loading="{{loading}}" disabled="{{!resumeText}}">
+    <checkbox-group bindchange="onConsentChange" class="consent-group">
+      <label class="consent-label">
+        <checkbox value="consented" checked="{{consented}}" color="#1a1a2e" />
+        <text class="consent-text">我同意将简历原文临时发送到后端 AI 生成摘要，不会落库保存</text>
+      </label>
+    </checkbox-group>
+    <button class="btn-primary" bindtap="onGenerate" loading="{{loading}}" disabled="{{!resumeText || !consented}}">
       生成摘要
     </button>
   </view>

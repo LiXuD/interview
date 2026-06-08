@@ -7,9 +7,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 
 /**
  * 微信小程序登录验证器。
@@ -19,8 +22,10 @@ import java.net.http.HttpResponse;
 @Component
 public class WechatTokenVerifier {
 
-    private static final String CODE2SESSION_URL = "https://api.weixin.qq.com/sns/jscode2session";
+    private static final String DEFAULT_CODE2SESSION_URL = "https://api.weixin.qq.com/sns/jscode2session";
+    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
 
+    private final String code2sessionUrl;
     private final String appId;
     private final String appSecret;
     private final boolean enabled;
@@ -28,15 +33,20 @@ public class WechatTokenVerifier {
     private final HttpClient httpClient;
 
     public WechatTokenVerifier(
+            @Value("${app.wechat.code2session-base-url:}") String code2sessionBaseUrl,
             @Value("${app.wechat.mini-program.app-id:}") String appId,
             @Value("${app.wechat.mini-program.app-secret:}") String appSecret,
             @Value("${app.wechat.login-enabled:false}") boolean enabled,
             ObjectMapper objectMapper) {
+        this.code2sessionUrl = (code2sessionBaseUrl != null && !code2sessionBaseUrl.isBlank())
+                ? code2sessionBaseUrl : DEFAULT_CODE2SESSION_URL;
         this.appId = appId;
         this.appSecret = appSecret;
         this.enabled = enabled;
         this.objectMapper = objectMapper;
-        this.httpClient = HttpClient.newHttpClient();
+        this.httpClient = HttpClient.newBuilder()
+                .connectTimeout(REQUEST_TIMEOUT)
+                .build();
     }
 
     /**
@@ -54,10 +64,13 @@ public class WechatTokenVerifier {
             throw new WechatAuthFailedException("code is required");
         }
         try {
-            String url = String.format("%s?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code",
-                    CODE2SESSION_URL, appId, appSecret, code);
+            String query = String.format("appid=%s&secret=%s&js_code=%s&grant_type=authorization_code",
+                    URLEncoder.encode(appId, StandardCharsets.UTF_8),
+                    URLEncoder.encode(appSecret, StandardCharsets.UTF_8),
+                    URLEncoder.encode(code, StandardCharsets.UTF_8));
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
+                    .uri(URI.create(code2sessionUrl + "?" + query))
+                    .timeout(REQUEST_TIMEOUT)
                     .GET()
                     .build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
