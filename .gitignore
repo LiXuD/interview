@@ -186,3 +186,4 @@ artifacts/
 # Generated OpenAPI clients can be regenerated locally unless explicitly tracked later
 generated/
 openapi-generated/
+miniprogram/interview-coach/project.private.config.json
