@@ -1,6 +1,7 @@
 {
   "pages": [
     "pages/login/login",
+    "pages/onboarding/onboarding",
     "pages/targets/targets",
     "pages/target-create/target-create",
     "pages/target-detail/target-detail",

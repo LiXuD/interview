@@ -13,7 +13,8 @@ const KEYS = {
   TOKEN: 'ic_token',
   USER_ID: 'ic_user_id',
   USERNAME: 'ic_username',
-  COACHING_MEMORY: 'ic_coaching_memory'
+  COACHING_MEMORY: 'ic_coaching_memory',
+  ONBOARDING_COMPLETED: 'ic_onboarding_completed'
 };
 
 function getToken() {
@@ -58,8 +59,22 @@ function removeCoachingMemory() {
   try { wx.removeStorageSync(KEYS.COACHING_MEMORY); } catch (e) { /* ignore */ }
 }
 
+function hasCompletedOnboarding() {
+  return wx.getStorageSync(KEYS.ONBOARDING_COMPLETED) === true;
+}
+
+function setOnboardingCompleted() {
+  wx.setStorageSync(KEYS.ONBOARDING_COMPLETED, true);
+}
+
+const ROUTES = {
+  TARGETS: '/pages/targets/targets',
+  ONBOARDING: '/pages/onboarding/onboarding'
+};
+
 module.exports = {
   KEYS,
+  ROUTES,
   getToken,
   setToken,
   removeToken,
@@ -68,5 +83,7 @@ module.exports = {
   removeUserInfo,
   clearAuth,
   isLoggedIn,
-  removeCoachingMemory
+  removeCoachingMemory,
+  hasCompletedOnboarding,
+  setOnboardingCompleted
 };

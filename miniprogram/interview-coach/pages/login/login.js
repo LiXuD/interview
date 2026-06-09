@@ -2,6 +2,7 @@
  * 登录页：支持微信登录和 Dev Login。
  */
 const auth = require('../../utils/auth');
+const storage = require('../../utils/storage');
 
 Page({
   data: {
@@ -18,7 +19,7 @@ Page({
     this.setData({ loading: true, error: '' });
     auth.wechatLogin()
       .then(() => {
-        wx.reLaunch({ url: '/pages/targets/targets' });
+        this._navigateAfterLogin();
       })
       .catch((err) => {
         this.setData({ error: err.message || '微信登录失败' });
@@ -34,7 +35,7 @@ Page({
     this.setData({ loading: true, error: '' });
     auth.devLogin(username)
       .then(() => {
-        wx.reLaunch({ url: '/pages/targets/targets' });
+        this._navigateAfterLogin();
       })
       .catch((err) => {
         this.setData({ error: err.message || '登录失败' });
@@ -42,5 +43,13 @@ Page({
       .finally(() => {
         this.setData({ loading: false });
       });
+  },
+
+  _navigateAfterLogin() {
+    if (storage.hasCompletedOnboarding()) {
+      wx.reLaunch({ url: storage.ROUTES.TARGETS });
+    } else {
+      wx.reLaunch({ url: storage.ROUTES.ONBOARDING });
+    }
   }
 });

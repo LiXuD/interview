@@ -1,0 +1,28 @@
+<view class="onboarding">
+  <swiper class="swiper" current="{{currentPage}}" bindchange="onSwiperChange" duration="300" circular="{{false}}">
+    <swiper-item wx:for="{{pages}}" wx:key="title">
+      <view class="page-content">
+        <view class="page-icon">{{item.icon}}</view>
+        <view class="page-title">{{item.title}}</view>
+        <view class="page-desc">{{item.desc}}</view>
+        <view wx:if="{{item.steps}}" class="step-list">
+          <view wx:for="{{item.steps}}" wx:for-item="step" wx:key="*this" class="step-item">
+            <view class="step-check">✓</view>
+            <text class="step-text">{{step}}</text>
+          </view>
+        </view>
+      </view>
+    </swiper-item>
+  </swiper>
+
+  <view class="dots">
+    <view wx:for="{{pages}}" wx:key="title" class="dot {{currentPage === index ? 'dot-active' : ''}}"></view>
+  </view>
+
+  <view class="bottom-actions">
+    <button class="btn-primary" bindtap="onNext">
+      {{currentPage < pages.length - 1 ? '下一步' : '开始使用'}}
+    </button>
+    <view wx:if="{{currentPage < pages.length - 1}}" class="skip-link" bindtap="onSkip">跳过</view>
+  </view>
+</view>
