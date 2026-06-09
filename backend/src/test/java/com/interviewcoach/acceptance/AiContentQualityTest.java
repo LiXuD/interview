@@ -477,12 +477,9 @@ class AiContentQualityTest {
         assertThat(combined).doesNotContain("kubernetes");
         assertThat(combined).doesNotContain("k8s");
 
-        // Seata 是 JD 要求但候选人没有的经验，应在 riskAreas 或 gap 中体现，而非 candidateMatch
+        // Seata 是 JD 要求但候选人没有的经验，不应出现在 candidateMatch（候选人匹配点）
         String matchOnly = candidateMatchAll.toLowerCase();
-        if (matchOnly.contains("seata")) {
-            // 如果 candidateMatch 提到 Seata，应是在 gap/risk 的语境下，而非声称已有经验
-            // 这个检查取决于 AI 的实际输出，允许提及但不允许声称掌握
-        }
+        assertThat(matchOnly).doesNotContain("seata");
     }
 
     // ==================== 场景 4: 前端/React ====================

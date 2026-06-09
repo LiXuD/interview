@@ -3,6 +3,7 @@
     "pages/login/login",
     "pages/targets/targets",
     "pages/target-create/target-create",
+    "pages/target-detail/target-detail",
     "pages/profile/profile",
     "pages/jobbrief/jobbrief",
     "pages/assessment/assessment",

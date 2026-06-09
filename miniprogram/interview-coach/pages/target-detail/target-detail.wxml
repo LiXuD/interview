@@ -1,0 +1,71 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="loading-mask">
+    <view>加载中...</view>
+  </view>
+
+  <view wx:elif="{{error}}" class="container">
+    <view class="error-banner">{{error}}</view>
+    <button class="btn-primary" bindtap="loadTarget">重试</button>
+  </view>
+
+  <!-- 查看模式 -->
+  <view wx:elif="{{!editing}}" class="container">
+    <view class="section-title">{{title}}</view>
+
+    <view class="card">
+      <view class="detail-label">职位描述</view>
+      <view class="detail-value jd-text">{{jd}}</view>
+    </view>
+
+    <view class="card" wx:if="{{status}}">
+      <view class="detail-label">状态</view>
+      <view class="detail-value">{{status}}</view>
+    </view>
+
+    <view class="card" wx:if="{{createdAt}}">
+      <view class="detail-label">创建时间</view>
+      <view class="detail-value text-muted">{{createdAt}}</view>
+    </view>
+
+    <view class="action-row">
+      <button class="btn-primary" bindtap="onGoProfile">候选人摘要</button>
+    </view>
+
+    <view class="action-row">
+      <button class="btn-outline" bindtap="onEdit">编辑</button>
+      <button class="btn-danger" bindtap="onDelete">删除</button>
+    </view>
+  </view>
+
+  <!-- 编辑模式 -->
+  <view wx:else class="container">
+    <view class="section-title">编辑目标岗位</view>
+    <view class="card">
+      <view class="form-group">
+        <view class="form-label">岗位名称 *</view>
+        <input class="form-input" value="{{editTitle}}" bindinput="onEditTitleInput" />
+      </view>
+      <view class="form-group">
+        <view class="form-label">职位描述 (JD) *</view>
+        <textarea class="form-textarea" value="{{editJd}}" bindinput="onEditJdInput" auto-height maxlength="10000" />
+      </view>
+    </view>
+
+    <view class="action-row">
+      <button class="btn-primary" bindtap="onSave" loading="{{saving}}" disabled="{{!editTitle || !editJd}}">保存</button>
+      <button class="btn-outline" bindtap="onCancelEdit">取消</button>
+    </view>
+  </view>
+
+  <!-- 删除确认弹窗 -->
+  <view wx:if="{{showDeleteConfirm}}" class="modal-mask" bindtap="onCancelDelete">
+    <view class="modal-box" catchtap="">
+      <view class="modal-title">确认删除</view>
+      <view class="modal-body">删除目标岗位将同时删除关联的岗位画像、测评、训练、模拟面试和报告，此操作不可撤销。</view>
+      <view class="modal-actions">
+        <button class="btn-outline" bindtap="onCancelDelete">取消</button>
+        <button class="btn-danger" bindtap="onConfirmDelete">确认删除</button>
+      </view>
+    </view>
+  </view>
+</view>

@@ -81,7 +81,7 @@ Page({
     request.del(API.ME)
       .then(() => {
         if (this.data.deleteLocalMemory) {
-          try { wx.removeStorageSync('ic_coaching_memory'); } catch (e) { /* ignore */ }
+          storage.removeCoachingMemory();
         }
         storage.clearAuth();
         wx.showToast({ title: '账号已删除', icon: 'success' });

@@ -12,7 +12,8 @@
 const KEYS = {
   TOKEN: 'ic_token',
   USER_ID: 'ic_user_id',
-  USERNAME: 'ic_username'
+  USERNAME: 'ic_username',
+  COACHING_MEMORY: 'ic_coaching_memory'
 };
 
 function getToken() {
@@ -53,6 +54,10 @@ function isLoggedIn() {
   return !!getToken();
 }
 
+function removeCoachingMemory() {
+  try { wx.removeStorageSync(KEYS.COACHING_MEMORY); } catch (e) { /* ignore */ }
+}
+
 module.exports = {
   KEYS,
   getToken,
@@ -62,5 +67,6 @@ module.exports = {
   setUserInfo,
   removeUserInfo,
   clearAuth,
-  isLoggedIn
+  isLoggedIn,
+  removeCoachingMemory
 };

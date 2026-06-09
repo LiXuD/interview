@@ -35,7 +35,7 @@ Page({
 
   onTargetTap(e) {
     const id = e.currentTarget.dataset.id;
-    wx.navigateTo({ url: '/pages/profile/profile?targetId=' + id });
+    wx.navigateTo({ url: '/pages/target-detail/target-detail?id=' + id });
   },
 
   goSettings() {

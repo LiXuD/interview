@@ -5,14 +5,20 @@
 
 const ENV_URLS = {
   develop: 'http://localhost:18080',   // 开发环境（本地后端）
-  trial: 'https://api.example.com',    // 体验版（替换为实际地址）
-  release: 'https://api.example.com'   // 正式版（替换为实际地址）
+  // TODO: 部署前必须替换为实际后端地址，否则体验版和正式版无法连接
+  trial: '',                           // 体验版（部署时配置）
+  release: ''                          // 正式版（部署时配置）
 };
 
 function getBaseUrl() {
   try {
     const { envVersion } = wx.getAccountInfoSync().miniProgram;
-    return ENV_URLS[envVersion] || ENV_URLS.develop;
+    const url = ENV_URLS[envVersion];
+    if (!url) {
+      console.warn('[config] 环境 ' + envVersion + ' 未配置 API 地址，回退到开发环境');
+      return ENV_URLS.develop;
+    }
+    return url;
   } catch (e) {
     return ENV_URLS.develop;
   }

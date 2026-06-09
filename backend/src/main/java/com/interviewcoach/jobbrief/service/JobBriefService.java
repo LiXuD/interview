@@ -107,8 +107,13 @@ public class JobBriefService {
                 }
 
                 skillMap 中 importance 只允许 required/important/bonus，userLevel 只允许 unknown/weak/basic/solid/strong。
-                只基于已确认的候选人摘要分析，不得编造候选人未提供的项目、技术或经历。
-                skillMap.gap 描述候选人需要补充的能力，而非猜测已有水平。
+
+                【硬约束 - 禁止虚构】
+                - 只基于已确认的候选人摘要分析，不得编造候选人未提供的项目、技术或经历。
+                - 岗位 JD 中提到的技术 ≠ 候选人拥有该技术。只有在"已确认的技能""已确认的项目经历""已确认的工作经验"中明确出现的技术，才能归为候选人已有能力。
+                - candidateMatch 只能列出候选人确实具备的匹配点，禁止把 JD 要求但候选人未提及的技术写入 candidateMatch。
+                - 如果 JD 要求某项技术但候选人未提及，该技术只能出现在 riskAreas 或 skillMap.gap 中，且 userLevel 必须为 unknown。
+                - skillMap.gap 描述候选人需要补充的能力，而非猜测已有水平。
                 """;
         String userPrompt = """
                 目标岗位：
