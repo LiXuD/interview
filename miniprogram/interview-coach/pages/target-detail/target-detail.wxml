@@ -27,8 +27,16 @@
       <view class="detail-value text-muted">{{createdAt}}</view>
     </view>
 
-    <view class="action-row">
-      <button class="btn-primary" bindtap="onGoProfile">候选人摘要</button>
+    <view class="card">
+      <view class="detail-label">教练闭环</view>
+      <view class="flow-grid">
+        <button class="btn-primary" bindtap="onGoProfile">候选人摘要</button>
+        <button class="btn-outline" bindtap="onGoJobBrief">岗位画像</button>
+        <button class="btn-outline" bindtap="onGoAssessment">技术测评</button>
+        <button class="btn-outline" bindtap="onGoTraining">训练计划</button>
+        <button class="btn-outline" bindtap="onGoMockInterview">模拟面试</button>
+        <button class="btn-outline" bindtap="onGoReports">复盘报告</button>
+      </view>
     </view>
 
     <view class="action-row">

@@ -10,6 +10,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -144,5 +145,29 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("WECHAT_AUTH_FAILED"));
+    }
+}
+
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+@TestPropertySource(properties = "app.auth.dev-login-enabled=false")
+class DevLoginDisabledSecurityTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Test
+    void devLoginIsNotPublicWhenDisabled() throws Exception {
+        LoginRequest request = new LoginRequest("testuser");
+
+        mockMvc.perform(post("/api/auth/dev-login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
     }
 }

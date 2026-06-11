@@ -31,6 +31,19 @@
   flex: 1;
 }
 
+.flow-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20rpx;
+}
+
+.flow-grid button {
+  width: 100%;
+  margin: 0;
+  font-size: 26rpx;
+  padding: 18rpx 0;
+}
+
 .btn-outline {
   background: #fff;
   color: #1a1a2e;

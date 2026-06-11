@@ -117,6 +117,26 @@ Page({
     wx.navigateTo({ url: '/pages/profile/profile?targetId=' + this.data.id });
   },
 
+  onGoJobBrief() {
+    wx.navigateTo({ url: '/pages/jobbrief/jobbrief?targetId=' + this.data.id });
+  },
+
+  onGoAssessment() {
+    wx.navigateTo({ url: '/pages/assessment/assessment?targetId=' + this.data.id });
+  },
+
+  onGoTraining() {
+    wx.navigateTo({ url: '/pages/training/training?targetId=' + this.data.id });
+  },
+
+  onGoMockInterview() {
+    wx.navigateTo({ url: '/pages/mock-interview/mock-interview?targetId=' + this.data.id });
+  },
+
+  onGoReports() {
+    wx.navigateTo({ url: '/pages/report-detail/report-detail?targetId=' + this.data.id });
+  },
+
   onPullDownRefresh() {
     this.loadTarget().finally(() => wx.stopPullDownRefresh());
   },

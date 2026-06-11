@@ -18,6 +18,11 @@ const { BASE_URL, REQUEST_TIMEOUT } = require('./config');
  */
 function request(options) {
   return new Promise((resolve, reject) => {
+    if (!BASE_URL) {
+      reject(new Error('当前环境未配置 API 地址，请联系管理员'));
+      return;
+    }
+
     const token = storage.getToken();
     const header = {
       'Content-Type': 'application/json',

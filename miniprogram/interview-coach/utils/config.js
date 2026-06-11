@@ -10,24 +10,34 @@ const ENV_URLS = {
   release: ''                          // 正式版（部署时配置）
 };
 
-function getBaseUrl() {
+function getEnvVersion() {
   try {
-    const { envVersion } = wx.getAccountInfoSync().miniProgram;
-    const url = ENV_URLS[envVersion];
-    if (!url) {
-      console.warn('[config] 环境 ' + envVersion + ' 未配置 API 地址，回退到开发环境');
-      return ENV_URLS.develop;
-    }
-    return url;
+    return wx.getAccountInfoSync().miniProgram.envVersion || 'develop';
   } catch (e) {
-    return ENV_URLS.develop;
+    return 'develop';
   }
 }
 
-const BASE_URL = getBaseUrl();
+function getBaseUrl(envVersion) {
+  const url = ENV_URLS[envVersion];
+  if (url) {
+    return url;
+  }
+  if (envVersion === 'develop') {
+    return ENV_URLS.develop;
+  }
+  console.error('[config] 环境 ' + envVersion + ' 未配置 API 地址');
+  return '';
+}
+
+const ENV_VERSION = getEnvVersion();
+const IS_DEVELOPMENT = ENV_VERSION === 'develop';
+const BASE_URL = getBaseUrl(ENV_VERSION);
 const REQUEST_TIMEOUT = 15000;
 
 module.exports = {
+  ENV_VERSION,
+  IS_DEVELOPMENT,
   BASE_URL,
   REQUEST_TIMEOUT
 };

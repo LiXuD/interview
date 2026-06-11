@@ -3,12 +3,20 @@
  */
 const auth = require('../../utils/auth');
 const storage = require('../../utils/storage');
+const config = require('../../utils/config');
 
 Page({
   data: {
     username: '',
     loading: false,
-    error: ''
+    error: '',
+    showDevLogin: config.IS_DEVELOPMENT
+  },
+
+  onLoad() {
+    if (auth.isLoggedIn()) {
+      this._navigateAfterLogin();
+    }
   },
 
   onUsernameInput(e) {
@@ -30,6 +38,10 @@ Page({
   },
 
   onDevLogin() {
+    if (!this.data.showDevLogin) {
+      this.setData({ error: '当前环境不支持 Dev Login' });
+      return;
+    }
     const username = this.data.username.trim();
     if (!username) return;
     this.setData({ loading: true, error: '' });

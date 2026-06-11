@@ -17,7 +17,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/interview_coach
     username: ic_user
-    password: ic_dev_password
+    password: ${IC_DB_PASSWORD:ic_dev_password}
   jpa:
     hibernate:
       ddl-auto: update
@@ -36,12 +36,12 @@ app:
   admin:
     usernames: ${IC_ADMIN_USERNAMES:}
   auth:
-    dev-login-enabled: true
+    dev-login-enabled: ${IC_DEV_LOGIN_ENABLED:false}
   jwt:
-    secret: OqdiowA+wbDLSdp8HFj7qcbW36V0mtilujurTO496HU=
+    secret: ${IC_JWT_SECRET:OqdiowA+wbDLSdp8HFj7qcbW36V0mtilujurTO496HU=}
     expiration-ms: 604800000
   ai:
-    encryption-key: ZGV2LWFpLWVuY3J5cHRpb24ta2V5LTMyLWJ5dGVzISE=
+    encryption-key: ${IC_AI_ENCRYPTION_KEY:ZGV2LWFpLWVuY3J5cHRpb24ta2V5LTMyLWJ5dGVzISE=}
     spring:
       enabled: ${IC_SPRING_AI_ENABLED:false}
     http:

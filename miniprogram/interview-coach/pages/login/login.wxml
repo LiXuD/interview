@@ -13,7 +13,7 @@
     </button>
 
     <!-- Dev Login（仅开发环境） -->
-    <view class="dev-login-section">
+    <view wx:if="{{showDevLogin}}" class="dev-login-section">
       <view class="dev-divider">开发环境</view>
       <input
         class="dev-input"
