@@ -31,16 +31,4 @@
     </view>
     <button class="btn-primary" bindtap="onCreateTarget">创建目标岗位</button>
   </view>
-
-  <!-- 底部导航 -->
-  <view class="tab-bar">
-    <view class="tab-item tab-active">
-      <view class="tab-icon">+</view>
-      <view class="tab-label">目标</view>
-    </view>
-    <view class="tab-item" bindtap="goSettings">
-      <view class="tab-icon">...</view>
-      <view class="tab-label">设置</view>
-    </view>
-  </view>
 </view>

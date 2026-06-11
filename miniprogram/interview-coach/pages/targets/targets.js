@@ -13,6 +13,9 @@ Page({
 
   onShow() {
     this.loadTargets();
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ selected: 0 });
+    }
   },
 
   loadTargets() {
@@ -36,9 +39,5 @@ Page({
   onTargetTap(e) {
     const id = e.currentTarget.dataset.id;
     wx.navigateTo({ url: '/pages/target-detail/target-detail?id=' + id });
-  },
-
-  goSettings() {
-    wx.navigateTo({ url: '/pages/settings/settings' });
   }
 });

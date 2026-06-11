@@ -4,6 +4,7 @@
 const auth = require('../../utils/auth');
 const storage = require('../../utils/storage');
 const config = require('../../utils/config');
+const privacy = require('../../utils/privacy');
 
 Page({
   data: {
@@ -24,12 +25,23 @@ Page({
   },
 
   onWechatLogin() {
+    if (this.data.loading) return;
     this.setData({ loading: true, error: '' });
-    auth.wechatLogin()
+    privacy.checkPrivacy()
+      .then(() => auth.wechatLogin())
       .then(() => {
         this._navigateAfterLogin();
       })
       .catch((err) => {
+        if (err.message === 'NEED_PRIVACY_AUTH') {
+          return privacy.requestPrivacyAuthorize().then((granted) => {
+            if (!granted) {
+              this.setData({ error: '需要同意隐私授权才能登录' });
+              return;
+            }
+            return this.onWechatLogin();
+          });
+        }
         this.setData({ error: err.message || '微信登录失败' });
       })
       .finally(() => {

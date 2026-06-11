@@ -6,16 +6,12 @@
 const storage = require('./storage');
 const { BASE_URL, REQUEST_TIMEOUT } = require('./config');
 
-/**
- * 发起带认证的 HTTP 请求。
- *
- * @param {Object} options
- * @param {string} options.url - 接口路径（不含基础地址）
- * @param {string} [options.method='GET'] - HTTP 方法
- * @param {Object} [options.data] - 请求体
- * @param {Object} [options.header] - 额外请求头
- * @returns {Promise<Object>} 响应数据
- */
+let isRedirectingToLogin = false;
+
+function resetRedirectFlag() {
+  isRedirectingToLogin = false;
+}
+
 function request(options) {
   return new Promise((resolve, reject) => {
     if (!BASE_URL) {
@@ -41,7 +37,14 @@ function request(options) {
       success(res) {
         if (res.statusCode === 401) {
           storage.clearAuth();
-          wx.reLaunch({ url: '/pages/login/login' });
+          if (!isRedirectingToLogin) {
+            isRedirectingToLogin = true;
+            wx.reLaunch({
+              url: '/pages/login/login',
+              complete: resetRedirectFlag
+            });
+            setTimeout(resetRedirectFlag, 3000);
+          }
           reject(new Error('未登录或登录已过期'));
           return;
         }
@@ -62,37 +65,22 @@ function request(options) {
   });
 }
 
-/**
- * GET 请求。
- */
 function get(url, data) {
   return request({ url, method: 'GET', data });
 }
 
-/**
- * POST 请求。
- */
 function post(url, data) {
   return request({ url, method: 'POST', data });
 }
 
-/**
- * PUT 请求。
- */
 function put(url, data) {
   return request({ url, method: 'PUT', data });
 }
 
-/**
- * PATCH 请求。
- */
 function patch(url, data) {
   return request({ url, method: 'PATCH', data });
 }
 
-/**
- * DELETE 请求。
- */
 function del(url, data) {
   return request({ url, method: 'DELETE', data });
 }

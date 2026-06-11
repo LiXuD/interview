@@ -3,6 +3,26 @@
   "rules": [
     {
       "action": "allow",
+      "page": "pages/targets/targets"
+    },
+    {
+      "action": "allow",
+      "page": "pages/target-detail/target-detail"
+    },
+    {
+      "action": "disallow",
+      "page": "pages/login/login"
+    },
+    {
+      "action": "disallow",
+      "page": "pages/onboarding/onboarding"
+    },
+    {
+      "action": "disallow",
+      "page": "pages/target-create/target-create"
+    },
+    {
+      "action": "disallow",
       "page": "*"
     }
   ]

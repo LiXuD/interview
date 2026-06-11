@@ -26,6 +26,12 @@ Page({
     this.checkHealth();
   },
 
+  onShow() {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ selected: 1 });
+    }
+  },
+
   checkHealth() {
     this.setData({ healthStatus: '检查中...' });
     request.get(API.HEALTH)
@@ -41,7 +47,7 @@ Page({
   },
 
   goPrivacy() {
-    wx.navigateTo({ url: '/pages/privacy/privacy' });
+    wx.navigateTo({ url: '/package-admin/pages/privacy/privacy' });
   },
 
   onLogout() {

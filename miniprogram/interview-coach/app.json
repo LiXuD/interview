@@ -5,21 +5,51 @@
     "pages/targets/targets",
     "pages/target-create/target-create",
     "pages/target-detail/target-detail",
-    "pages/profile/profile",
-    "pages/jobbrief/jobbrief",
-    "pages/assessment/assessment",
-    "pages/training/training",
-    "pages/mock-interview/mock-interview",
-    "pages/report-detail/report-detail",
-    "pages/dimension-analysis/dimension-analysis",
-    "pages/progress/progress",
-    "pages/coach-agent/coach-agent",
-    "pages/ai-usage/ai-usage",
-    "pages/ai-providers/ai-providers",
-    "pages/coaching-memory/coaching-memory",
-    "pages/privacy/privacy",
     "pages/settings/settings"
   ],
+  "subPackages": [
+    {
+      "root": "package-coach",
+      "name": "coach",
+      "pages": [
+        "pages/profile/profile",
+        "pages/jobbrief/jobbrief",
+        "pages/assessment/assessment",
+        "pages/training/training",
+        "pages/mock-interview/mock-interview",
+        "pages/report-detail/report-detail",
+        "pages/dimension-analysis/dimension-analysis",
+        "pages/progress/progress",
+        "pages/coach-agent/coach-agent",
+        "pages/coaching-memory/coaching-memory"
+      ]
+    },
+    {
+      "root": "package-admin",
+      "name": "admin",
+      "pages": [
+        "pages/privacy/privacy",
+        "pages/ai-usage/ai-usage",
+        "pages/ai-providers/ai-providers"
+      ]
+    }
+  ],
+  "tabBar": {
+    "custom": true,
+    "color": "#999999",
+    "selectedColor": "#1a1a2e",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/targets/targets",
+        "text": "目标"
+      },
+      {
+        "pagePath": "pages/settings/settings",
+        "text": "设置"
+      }
+    ]
+  },
   "window": {
     "navigationBarBackgroundColor": "#1a1a2e",
     "navigationBarTitleText": "Interview Coach",
@@ -27,5 +57,11 @@
     "backgroundColor": "#f5f5f5"
   },
   "style": "v2",
-  "sitemapLocation": "sitemap.json"
+  "sitemapLocation": "sitemap.json",
+  "__usePrivacyCheck__": true,
+  "permission": {
+    "scope.userInfo": {
+      "desc": "用于获取您的基本信息以提供个性化服务"
+    }
+  }
 }

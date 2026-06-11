@@ -1,13 +1,18 @@
 /**
  * 应用配置，集中管理环境相关常量。
  * 根据小程序运行环境自动切换 API 地址。
+ *
+ * 部署说明：
+ * - trial 和 release 必须填写 HTTPS 后端地址
+ * - 需在微信公众平台「开发管理 → 开发设置 → 服务器域名」中注册
+ * - 开发环境可使用 HTTP（需在开发者工具中关闭域名校验）
  */
 
 const ENV_URLS = {
-  develop: 'http://localhost:18080',   // 开发环境（本地后端）
-  // TODO: 部署前必须替换为实际后端地址，否则体验版和正式版无法连接
-  trial: '',                           // 体验版（部署时配置）
-  release: ''                          // 正式版（部署时配置）
+  develop: 'http://localhost:18080',   // 开发环境（本地后端，仅开发调试用）
+  // TODO: 部署前必须替换为实际 HTTPS 后端地址
+  trial: '',                           // 体验版（部署时配置，必须 HTTPS）
+  release: ''                          // 正式版（部署时配置，必须 HTTPS）
 };
 
 function getEnvVersion() {

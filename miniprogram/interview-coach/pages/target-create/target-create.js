@@ -15,7 +15,7 @@ Page({
       .then((target) => {
         wx.showToast({ title: '创建成功' });
         this._navTimer = setTimeout(() => {
-          wx.redirectTo({ url: '/pages/profile/profile?targetId=' + target.id });
+          wx.navigateTo({ url: '/package-coach/pages/profile/profile?targetId=' + target.id });
         }, 500);
       })
       .catch((err) => {

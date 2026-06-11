@@ -114,31 +114,38 @@ Page({
   },
 
   onGoProfile() {
-    wx.navigateTo({ url: '/pages/profile/profile?targetId=' + this.data.id });
+    wx.navigateTo({ url: '/package-coach/pages/profile/profile?targetId=' + this.data.id });
   },
 
   onGoJobBrief() {
-    wx.navigateTo({ url: '/pages/jobbrief/jobbrief?targetId=' + this.data.id });
+    wx.navigateTo({ url: '/package-coach/pages/jobbrief/jobbrief?targetId=' + this.data.id });
   },
 
   onGoAssessment() {
-    wx.navigateTo({ url: '/pages/assessment/assessment?targetId=' + this.data.id });
+    wx.navigateTo({ url: '/package-coach/pages/assessment/assessment?targetId=' + this.data.id });
   },
 
   onGoTraining() {
-    wx.navigateTo({ url: '/pages/training/training?targetId=' + this.data.id });
+    wx.navigateTo({ url: '/package-coach/pages/training/training?targetId=' + this.data.id });
   },
 
   onGoMockInterview() {
-    wx.navigateTo({ url: '/pages/mock-interview/mock-interview?targetId=' + this.data.id });
+    wx.navigateTo({ url: '/package-coach/pages/mock-interview/mock-interview?targetId=' + this.data.id });
   },
 
   onGoReports() {
-    wx.navigateTo({ url: '/pages/report-detail/report-detail?targetId=' + this.data.id });
+    wx.navigateTo({ url: '/package-coach/pages/report-detail/report-detail?targetId=' + this.data.id });
   },
 
   onPullDownRefresh() {
     this.loadTarget().finally(() => wx.stopPullDownRefresh());
+  },
+
+  onShareAppMessage() {
+    return {
+      title: '我在用 AI 面试教练准备「' + (this.data.title || '面试') + '」',
+      path: '/pages/target-detail/target-detail?id=' + this.data.id
+    };
   },
 
   onUnload() {

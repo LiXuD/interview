@@ -1,5 +1,6 @@
 /**
- * 认证状态管理，处理登录、登出和 401 自动清理。
+ * 认证状态管理，处理登录、登出。
+ * 401 处理由 utils/request.js 统一处理。
  */
 
 const storage = require('./storage');
@@ -12,16 +13,10 @@ function handleAuthResponse(data) {
   return data;
 }
 
-/**
- * Dev Login：用用户名登录获取 Token。
- */
 function devLogin(username) {
   return request.post(API.AUTH_DEV_LOGIN, { username }).then(handleAuthResponse);
 }
 
-/**
- * 微信登录：调用 wx.login 获取 code，发送到后端换取 Token。
- */
 function wechatLogin() {
   return new Promise((resolve, reject) => {
     wx.login({
@@ -42,25 +37,13 @@ function wechatLogin() {
   });
 }
 
-/**
- * 登出：清除本地登录态。
- */
 function logout() {
   storage.clearAuth();
-}
-
-/**
- * 处理 401 响应：清除登录态并跳转到登录页。
- */
-function handleUnauthorized() {
-  storage.clearAuth();
-  wx.reLaunch({ url: '/pages/login/login' });
 }
 
 module.exports = {
   devLogin,
   wechatLogin,
   logout,
-  handleUnauthorized,
   isLoggedIn: storage.isLoggedIn
 };
