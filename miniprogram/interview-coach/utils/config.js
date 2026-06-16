@@ -38,7 +38,7 @@ function getBaseUrl(envVersion) {
 const ENV_VERSION = getEnvVersion();
 const IS_DEVELOPMENT = ENV_VERSION === 'develop';
 const BASE_URL = getBaseUrl(ENV_VERSION);
-const REQUEST_TIMEOUT = 15000;
+const REQUEST_TIMEOUT = 60000;
 
 module.exports = {
   ENV_VERSION,
