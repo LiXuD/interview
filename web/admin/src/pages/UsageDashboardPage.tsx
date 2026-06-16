@@ -6,6 +6,7 @@ import UsageTrendChart from '../components/UsageTrendChart'
 import UsageRankingChart from '../components/UsageRankingChart'
 import UserUsageTable from '../components/UserUsageTable'
 import UserUsageDrawer from '../components/UserUsageDrawer'
+import TokenCompositionPanel from '../components/TokenCompositionPanel'
 import { formatTokens } from '../utils/format'
 
 export default function UsageDashboardPage() {
@@ -44,6 +45,8 @@ export default function UsageDashboardPage() {
             : '-'
         } />
       </div>
+
+      <TokenCompositionPanel summary={overview.summary} providers={overview.providers} />
 
       {/* Charts */}
       <div className="chart-section">

@@ -12,6 +12,7 @@ struct ProfileInputView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var draft: CandidateProfileDraftDTO?
+    @State private var showDraftConfirmation = false
     @State private var showConsent = false
 
     var body: some View {
@@ -69,21 +70,25 @@ struct ProfileInputView: View {
             } message: {
                 Text("简历原文将临时发送到后端进行 AI 摘要生成。后端不会保存原文，仅在内存中使用。")
             }
-            .navigationDestination(item: $draft) { draftValue in
-                ProfileConfirmView(
-                    targetId: targetId,
-                    targetTitle: targetTitle,
-                    draft: draftValue,
-                    authService: authService
-                )
+            .navigationDestination(isPresented: $showDraftConfirmation) {
+                if let draft {
+                    ProfileConfirmView(
+                        targetId: targetId,
+                        targetTitle: targetTitle,
+                        draft: draft,
+                        authService: authService
+                    )
+                }
             }
             .loadingOverlay(isLoading: isLoading, message: "生成摘要中...")
         }
     }
 
+    @MainActor
     private func generateDraft() async {
         isLoading = true
         errorMessage = nil
+        showDraftConfirmation = false
         do {
             let result: CandidateProfileDraftDTO = try await APIClient.shared.request(
                 "POST",
@@ -94,6 +99,9 @@ struct ProfileInputView: View {
                 )
             )
             draft = result
+            isLoading = false
+            showDraftConfirmation = true
+            return
         } catch {
             errorMessage = "生成失败: \(error.localizedDescription)"
         }

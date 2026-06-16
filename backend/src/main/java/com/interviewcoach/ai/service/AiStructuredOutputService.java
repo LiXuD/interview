@@ -699,15 +699,43 @@ public class AiStructuredOutputService {
      * @return 教练记忆 DTO
      */
     public CoachingMemoryDto generateCoachingMemory(AiPrompt prompt) {
-        CoachingMemoryDto structuredResult = generateStructuredFromSpringProvider(prompt, CoachingMemoryDto.class);
+        CoachingMemoryAiOutput structuredResult = generateStructuredFromSpringProvider(prompt, CoachingMemoryAiOutput.class);
         if (structuredResult != null) {
-            CoachingMemoryDto validated = validateStructured(prompt, structuredResult, (dto, p) -> validateCoachingMemory(dto));
-            if (validated != null) return validated;
+            CoachingMemoryAiOutput validated = validateStructured(prompt, structuredResult, (dto, p) -> validateCoachingMemory(dto));
+            if (validated != null) return toCoachingMemoryDto(validated);
         }
-        return generateAndValidate(prompt, CoachingMemoryDto.class, (dto, p) -> validateCoachingMemory(dto));
+        CoachingMemoryAiOutput generated = generateAndValidate(
+                prompt, CoachingMemoryAiOutput.class, (dto, p) -> validateCoachingMemory(dto));
+        return toCoachingMemoryDto(generated);
     }
 
-    private void validateCoachingMemory(CoachingMemoryDto dto) {
+    private record CoachingMemoryAiOutput(
+            List<CoachingMemoryItemDto> observedStrengths,
+            List<CoachingMemoryItemDto> observedWeaknesses,
+            List<CoachingMemoryItemDto> recurringProblems,
+            List<CoachingMemoryItemDto> verifiedExperience,
+            List<CoachingMemoryItemDto> unverifiedClaims,
+            List<CoachingMemoryItemDto> recommendedNextFocus,
+            List<CoachingMemoryItemDto> avoidRepeating
+    ) {}
+
+    private CoachingMemoryDto toCoachingMemoryDto(CoachingMemoryAiOutput output) {
+        return new CoachingMemoryDto(
+                null,
+                null,
+                null,
+                null,
+                output.observedStrengths(),
+                output.observedWeaknesses(),
+                output.recurringProblems(),
+                output.verifiedExperience(),
+                output.unverifiedClaims(),
+                output.recommendedNextFocus(),
+                output.avoidRepeating(),
+                null);
+    }
+
+    private void validateCoachingMemory(CoachingMemoryAiOutput dto) {
         if (dto == null) {
             throw new IllegalArgumentException("CoachingMemory is null");
         }
@@ -738,6 +766,7 @@ public class AiStructuredOutputService {
 
     private static final Set<String> VALID_AGENT_STAGES = Set.of(
             "targetSetup", "profileConfirmation", "assessment", "training", "mockInterview", "review");
+    private static final int MAX_AGENT_FOCUS_DIMENSIONS = 3;
 
     /**
      * 生成 Agent 决策，包含当前目标、关注维度、推荐动作和工具调用计划。
@@ -760,6 +789,15 @@ public class AiStructuredOutputService {
         }
         requireText(dto.currentGoal(), "currentGoal");
         requireList(dto.focusDimensions(), "focusDimensions");
+        if (dto.focusDimensions().isEmpty()) {
+            throw new IllegalArgumentException("focusDimensions must not be empty");
+        }
+        if (dto.focusDimensions().size() > MAX_AGENT_FOCUS_DIMENSIONS) {
+            throw new IllegalArgumentException("focusDimensions exceeds budget");
+        }
+        for (String dimension : dto.focusDimensions()) {
+            requireText(dimension, "focusDimensions item");
+        }
         requireText(dto.recommendedAction(), "recommendedAction");
         requireText(dto.rationaleSummary(), "rationaleSummary");
         requireList(dto.toolCalls(), "toolCalls");

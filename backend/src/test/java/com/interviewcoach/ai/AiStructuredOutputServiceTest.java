@@ -16,6 +16,7 @@ import com.interviewcoach.ai.service.SpringAiFoundationProperties;
 import com.interviewcoach.ai.service.SpringAiPlatformClient;
 import com.interviewcoach.ai.service.SpringAiUserProviderClient;
 import com.interviewcoach.common.api.AdaptiveTrainingTurnDto;
+import com.interviewcoach.common.api.AgentDecisionDto;
 import com.interviewcoach.common.api.AnswerStructureDto;
 import com.interviewcoach.common.api.AssessmentDimensionName;
 import com.interviewcoach.common.api.AssessmentQuestionDto;
@@ -38,11 +39,14 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -1006,28 +1010,14 @@ class AiStructuredOutputServiceTest {
                 "uses concrete examples",
                 "observed",
                 "medium");
-        CoachingMemoryDto dto = new CoachingMemoryDto(
-                null,
-                null,
-                null,
-                null,
-                List.of(item),
-                List.of(),
-                List.of(),
-                List.of(),
-                List.of(),
-                List.of(),
-                List.of(),
-                null);
-
         when(providerService.findDefaultProvider(userId)).thenReturn(provider);
         when(encryption.decrypt("encrypted-key")).thenReturn("sk-user-secret");
         when(springAiUserProviderClient.generateEntity(
-                provider,
-                "sk-user-secret",
-                prompt,
-                CoachingMemoryDto.class))
-                .thenReturn(dto);
+                eq(provider),
+                eq("sk-user-secret"),
+                eq(prompt),
+                argThat(AiStructuredOutputServiceTest::isAiOnlyCoachingMemoryType)))
+                .thenAnswer(invocation -> coachingMemoryOutput(invocation.getArgument(3), item));
 
         AiStructuredOutputService service = new AiStructuredOutputService(
                 p -> fail("Should use user provider before platform provider"),
@@ -1043,11 +1033,37 @@ class AiStructuredOutputServiceTest {
 
         assertThat(result.observedStrengths()).hasSize(1);
         verify(springAiUserProviderClient).generateEntity(
-                provider,
-                "sk-user-secret",
-                prompt,
-                CoachingMemoryDto.class);
+                eq(provider),
+                eq("sk-user-secret"),
+                eq(prompt),
+                argThat(AiStructuredOutputServiceTest::isAiOnlyCoachingMemoryType));
         verifyNoInteractions(openAiClient);
+    }
+
+    private static boolean isAiOnlyCoachingMemoryType(Class<?> responseType) {
+        return responseType != null
+                && !CoachingMemoryDto.class.equals(responseType)
+                && responseType.getSimpleName().contains("CoachingMemory");
+    }
+
+    private static Object coachingMemoryOutput(Class<?> responseType, CoachingMemoryItemDto item) throws Exception {
+        Constructor<?> constructor = responseType.getDeclaredConstructor(
+                List.class,
+                List.class,
+                List.class,
+                List.class,
+                List.class,
+                List.class,
+                List.class);
+        constructor.setAccessible(true);
+        return constructor.newInstance(
+                List.of(item),
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of());
     }
 
     private AssessmentQuestionDto question(String dimension) {
@@ -1694,6 +1710,64 @@ class AiStructuredOutputServiceTest {
                 new AiPrompt("coachingMemory", "target-1", "system", "user")));
     }
 
+    // --- agentDecision ---
+
+    @Test
+    void agentDecisionRetriesWhenFocusDimensionsExceedBudget() {
+        int[] callCount = {0};
+        PlatformAiClient client = prompt -> {
+            callCount[0]++;
+            if (callCount[0] == 1) {
+                return """
+                        {
+                          "currentGoal": "补强表达",
+                          "focusDimensions": ["technicalDepth", "projectSpecificity", "systemThinking", "tradeoffAwareness"],
+                          "recommendedAction": "startAssessment",
+                          "rationaleSummary": "先建立能力基线",
+                          "toolCalls": [{"toolName": "startAssessment", "reason": "需要确认当前能力基线"}],
+                          "memoryUpdateRequired": false,
+                          "planAdjustmentRequired": false
+                        }
+                        """;
+            }
+            return validAgentDecisionJson();
+        };
+
+        AgentDecisionDto result = serviceWith(client).generateAgentDecision(
+                new AiPrompt("agentDecision", "target-1", "system prompt", "user prompt"));
+
+        assertThat(result.focusDimensions()).containsExactly("systemThinking");
+        assertEquals(2, callCount[0], "Should retry once with validation repair prompt");
+    }
+
+    @Test
+    void agentDecisionRetriesWhenFocusDimensionsAreEmpty() {
+        int[] callCount = {0};
+        PlatformAiClient client = prompt -> {
+            callCount[0]++;
+            if (callCount[0] == 1) {
+                return """
+                        {
+                          "currentGoal": "补强表达",
+                          "focusDimensions": [],
+                          "recommendedAction": "startAssessment",
+                          "rationaleSummary": "先建立能力基线",
+                          "toolCalls": [{"toolName": "startAssessment", "reason": "需要确认当前能力基线"}],
+                          "memoryUpdateRequired": false,
+                          "planAdjustmentRequired": false
+                        }
+                        """;
+            }
+            return validAgentDecisionJson();
+        };
+
+        AgentDecisionDto result = serviceWith(client).generateAgentDecision(
+                new AiPrompt("agentDecision", "target-1", "system prompt", "user prompt"));
+
+        assertThat(result.focusDimensions()).containsExactly("systemThinking");
+        assertEquals(2, callCount[0], "Should retry once with validation repair prompt");
+    }
+
     // --- cross-cutting: retry on first failure ---
 
     @Test
@@ -1768,6 +1842,20 @@ class AiStructuredOutputServiceTest {
         assertThat(capturedRepairPrompt[0].systemPrompt()).contains("业务字段");
         assertThat(capturedRepairPrompt[0].systemPrompt()).doesNotContain("不要新增、删除或修改任何业务内容");
         assertThat(capturedRepairPrompt[0].userPrompt()).contains("question is required");
+    }
+
+    private String validAgentDecisionJson() {
+        return """
+                {
+                  "currentGoal": "补强系统设计表达",
+                  "focusDimensions": ["systemThinking"],
+                  "recommendedAction": "startAssessment",
+                  "rationaleSummary": "根据当前上下文推荐继续测评",
+                  "toolCalls": [{"toolName": "startAssessment", "reason": "需要确认当前能力基线"}],
+                  "memoryUpdateRequired": false,
+                  "planAdjustmentRequired": false
+                }
+                """;
     }
 
     private static class CapturingAiMetrics extends AiMetrics {

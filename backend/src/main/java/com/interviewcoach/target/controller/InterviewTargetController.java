@@ -6,6 +6,7 @@ import com.interviewcoach.common.api.InterviewTargetUpdateRequest;
 import com.interviewcoach.common.security.SecurityUtils;
 import com.interviewcoach.target.service.InterviewTargetService;
 import com.interviewcoach.user.entity.User;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,7 +35,7 @@ public class InterviewTargetController {
      */
     @PostMapping
     public ResponseEntity<InterviewTargetDto> createTarget(
-            @RequestBody InterviewTargetCreateRequest request) {
+            @Valid @RequestBody InterviewTargetCreateRequest request) {
         User user = SecurityUtils.currentUser();
         InterviewTargetDto dto = targetService.createTarget(user, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);

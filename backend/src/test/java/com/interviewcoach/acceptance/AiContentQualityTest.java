@@ -143,19 +143,19 @@ class AiContentQualityTest {
         String sessionJson = startResult.getResponse().getContentAsString();
         String sessionId = objectMapper.readTree(sessionJson).get("id").asText();
 
+        AssessmentSessionDto session = objectMapper.readValue(sessionJson, AssessmentSessionDto.class);
+
         // 验证 5 题全部是字符串且不为空
-        String currentQuestion = objectMapper.readTree(sessionJson).get("currentQuestion").get("question").asText();
+        String currentQuestion = session.currentQuestion().question();
         assertThat(currentQuestion).isNotBlank();
+        assertThat(session.questions()).hasSize(5);
+        session.questions().forEach(question -> assertThat(question.question()).isNotBlank());
 
         // 验证题目的多样性：题目长度和内容应有差异（不是重复的同一题）
         // 先回答完所有题，再 finish 获取评分结果
-        List<String> answers = List.of(
-                AiAcceptanceFixtures.JAVA_ANSWER_ORDER_DESIGN,
-                AiAcceptanceFixtures.JAVA_ANSWER_WEAK,
-                "Spring Boot 自动配置通过 @EnableAutoConfiguration 实现，扫描 META-INF/spring.factories 文件加载自动配置类。",
-                "Redis 分布式锁使用 SET key value NX EX 实现，需要配合 Lua 脚本保证原子性释放。",
-                "支付系统设计需要考虑幂等性、分布式事务、资金安全和对账机制。"
-        );
+        List<String> answers = session.questions().stream()
+                .map(this::answerForJavaAssessmentQuestion)
+                .toList();
         for (String answer : answers) {
             mockMvc.perform(post("/api/assessments/" + sessionId + "/answers")
                             .header("Authorization", "Bearer " + ctx.token)
@@ -189,6 +189,37 @@ class AiContentQualityTest {
         assertThat(distinctScores)
                 .as("各维度评分应有区分度，不应全部相同。实际评分维度数: %d", distinctScores)
                 .isGreaterThan(1);
+    }
+
+    private String answerForJavaAssessmentQuestion(AssessmentQuestionDto question) {
+        String text = question.question().toLowerCase(java.util.Locale.ROOT);
+        if (text.contains("transactional") || text.contains("事务")) {
+            return "在支付服务里我遇到过三类事务失效：第一是同一个类内部自调用绕过 Spring AOP 代理，"
+                    + "第二是异常被 catch 后没有继续抛出 RuntimeException，第三是方法不是 public 或数据源/引擎不支持事务。"
+                    + "我们把事务边界拆到独立 Service，统一异常传播，并用集成测试验证回滚。";
+        }
+        if (text.contains("对账") || text.contains("账单") || text.contains("文件")) {
+            return "日终对账链路里，我会通过 SFTP 拉取渠道账单并做文件大小、MD5 和批次号校验，"
+                    + "解析时用流式读取避免大文件一次进内存，再按渠道流水号和本地订单号建立索引比对。"
+                    + "差异单进入差异表和告警队列，支持重试、人工确认和次日补偿。";
+        }
+        if (text.contains("幂等") || text.contains("回调") || text.contains("重复")) {
+            return "支付回调幂等我会用渠道流水号加商户订单号建立唯一索引，先查询订单状态机，"
+                    + "只有待支付状态可以流转到已支付；并用 Redis 短锁降低并发重复处理概率。"
+                    + "如果回调处理失败，会记录幂等流水和补偿任务，保证重复通知只更新一次。";
+        }
+        if (text.contains("rabbitmq") || text.contains("消息") || text.contains("消费")) {
+            return "支付消息链路会开启 publisher confirm 保证投递可知，消费端使用手动 ACK，"
+                    + "业务处理前先查去重表或幂等流水。关键交易用单条确认保证可靠性，普通通知可以批量确认提高吞吐。"
+                    + "失败消息进入死信队列并触发告警，资金相关差异需要人工复核兜底。";
+        }
+        if (text.contains("tcc") || text.contains("退款") || text.contains("本地消息")) {
+            return "跨库退款我会先看实时性和资金风险。如果要求强一致和同步返回结果，TCC 更合适，"
+                    + "但要实现 Try/Confirm/Cancel，业务侵入大且回滚分支复杂。若允许短暂延迟，我更倾向本地消息表，"
+                    + "用本地事务写退款单和消息，再异步驱动渠道退款与对账补偿。";
+        }
+        return "我会先明确业务一致性目标，再用数据库唯一约束、状态机、消息重试、补偿任务和监控告警组合设计。"
+                + "实现时把核心资金状态放在本地事务内，跨系统调用通过异步消息和对账兜底，最后用压测和故障演练验证。";
     }
 
     @Test

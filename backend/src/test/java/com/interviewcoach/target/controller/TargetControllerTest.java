@@ -52,6 +52,20 @@ class TargetControllerTest {
     }
 
     @Test
+    void createTargetWithoutJdReturnsValidationError() throws Exception {
+        String token = loginAndGetToken("target_user_missing_jd");
+
+        mockMvc.perform(post("/api/targets")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Java Backend Engineer\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+                .andExpect(jsonPath("$.message").value("jd must not be blank"))
+                .andExpect(jsonPath("$.requestId").isString());
+    }
+
+    @Test
     void listTargetsReturnsEmptyForNewUser() throws Exception {
         String token = loginAndGetToken("target_user2");
 

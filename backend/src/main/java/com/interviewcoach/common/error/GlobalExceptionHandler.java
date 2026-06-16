@@ -2,6 +2,7 @@ package com.interviewcoach.common.error;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -209,6 +210,19 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleAiTokenQuotaExceeded(AiTokenQuotaExceededException ex) {
         return ResponseEntity.status(429)
                 .body(new ErrorResponse("AI_TOKEN_QUOTA_EXCEEDED", ex.getMessage(), generateRequestId()));
+    }
+
+    /**
+     * 处理请求体字段校验失败，返回 400。
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidationFailed(MethodArgumentNotValidException ex) {
+        String message = ex.getBindingResult().getFieldErrors().stream()
+                .findFirst()
+                .map(error -> error.getDefaultMessage() != null ? error.getDefaultMessage() : "Request validation failed")
+                .orElse("Request validation failed");
+        return ResponseEntity.badRequest()
+                .body(new ErrorResponse("VALIDATION_FAILED", message, generateRequestId()));
     }
 
     /**
