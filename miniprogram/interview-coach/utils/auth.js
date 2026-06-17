@@ -13,10 +13,6 @@ function handleAuthResponse(data) {
   return data;
 }
 
-function devLogin(username) {
-  return request.post(API.AUTH_DEV_LOGIN, { username }).then(handleAuthResponse);
-}
-
 function wechatLogin() {
   return new Promise((resolve, reject) => {
     wx.login({
@@ -48,7 +44,6 @@ function logout() {
 }
 
 module.exports = {
-  devLogin,
   wechatLogin,
   logout,
   isLoggedIn: storage.isLoggedIn

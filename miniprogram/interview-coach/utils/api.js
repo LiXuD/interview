@@ -4,7 +4,6 @@
 
 const API = {
   // 认证
-  AUTH_DEV_LOGIN: '/api/auth/dev-login',
   AUTH_WECHAT: '/api/auth/wechat',
   AUTH_LOGOUT: '/api/auth/logout',
 

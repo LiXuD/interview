@@ -1,27 +1,20 @@
 /**
- * 登录页：支持微信登录和 Dev Login。
+ * 登录页：使用微信登录进入 AI 面试教练闭环。
  */
 const auth = require('../../utils/auth');
 const storage = require('../../utils/storage');
-const config = require('../../utils/config');
 const privacy = require('../../utils/privacy');
 
 Page({
   data: {
-    username: '',
     loading: false,
-    error: '',
-    showDevLogin: config.IS_DEVELOPMENT
+    error: ''
   },
 
   onLoad() {
     if (auth.isLoggedIn()) {
       this._navigateAfterLogin();
     }
-  },
-
-  onUsernameInput(e) {
-    this.setData({ username: e.detail.value, error: '' });
   },
 
   onWechatLogin() {
@@ -43,26 +36,6 @@ Page({
           });
         }
         this.setData({ error: err.message || '微信登录失败' });
-      })
-      .finally(() => {
-        this.setData({ loading: false });
-      });
-  },
-
-  onDevLogin() {
-    if (!this.data.showDevLogin) {
-      this.setData({ error: '当前环境不支持 Dev Login' });
-      return;
-    }
-    const username = this.data.username.trim();
-    if (!username) return;
-    this.setData({ loading: true, error: '' });
-    auth.devLogin(username)
-      .then(() => {
-        this._navigateAfterLogin();
-      })
-      .catch((err) => {
-        this.setData({ error: err.message || '登录失败' });
       })
       .finally(() => {
         this.setData({ loading: false });
