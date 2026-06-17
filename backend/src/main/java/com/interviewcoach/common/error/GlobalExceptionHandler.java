@@ -1,6 +1,9 @@
 package com.interviewcoach.common.error;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -13,6 +16,8 @@ import java.util.UUID;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     /**
      * 处理用户未找到异常，返回 404。
@@ -204,6 +209,15 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 处理缺失认证上下文异常，返回 401。
+     */
+    @ExceptionHandler(AuthenticationCredentialsNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleMissingAuthentication(AuthenticationCredentialsNotFoundException ex) {
+        return ResponseEntity.status(401)
+                .body(new ErrorResponse("UNAUTHORIZED", "Authentication required", generateRequestId()));
+    }
+
+    /**
      * 处理 AI Token 配额超限异常，返回 429。
      */
     @ExceptionHandler(AiTokenQuotaExceededException.class)
@@ -245,8 +259,10 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
+        String requestId = generateRequestId();
+        log.error("Unhandled exception requestId={}", requestId, ex);
         return ResponseEntity.status(500)
-                .body(new ErrorResponse("INTERNAL_ERROR", "An unexpected error occurred", generateRequestId()));
+                .body(new ErrorResponse("INTERNAL_ERROR", "An unexpected error occurred", requestId));
     }
 
     /**
