@@ -167,11 +167,15 @@ Task 18 起，测评出题、测评评分、训练计划/反馈、模拟面试�
 
 - 在 App 的 `AI Provider` 设置页配置用户 OpenAI-compatible Provider。
 - 在后端环境变量中配置平台 Provider：
+  - `IC_JWT_SECRET`，必须显式配置，可用 `openssl rand -base64 32` 生成
+  - `IC_AI_ENCRYPTION_KEY`，必须显式配置，可用 `openssl rand -base64 32` 生成
   - `IC_PLATFORM_AI_ENABLED=true`
   - `IC_PLATFORM_AI_BASE_URL`
   - `IC_PLATFORM_AI_API_KEY`
   - `IC_PLATFORM_AI_MODEL`
   - `IC_PLATFORM_AI_MODE=chatCompletions` 或 `responses`
+
+本地可参考 `backend/.env.example` 创建 `backend/.env`；真实 `.env` 文件已被 Git 忽略，禁止提交。
 
 默认 `IC_REQUIRE_REAL_AI_FOR_COACHING=true`。未配置用户 Provider 且平台真实 AI 未完整配置时，核心教练入口会阻止继续；`LocalPlatformAiClient` 仅保留给单元测试、CI 非 live AI 回归、明确离线演示和基础健康检查。
 

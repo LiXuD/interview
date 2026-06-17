@@ -38,10 +38,10 @@ app:
   auth:
     dev-login-enabled: ${IC_DEV_LOGIN_ENABLED:false}
   jwt:
-    secret: ${IC_JWT_SECRET:OqdiowA+wbDLSdp8HFj7qcbW36V0mtilujurTO496HU=}
+    secret: ${IC_JWT_SECRET}
     expiration-ms: 604800000
   ai:
-    encryption-key: ${IC_AI_ENCRYPTION_KEY:ZGV2LWFpLWVuY3J5cHRpb24ta2V5LTMyLWJ5dGVzISE=}
+    encryption-key: ${IC_AI_ENCRYPTION_KEY}
     spring:
       enabled: ${IC_SPRING_AI_ENABLED:false}
     http:
