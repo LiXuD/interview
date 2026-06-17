@@ -56,8 +56,9 @@ Page({
       content: '退出后需要重新登录',
       success: (res) => {
         if (res.confirm) {
-          auth.logout();
-          wx.reLaunch({ url: '/pages/login/login' });
+          auth.logout().finally(() => {
+            wx.reLaunch({ url: '/pages/login/login' });
+          });
         }
       }
     });
@@ -91,16 +92,10 @@ Page({
         }
         storage.clearAuth();
         wx.showToast({ title: '账号已删除', icon: 'success' });
-        this._navTimer = setTimeout(() => {
-          wx.reLaunch({ url: '/pages/login/login' });
-        }, 1000);
+        wx.reLaunch({ url: '/pages/login/login' });
       })
       .catch((err) => {
         this.setData({ error: err.message || '删除失败' });
       });
-  },
-
-  onUnload() {
-    if (this._navTimer) clearTimeout(this._navTimer);
   }
 });

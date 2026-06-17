@@ -8,15 +8,16 @@ Page({
   onJdInput(e) { this.setData({ jd: e.detail.value, error: '' }); },
 
   onSubmit() {
-    const { title, jd } = this.data;
+    const { title, jd, submitting } = this.data;
+    if (submitting) return;
     if (!title.trim() || !jd.trim()) return;
     this.setData({ submitting: true, error: '' });
     request.post(API.TARGETS, { title: title.trim(), jd: jd.trim() })
       .then((target) => {
         wx.showToast({ title: '创建成功' });
-        this._navTimer = setTimeout(() => {
-          wx.navigateTo({ url: '/package-coach/pages/profile/profile?targetId=' + target.id });
-        }, 500);
+        wx.navigateTo({
+          url: '/package-coach/pages/profile/profile?targetId=' + target.id
+        });
       })
       .catch((err) => {
         this.setData({ error: err.message || '创建失败' });
@@ -24,9 +25,5 @@ Page({
       .finally(() => {
         this.setData({ submitting: false });
       });
-  },
-
-  onUnload() {
-    if (this._navTimer) clearTimeout(this._navTimer);
   }
 });

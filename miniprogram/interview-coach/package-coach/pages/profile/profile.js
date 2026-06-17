@@ -24,6 +24,7 @@ Page({
   },
 
   onGenerate() {
+    if (this.data.loading) return;
     const resumeText = this.data.resumeText.trim();
     if (!resumeText) return;
     if (!this.data.consented) {
@@ -41,6 +42,7 @@ Page({
   },
 
   doGenerate(resumeText) {
+    if (this.data.loading) return;
     this.setData({ loading: true, error: '' });
     request.post(API.PROFILE_DRAFT_SUMMARY, { resumeText })
       .then((draft) => {
@@ -55,7 +57,8 @@ Page({
   },
 
   onConfirm() {
-    const { targetId, draft } = this.data;
+    const { targetId, draft, loading } = this.data;
+    if (loading) return;
     if (!draft) return;
     this.setData({ loading: true, error: '' });
     request.post(API.PROFILE_CONFIRM, {
@@ -67,9 +70,9 @@ Page({
     })
       .then(() => {
         wx.showToast({ title: '已确认' });
-        this._navTimer = setTimeout(() => {
-          wx.navigateTo({ url: '/package-coach/pages/jobbrief/jobbrief?targetId=' + targetId });
-        }, 500);
+        wx.navigateTo({
+          url: '/package-coach/pages/jobbrief/jobbrief?targetId=' + targetId
+        });
       })
       .catch((err) => {
         this.setData({ error: err.message || '确认失败' });
@@ -77,9 +80,5 @@ Page({
       .finally(() => {
         this.setData({ loading: false });
       });
-  },
-
-  onUnload() {
-    if (this._navTimer) clearTimeout(this._navTimer);
   }
 });

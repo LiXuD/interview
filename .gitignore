@@ -45,6 +45,7 @@ private/
 .qodo/
 .openhands/
 .sourcegraph/
+.workbuddy/
 .github/copilot-instructions.local.md
 *.prompt.local.md
 prompts/*.local.md

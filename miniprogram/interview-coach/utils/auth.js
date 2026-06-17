@@ -38,7 +38,13 @@ function wechatLogin() {
 }
 
 function logout() {
-  storage.clearAuth();
+  return request.post(API.AUTH_LOGOUT)
+    .catch(() => {
+      // 本地退出必须可用；服务端登出失败时仍清理本地登录态。
+    })
+    .finally(() => {
+      storage.clearAuth();
+    });
 }
 
 module.exports = {

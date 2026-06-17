@@ -45,9 +45,7 @@ Page({
   },
 
   goBack() {
-    wx.navigateBack({ delta: 10 }).catch(() => {
-      wx.reLaunch({ url: '/pages/targets/targets' });
-    });
+    wx.reLaunch({ url: '/pages/targets/targets' });
   },
 
   onShareAppMessage() {

@@ -4,5 +4,18 @@
 App({
   globalData: {},
 
-  onLaunch() {}
+  onLaunch() {},
+
+  onError(error) {
+    console.error('[app] uncaught error', error);
+  },
+
+  onUnhandledRejection(res) {
+    console.error('[app] unhandled rejection', res && (res.reason || res));
+  },
+
+  onPageNotFound(res) {
+    console.warn('[app] page not found', res);
+    wx.reLaunch({ url: '/pages/targets/targets' });
+  }
 });

@@ -101,9 +101,7 @@ Page({
     request.del(API.TARGET_DETAIL(this.data.id))
       .then(() => {
         wx.showToast({ title: '已删除' });
-        this._navTimer = setTimeout(() => {
-          wx.navigateBack();
-        }, 500);
+        wx.navigateBack();
       })
       .catch((err) => {
         wx.showToast({ title: err.message || '删除失败', icon: 'none' });
@@ -146,9 +144,5 @@ Page({
       title: '我在用 AI 面试教练准备「' + (this.data.title || '面试') + '」',
       path: '/pages/target-detail/target-detail?id=' + this.data.id
     };
-  },
-
-  onUnload() {
-    if (this._navTimer) clearTimeout(this._navTimer);
   }
 });
